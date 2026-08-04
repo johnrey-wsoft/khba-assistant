@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import { ChatPane } from "@/components/chat/chat-pane";
 import { getThread } from "@/constants/chat.constant";
@@ -21,8 +20,7 @@ export default async function Page({ params }: PageProps) {
   const { id } = await params;
   const thread = getThread(id);
 
-  if (!thread) notFound();
-
-  // key forces a fresh useChat (new seed) when switching threads.
-  return <ChatPane key={thread.id} thread={thread} />;
+  // Known mock threads seed their conversation; any other id is a fresh
+  // (live) consultation started from /chat. key forces a clean useChat.
+  return <ChatPane key={id} chatId={id} thread={thread ?? undefined} />;
 }
