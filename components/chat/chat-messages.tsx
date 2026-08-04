@@ -1,10 +1,16 @@
 "use client";
 
 import type { UIMessage } from "ai";
-import { ThumbsUp, HelpCircle, Bookmark } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ThumbsUp, HelpCircle, Bookmark, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Notice, SourceCard, ToneBadge, type ChatSource } from "@/components/chat/primitives";
+
+// useLayoutEffect on the client (scroll before paint = no flicker), useEffect
+// on the server to avoid the SSR warning.
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 type Part = UIMessage["parts"][number];
 
@@ -148,24 +154,70 @@ type ChatMessagesProps = {
   dateLabel?: string;
 };
 
-export const ChatMessages = ({ messages, isThinking, dateLabel }: ChatMessagesProps) => (
-  <div className="min-h-0 flex-1 overflow-y-auto bg-background">
-    <div className="mx-auto flex max-w-[820px] flex-col gap-4.5 px-7 py-7">
-      {messages.length === 0 && !isThinking ? (
-        <EmptyState />
-      ) : (
-        <>
-          {dateLabel && messages.length > 0 && <DateDivider label={dateLabel} />}
-          {messages.map((message) =>
-            message.role === "user" ? (
-              <UserMessage key={message.id} text={getText(message)} time={getTime(message)} />
-            ) : (
-              <AssistantMessage key={message.id} message={message} />
-            )
+export const ChatMessages = ({ messages, isThinking, dateLabel }: ChatMessagesProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
+  }, []);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceFromBottom < 80;
+    atBottomRef.current = atBottom;
+    setShowScrollButton(!atBottom);
+  };
+
+  // Follow new/streaming content, but only if the user hasn't scrolled up.
+  // Layout effect keeps the initial jump-to-bottom before paint (no flicker).
+  useIsomorphicLayoutEffect(() => {
+    if (atBottomRef.current) scrollToBottom("auto");
+  }, [messages, isThinking, scrollToBottom]);
+
+  return (
+    <div className="relative min-h-0 flex-1">
+      <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto bg-background">
+        <div className="mx-auto flex max-w-[820px] flex-col gap-4.5 px-7 py-7">
+          {messages.length === 0 && !isThinking ? (
+            <EmptyState />
+          ) : (
+            <>
+              {dateLabel && messages.length > 0 && <DateDivider label={dateLabel} />}
+              {messages.map((message) =>
+                message.role === "user" ? (
+                  <UserMessage key={message.id} text={getText(message)} time={getTime(message)} />
+                ) : (
+                  <AssistantMessage key={message.id} message={message} />
+                )
+              )}
+            </>
           )}
-        </>
-      )}
-      {isThinking && <ThinkingBubble />}
+          {isThinking && <ThinkingBubble />}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          atBottomRef.current = true;
+          setShowScrollButton(false);
+          scrollToBottom("smooth");
+        }}
+        aria-label="Scroll to latest"
+        className={cn(
+          "absolute bottom-4 left-1/2 grid size-9 -translate-x-1/2 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition-all hover:bg-accent hover:text-accent-foreground",
+          showScrollButton
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none translate-y-1 opacity-0"
+        )}
+      >
+        <ChevronDown className="size-4" />
+      </button>
     </div>
-  </div>
-);
+  );
+};
