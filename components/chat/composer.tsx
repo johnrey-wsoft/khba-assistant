@@ -4,8 +4,10 @@ import { ArrowUp, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Chip } from "@/components/chat/primitives";
-import { CHAT_SUGGESTIONS } from "@/constants/chat.constant";
+
+const SKELETON_WIDTHS = ["w-44", "w-36", "w-40", "w-32"];
 
 type ComposerProps = {
   value: string;
@@ -14,6 +16,8 @@ type ComposerProps = {
   onSuggestion: (value: string) => void;
   onStop: () => void;
   isBusy: boolean;
+  suggestions: string[];
+  loadingSuggestions?: boolean;
 };
 
 export const Composer = ({
@@ -23,6 +27,8 @@ export const Composer = ({
   onSuggestion,
   onStop,
   isBusy,
+  suggestions,
+  loadingSuggestions = false,
 }: ComposerProps) => {
   const canSend = value.trim().length > 0 && !isBusy;
 
@@ -43,11 +49,15 @@ export const Composer = ({
             WebkitMaskImage: "linear-gradient(90deg, #000 calc(100% - 28px), transparent)",
           }}
         >
-          {CHAT_SUGGESTIONS.map((s) => (
-            <Chip key={s} onClick={() => onSuggestion(s)} disabled={isBusy}>
-              {s}
-            </Chip>
-          ))}
+          {loadingSuggestions
+            ? SKELETON_WIDTHS.map((w, i) => (
+                <Skeleton key={i} className={`h-9 flex-none rounded-full ${w}`} />
+              ))
+            : suggestions.map((s, i) => (
+                <Chip key={`${i}-${s}`} onClick={() => onSuggestion(s)} disabled={isBusy}>
+                  {s}
+                </Chip>
+              ))}
         </div>
 
         <div className="flex items-end gap-2.5 rounded-2xl border-2 border-primary bg-card p-3 pl-4.5 shadow-sm">

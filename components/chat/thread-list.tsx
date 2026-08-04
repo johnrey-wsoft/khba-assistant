@@ -6,12 +6,21 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/components/chat/chat-store";
 import { CHAT_THREADS, type ThreadStatus } from "@/constants/chat.constant";
 
 const STATUS_DOT: Record<ThreadStatus, string> = {
   sourced: "bg-chart-2",
   partial: "bg-chart-3",
   unanswered: "bg-destructive",
+};
+
+type ThreadItem = {
+  id: string;
+  title: string;
+  preview: string;
+  when: string;
+  status: ThreadStatus;
 };
 
 type ThreadListProps = {
@@ -21,12 +30,24 @@ type ThreadListProps = {
 };
 
 export const ThreadList = ({ activeId, filter, onFilterChange }: ThreadListProps) => {
+  const { conversations } = useChatStore();
+
+  // Live conversations started this session, then the sample threads.
+  const items: ThreadItem[] = [
+    ...conversations.map((c) => ({
+      id: c.id,
+      title: c.title,
+      preview: c.preview,
+      when: c.when,
+      status: "sourced" as ThreadStatus,
+    })),
+    ...CHAT_THREADS,
+  ];
+
   const q = filter.trim().toLowerCase();
   const threads = q
-    ? CHAT_THREADS.filter(
-        (t) => t.title.toLowerCase().includes(q) || t.preview.toLowerCase().includes(q)
-      )
-    : CHAT_THREADS;
+    ? items.filter((t) => t.title.toLowerCase().includes(q) || t.preview.toLowerCase().includes(q))
+    : items;
 
   return (
     <section className="flex h-full min-w-0 flex-col overflow-hidden border-r border-border bg-card">
@@ -64,9 +85,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange }: ThreadListProps
 
       <div className="flex items-baseline justify-between px-5 pt-4 pb-1">
         <span className="text-sm font-extrabold tracking-tight text-foreground">Consultations</span>
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
-          {CHAT_THREADS.length}
-        </span>
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">{items.length}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

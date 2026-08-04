@@ -3,6 +3,13 @@
 
 export const generateChatId = (): string => crypto.randomUUID();
 
+// "YYYY-MM-DD HH:mm" to match the mock thread `when` format.
+export const formatNow = (): string => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 // The first message is typed on /chat but must be sent on /chat/[id].
 // Stash it here (module scope survives client-side navigation) and let the
 // destination pane consume it once on mount.
