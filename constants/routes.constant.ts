@@ -1,5 +1,6 @@
 export const PUBLIC_ROUTES = {
   ROOT: "/",
+  CHAT: "/chat",
 } as const;
 
 export const AUTH_ROUTES = {
@@ -20,6 +21,7 @@ export const API_ROUTES = {
   MAIL: {
     SEND: "/api/mail/send",
   },
+  CHAT: "/api/chat",
   HEALTHCHECK: "/api/healthcheck",
 } as const;
 
