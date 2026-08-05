@@ -52,3 +52,5 @@ docs/.vitepress/cache/
 
 # vitepress
 docs/.vitepress/dist
+# Generated embedding index (rebuild with pnpm embeddings:build)
+data/khba-index.json
