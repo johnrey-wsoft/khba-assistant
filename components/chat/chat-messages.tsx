@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { ThumbsUp, HelpCircle, Bookmark, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Notice, SourceCard, ToneBadge, type ChatSource } from "@/components/chat/primitives";
 import { useArtifact } from "@/components/chat/artifact-context";
@@ -38,6 +39,34 @@ const getSources = (message: UIMessage): ChatSource[] => {
 const getTime = (message: UIMessage): string | undefined =>
   (message.metadata as { time?: string } | undefined)?.time;
 
+// True while a searchKhba tool call is executing (input states, before output).
+const isSearching = (message: UIMessage): boolean =>
+  message.parts.some(
+    (p) =>
+      p.type === "tool-searchKhba" &&
+      "state" in p &&
+      (p.state === "input-streaming" || p.state === "input-available")
+  );
+
+const SourcesSkeleton = () => (
+  <div className="flex flex-col gap-2.5">
+    <span className="flex items-center gap-2 text-sm font-extrabold text-foreground">
+      <span className="inline-block size-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
+      Searching sources…
+    </span>
+    {[0, 1].map((i) => (
+      <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3.5">
+        <Skeleton className="size-10 flex-none rounded-lg" />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-3 w-1/3" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const DateDivider = ({ label }: { label: string }) => (
   <div className="flex items-center gap-3">
     <span className="h-px flex-1 bg-border" />
@@ -70,6 +99,8 @@ const AssistantMessage = ({ message }: { message: UIMessage }) => {
     source,
   }));
   const time = getTime(message);
+  const searching = isSearching(message);
+  const hasContent = Boolean(text) || sources.length > 0;
   const sourceLabel =
     sources.length > 0 ? `${sources.length} ${sources.length === 1 ? "source" : "sources"}` : null;
   const footerMeta = [time, sourceLabel].filter(Boolean).join(" · ");
@@ -92,6 +123,8 @@ const AssistantMessage = ({ message }: { message: UIMessage }) => {
           </div>
         )}
 
+        {searching && sources.length === 0 && <SourcesSkeleton />}
+
         {sources.length > 0 && (
           <div className="flex flex-col gap-2.5">
             <span className="text-sm font-extrabold text-foreground">Where this came from</span>
@@ -101,31 +134,35 @@ const AssistantMessage = ({ message }: { message: UIMessage }) => {
           </div>
         )}
 
-        <Notice>
-          Answers are reference material. Confirm the current wording with the official text and the
-          competent authority before filing.
-        </Notice>
+        {hasContent && (
+          <Notice>
+            Answers are reference material. Confirm the current wording with the official text and
+            the competent authority before filing.
+          </Notice>
+        )}
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
-            <ThumbsUp />
-            Helpful
-          </Button>
-          <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
-            <HelpCircle />
-            Not quite
-          </Button>
-          <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
-            <Bookmark />
-            Save
-          </Button>
-          <span className="flex-1" />
-          {footerMeta && (
-            <span className="font-mono text-xs tabular-nums text-muted-foreground">
-              {footerMeta}
-            </span>
-          )}
-        </div>
+        {hasContent && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
+            <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
+              <ThumbsUp />
+              Helpful
+            </Button>
+            <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
+              <HelpCircle />
+              Not quite
+            </Button>
+            <Button variant="outline" size="sm" className="rounded-full text-muted-foreground">
+              <Bookmark />
+              Save
+            </Button>
+            <span className="flex-1" />
+            {footerMeta && (
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {footerMeta}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { authorityGlyph } from "@/lib/chat/authority";
 
 // --- Tone badge -----------------------------------------------------------
 // "Well sourced" (mint) / "Thin evidence" (amber) — built on shadcn Badge,
@@ -66,14 +67,8 @@ export type ChatSource = {
   snippet?: string;
 };
 
-const AUTHORITY_GLYPH: Record<string, string> = {
-  LAW: "法",
-  ORDINANCE: "条",
-  GUIDELINE: "指",
-};
-
 export const SourceCard = ({ source, onOpen }: { source: ChatSource; onOpen?: () => void }) => {
-  const glyph = AUTHORITY_GLYPH[source.authorityType] ?? "文";
+  const glyph = authorityGlyph(source.authorityType);
 
   return (
     <button

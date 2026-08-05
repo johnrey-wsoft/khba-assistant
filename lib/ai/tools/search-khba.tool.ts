@@ -1,9 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-// POC MOCK — static in-memory KHBA documents.
-// Shaped to mirror the WS-1267 `document` schema so this can later be swapped
-// for a real DB / vector query without changing the tool's output contract.
+import { semanticSearchKhba } from "@/lib/ai/retrieval";
+
+// Fallback data used only when the DB/vector search is unavailable, so the
+// chat keeps working. Shaped to mirror the WS-1267 `document` schema.
 const MOCK_DOCUMENTS = [
   {
     documentCode: "LAW-2026-000123",
@@ -52,10 +53,19 @@ export const searchKhba = tool({
       .describe("Max number of documents to return."),
   }),
   execute: async ({ query, limit }) => {
-    const q = query.toLowerCase();
+    // Primary: semantic retrieval over pgvector (PUBLIC + INDEXED only).
+    try {
+      const results = await semanticSearchKhba(query, limit);
+      if (results.length > 0) {
+        return { query, count: results.length, results, source: "semantic" };
+      }
+    } catch (error) {
+      console.error("[searchKhba] semantic search failed, using fallback:", error);
+    }
 
-    // POC: naive substring match. Public documents only — this is an
-    // unauthenticated endpoint, so restricted records must never be returned.
+    // Fallback: naive substring match over the mock set (PUBLIC only) so the
+    // chat still responds if the DB/vector index is unavailable or empty.
+    const q = query.toLowerCase();
     const results = MOCK_DOCUMENTS.filter(
       (doc) =>
         doc.securityClass === "PUBLIC" &&
@@ -64,10 +74,6 @@ export const searchKhba = tool({
           doc.snippet.toLowerCase().includes(q))
     ).slice(0, limit);
 
-    return {
-      query,
-      count: results.length,
-      results,
-    };
+    return { query, count: results.length, results, source: "fallback" };
   },
 });

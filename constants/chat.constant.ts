@@ -107,12 +107,13 @@ export const CHAT_THREADS: ChatThread[] = [
         query: "LH purchase-rental notice conditions",
         sources: [
           {
-            documentCode: "NOTICE-2026-000512",
-            title: "LH 매입임대 입주자 모집 공고",
-            authorityType: "GUIDELINE",
+            documentCode: "ADMIN-2026-000512",
+            title: "LH 매입임대주택 입주자 모집 공고",
+            authorityType: "ADMIN_RULE",
             jurisdictionCode: null,
             securityClass: "PUBLIC",
-            snippet: "신청 접수는 2026-08-08까지이며, 개정 세대 표를 적용한다.",
+            snippet:
+              "2. 접수기간 신청 접수는 2026년 8월 8일까지이며, 마감 이후 접수분은 인정하지 아니한다. 접수는 온라인으로만 받는다.",
           },
         ],
       },
@@ -161,7 +162,7 @@ export const CHAT_THREADS: ChatThread[] = [
           {
             documentCode: "GUIDE-2026-000078",
             title: "협회 분기 신고 서식 안내",
-            authorityType: "GUIDELINE",
+            authorityType: "ASSOCIATION_GUIDE",
             jurisdictionCode: null,
             securityClass: "PUBLIC",
             snippet: "서식 3호와 부록을 현행 기준일 기준으로 제출한다.",
