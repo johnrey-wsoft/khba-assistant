@@ -28,7 +28,9 @@ export default function ChatLayout({ children }: PropsWithChildren) {
             <ThreadList activeId={activeId} filter={filter} onFilterChange={setFilter} />
           </div>
 
-          <section className="flex h-full min-w-0 flex-1 flex-col bg-card">{children}</section>
+          <section className="flex h-full min-w-0 flex-1 overflow-hidden bg-card">
+            {children}
+          </section>
         </div>
       </ChatStoreProvider>
     </ChatShellProvider>

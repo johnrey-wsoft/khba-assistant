@@ -72,11 +72,15 @@ const AUTHORITY_GLYPH: Record<string, string> = {
   GUIDELINE: "指",
 };
 
-export const SourceCard = ({ source }: { source: ChatSource }) => {
+export const SourceCard = ({ source, onOpen }: { source: ChatSource; onOpen?: () => void }) => {
   const glyph = AUTHORITY_GLYPH[source.authorityType] ?? "文";
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-accent/40">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-start gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+    >
       <span className="grid size-10 flex-none place-items-center rounded-lg bg-accent text-lg font-bold text-accent-foreground">
         {glyph}
       </span>
@@ -95,6 +99,6 @@ export const SourceCard = ({ source }: { source: ChatSource }) => {
           <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">{source.snippet}</span>
         ) : null}
       </div>
-    </div>
+    </button>
   );
 };

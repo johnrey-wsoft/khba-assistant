@@ -7,6 +7,8 @@ import { ThumbsUp, HelpCircle, Bookmark, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Notice, SourceCard, ToneBadge, type ChatSource } from "@/components/chat/primitives";
+import { useArtifact } from "@/components/chat/artifact-context";
+import { Markdown, type Citation } from "@/components/chat/markdown";
 
 // useLayoutEffect on the client (scroll before paint = no flicker), useEffect
 // on the server to avoid the SSR warning.
@@ -60,8 +62,13 @@ const UserMessage = ({ text, time }: { text: string; time?: string }) => (
 );
 
 const AssistantMessage = ({ message }: { message: UIMessage }) => {
+  const { openSource } = useArtifact();
   const text = getText(message);
   const sources = getSources(message);
+  const citations: Citation[] = sources.map((source, i) => ({
+    number: i + 1,
+    source,
+  }));
   const time = getTime(message);
   const sourceLabel =
     sources.length > 0 ? `${sources.length} ${sources.length === 1 ? "source" : "sources"}` : null;
@@ -78,16 +85,18 @@ const AssistantMessage = ({ message }: { message: UIMessage }) => {
 
       <div className="flex flex-col gap-5 p-6">
         {text && (
-          <p className="text-base leading-relaxed font-medium whitespace-pre-wrap text-foreground">
-            {text}
-          </p>
+          <div className="text-base leading-relaxed font-medium text-foreground">
+            <Markdown citations={citations} onCite={openSource}>
+              {text}
+            </Markdown>
+          </div>
         )}
 
         {sources.length > 0 && (
           <div className="flex flex-col gap-2.5">
             <span className="text-sm font-extrabold text-foreground">Where this came from</span>
             {sources.map((s) => (
-              <SourceCard key={s.documentCode} source={s} />
+              <SourceCard key={s.documentCode} source={s} onOpen={() => openSource(s)} />
             ))}
           </div>
         )}

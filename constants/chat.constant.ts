@@ -41,7 +41,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "Under 30㎡ exclusive area it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6. Any remainder in the total is rounded up before it applies.",
+        text: "Under 30㎡ exclusive area it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6 [1](cite:1). Any remainder in the total is rounded up before it applies [2](cite:2).",
         time: "16:19",
         query: "Suwon parking ratio small multi-family",
         sources: [
@@ -70,7 +70,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "It counts under the national decree. Whether Suwon caps that share is decided in the ordinance, and that article is not in our index yet, so we are not going to guess at the number.",
+        text: "It counts under the national decree [1](cite:1). Whether Suwon caps that share is decided in the ordinance, and that article is not in our index yet, so we are not going to guess at the number.",
         time: "16:25",
         query: "mechanical parking required count decree",
         sources: [
@@ -102,7 +102,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "Applications close 2026-08-08, and the revised unit table applies from this notice. Income and asset limits follow the standard purchase-rental bracket.",
+        text: "Applications close 2026-08-08, and the revised unit table applies from this notice [1](cite:1). Income and asset limits follow the standard purchase-rental bracket.",
         time: "11:02",
         query: "LH purchase-rental notice conditions",
         sources: [
@@ -154,7 +154,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "File Form 3 with its appendix, using the current base date on the cover.",
+        text: "File Form 3 with its appendix, using the current base date on the cover [1](cite:1).",
         time: "17:30",
         query: "association quarterly filing forms",
         sources: [

@@ -7,8 +7,11 @@ import { useRouter } from "nextjs-toploader/app";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { Composer } from "@/components/chat/composer";
+import { ArtifactPanel } from "@/components/chat/artifact-panel";
+import { ArtifactProvider } from "@/components/chat/artifact-context";
 import { useChatShell } from "@/components/chat/chat-shell-context";
 import { useChatStore } from "@/components/chat/chat-store";
+import type { ChatSource } from "@/components/chat/primitives";
 import { toUIMessages } from "@/lib/chat/seed-messages";
 import { messageText } from "@/lib/chat/message-text";
 import { suggestionsSchema } from "@/lib/chat/suggestions.schema";
@@ -36,6 +39,7 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const seed = useMemo(() => (thread ? toUIMessages(thread.messages) : []), [thread]);
 
   const [input, setInput] = useState("");
+  const [activeSource, setActiveSource] = useState<ChatSource | null>(null);
   const { messages, sendMessage, status, stop } = useChat({
     id: chatId,
     messages: seed,
@@ -128,29 +132,35 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const headerTitle = thread?.title ?? conversation?.title;
 
   return (
-    <>
-      <ChatHeader
-        title={headerTitle}
-        subtitle={thread?.subtitle}
-        baseDate={thread?.baseDate}
-        messageCount={messages.length}
-        onToggleThreadList={toggleThreadList}
-      />
-      <ChatMessages
-        messages={messages}
-        isThinking={status === "submitted"}
-        dateLabel={thread?.when?.split(" ")[0]}
-      />
-      <Composer
-        value={input}
-        onChange={setInput}
-        onSubmit={() => submit(input)}
-        onSuggestion={submit}
-        onStop={stop}
-        isBusy={isBusy}
-        suggestions={suggestions}
-        loadingSuggestions={loadingSuggestions}
-      />
-    </>
+    <ArtifactProvider openSource={setActiveSource}>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ChatHeader
+          title={headerTitle}
+          subtitle={thread?.subtitle}
+          baseDate={thread?.baseDate}
+          messageCount={messages.length}
+          onToggleThreadList={toggleThreadList}
+        />
+        <ChatMessages
+          messages={messages}
+          isThinking={status === "submitted"}
+          dateLabel={thread?.when?.split(" ")[0]}
+        />
+        <Composer
+          value={input}
+          onChange={setInput}
+          onSubmit={() => submit(input)}
+          onSuggestion={submit}
+          onStop={stop}
+          isBusy={isBusy}
+          suggestions={suggestions}
+          loadingSuggestions={loadingSuggestions}
+        />
+      </div>
+
+      {activeSource && (
+        <ArtifactPanel source={activeSource} onClose={() => setActiveSource(null)} />
+      )}
+    </ArtifactProvider>
   );
 };
