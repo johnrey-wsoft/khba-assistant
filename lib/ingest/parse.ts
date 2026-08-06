@@ -14,6 +14,16 @@ export const parseDocumentToMarkdown = async (filePath: string): Promise<string>
     version: "latest",
     upload_file: fs.createReadStream(filePath),
     expand: ["markdown"],
+    // Emit tables as markdown pipe tables (RAG-friendly) instead of HTML
+    // <table> tags, and stitch tables that span pages.
+    output_options: {
+      markdown: {
+        tables: {
+          output_tables_as_markdown: true,
+          merge_continued_tables: true,
+        },
+      },
+    },
   });
 
   const parts: string[] = [];

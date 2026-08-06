@@ -8,6 +8,42 @@
       "jurisdictionCode": "41390",
       "securityClass": "PUBLIC",
       "version": { "versionNo": 1, "effectiveFrom": "2026-03-15" }
+    },
+    {
+      "file": "documents/parking-lot-act-decree.pdf",
+      "documentCode": "LAW-2026-000210",
+      "title": "주차장법 시행령",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-01-08" }
+    },
+    {
+      "file": "documents/lh-purchase-rental-notice.pdf",
+      "documentCode": "ADMIN-2026-000512",
+      "title": "LH 매입임대주택 입주자 모집 공고",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-07-10" }
+    },
+    {
+      "file": "documents/association-quarterly-filing-guide.pdf",
+      "documentCode": "GUIDE-2026-000078",
+      "title": "협회 분기 신고 서식 안내",
+      "authorityType": "ASSOCIATION_GUIDE",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-06-30" }
+    },
+    {
+      "file": "documents/parking-relaxation-case.pdf",
+      "documentCode": "CASE-2026-000031",
+      "title": "부설주차장 완화 적용 회원 상담 사례",
+      "authorityType": "MEMBER_CASE",
+      "jurisdictionCode": "41390",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-05-20" }
     }
   ]
 }
