@@ -1,0 +1,13 @@
+{
+  "documents": [
+    {
+      "file": "documents/suwon-parking-ordinance.pdf",
+      "documentCode": "ORD-41390-000045",
+      "title": "수원시 주차장 설치 및 관리 조례",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "41390",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-03-15" }
+    }
+  ]
+}
