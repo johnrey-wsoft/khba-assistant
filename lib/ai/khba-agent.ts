@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { ToolLoopAgent, stepCountIs } from "ai";
 
 import { searchKhba } from "./tools/search-khba.tool";
+import { compactHistoricalSearchResults } from "./compact-history";
 
 // Define once, use everywhere (route handler + client typing).
 export const khbaAgent = new ToolLoopAgent({
@@ -21,4 +22,9 @@ export const khbaAgent = new ToolLoopAgent({
   },
   // Allow the model to call the tool, then produce a final answer (up to 5 steps).
   stopWhen: stepCountIs(5),
+  // Send only the citation map (not the full passages) for prior-turn searches,
+  // so conversation context doesn't balloon with re-sent snippets.
+  prepareStep: ({ messages, initialMessages }) => ({
+    messages: compactHistoricalSearchResults(messages, initialMessages),
+  }),
 });
