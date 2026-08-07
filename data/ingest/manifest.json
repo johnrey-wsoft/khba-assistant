@@ -44,6 +44,60 @@
       "jurisdictionCode": "41390",
       "securityClass": "PUBLIC",
       "version": { "versionNo": 1, "effectiveFrom": "2026-05-20" }
+    },
+    {
+      "file": "documents/seoul-ai-framework-ordinance.pdf",
+      "documentCode": "ORD-11000-000001",
+      "title": "Seoul Metropolitan Government Framework Ordinance on Artificial Intelligence",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-low-emission-areas-ordinance.pdf",
+      "documentCode": "ORD-11000-000002",
+      "title": "Seoul Metropolitan Government Ordinance on the Designation and Operation of Low-Emission Areas",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-international-policy-advisers-ordinance.pdf",
+      "documentCode": "ORD-11000-000003",
+      "title": "Seoul Metropolitan Government Ordinance on the Establishment and Operation of International Policy Advisers",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-international-policy-advisers-ordinance-v2.pdf",
+      "documentCode": "ORD-11000-000004",
+      "title": "Seoul Metropolitan Government Ordinance on the Establishment and Operation of International Policy Advisers (variant)",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-metropolitan-sports-facilities-ordinance.pdf",
+      "documentCode": "ORD-11000-000005",
+      "title": "Seoul Metropolitan Government Ordinance on the Installation and Operation of Metropolitan Sports Facilities",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-personal-information-protection-ordinance.pdf",
+      "documentCode": "ORD-11000-000006",
+      "title": "Seoul Metropolitan Government Ordinance on the Protection of Personal Information",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
     }
   ]
 }
