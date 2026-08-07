@@ -1,6 +1,9 @@
 import fs from "node:fs";
+import { extname } from "node:path";
 
 import LlamaCloud from "@llamaindex/llama-cloud";
+
+import { parseWithUpstage } from "./upstage";
 
 // Agentic OCR: parse a local document (PDF, image, HWP, 130+ formats) to
 // markdown via LlamaCloud. `tier: "agentic"` analyzes the whole document in
@@ -31,4 +34,14 @@ export const parseDocumentToMarkdown = async (filePath: string): Promise<string>
     if (page.success) parts.push(page.markdown);
   }
   return parts.join("\n\n").trim();
+};
+
+// Format-aware entry point for the pipeline. HWP is an OLE2/CFB binary that
+// LlamaParse's agentic OCR rejects, so it is routed to Upstage Document Parse
+// (Korean-optimized); every other format uses LlamaParse agentic OCR.
+export const parseDocument = async (filePath: string): Promise<string> => {
+  if (extname(filePath).toLowerCase() === ".hwp") {
+    return parseWithUpstage(filePath);
+  }
+  return parseDocumentToMarkdown(filePath);
 };

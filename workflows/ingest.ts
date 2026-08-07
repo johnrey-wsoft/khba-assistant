@@ -1,5 +1,5 @@
 import { db } from "@/lib/drizzle/db";
-import { parseDocumentToMarkdown } from "@/lib/ingest/parse";
+import { parseDocument } from "@/lib/ingest/parse";
 import { upsertDocuments } from "@/lib/ingest/upsert";
 import { semanticChunk } from "@/lib/ai/chunking";
 import { embedTexts } from "@/lib/ai/embeddings";
@@ -17,7 +17,7 @@ async function ocrStep(entry: ManifestEntry): Promise<string> {
   "use step";
   const started = Date.now();
   logIngest("workflow", "ocr start", { doc: entry.documentCode, file: entry.file });
-  const markdown = await parseDocumentToMarkdown(resolveDocumentPath(entry.file));
+  const markdown = await parseDocument(resolveDocumentPath(entry.file));
   logIngest("workflow", "ocr done", {
     doc: entry.documentCode,
     chars: markdown.length,

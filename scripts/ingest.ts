@@ -19,7 +19,7 @@ import { resolve } from "node:path";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 
-import { parseDocumentToMarkdown } from "../lib/ingest/parse";
+import { parseDocument } from "../lib/ingest/parse";
 import { upsertDocuments } from "../lib/ingest/upsert";
 import { semanticChunk } from "../lib/ai/chunking";
 import { embedTexts } from "../lib/ai/embeddings";
@@ -44,9 +44,35 @@ async function main() {
     documents: ManifestEntry[];
   };
 
+  // Optional `--codes=A,B,C` (or `--codes A,B,C`) to ingest a subset — handy for
+  // re-running just the docs that failed, without re-parsing the whole corpus.
+  const codesArg = process.argv.find((a) => a.startsWith("--codes="))?.slice("--codes=".length);
+  const flagIdx = process.argv.indexOf("--codes");
+  const codesRaw = codesArg ?? (flagIdx >= 0 ? process.argv[flagIdx + 1] : undefined);
+  const codes = codesRaw
+    ? new Set(
+        codesRaw
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean)
+      )
+    : null;
+
+  const docs = codes
+    ? manifest.documents.filter((d) => codes.has(d.documentCode))
+    : manifest.documents;
+
+  if (codes && docs.length === 0) {
+    throw new Error(`No manifest entries match --codes: ${codesRaw}`);
+  }
+
+  const isHwp = (file: string) => file.toLowerCase().endsWith(".hwp");
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  if (!process.env.LLAMA_CLOUD_API_KEY) {
+  if (docs.some((d) => !isHwp(d.file)) && !process.env.LLAMA_CLOUD_API_KEY) {
     throw new Error("LLAMA_CLOUD_API_KEY is not set");
+  }
+  if (docs.some((d) => isHwp(d.file)) && !process.env.UPSTAGE_API_KEY) {
+    throw new Error("UPSTAGE_API_KEY is not set (required for .hwp files)");
   }
 
   const client = postgres(process.env.DATABASE_URL, {
@@ -58,7 +84,8 @@ async function main() {
   });
   const db = drizzle(client);
 
-  const total = manifest.documents.length;
+  const total = docs.length;
+  logIngest("cli", "run start", { docs: total, codes: codesRaw ?? "all" });
   const runStart = Date.now();
   let ok = 0;
   let totalEvidence = 0;
@@ -67,7 +94,7 @@ async function main() {
   // Process one document at a time so a single bad file (e.g. an OCR failure on
   // a tricky HWP) is logged and skipped instead of aborting the whole batch.
   try {
-    for (const [i, entry] of manifest.documents.entries()) {
+    for (const [i, entry] of docs.entries()) {
       const tag = `${i + 1}/${total}`;
       const docStart = Date.now();
       try {
@@ -75,7 +102,7 @@ async function main() {
 
         const tParse = Date.now();
         logIngest("cli", `parse start ${tag}`, { doc: entry.documentCode, file: entry.file });
-        const markdown = await parseDocumentToMarkdown(filePath);
+        const markdown = await parseDocument(filePath);
         logIngest("cli", `parsed ${tag}`, {
           doc: entry.documentCode,
           chars: markdown.length,
