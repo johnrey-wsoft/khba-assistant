@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHBA Assistant — Implementation Documentation</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #d8d4cc;
+    --border-strong: #b8b3a8;
+    --text: #1a1916;
+    --text-muted: #6b6760;
+    --text-subtle: #9b978f;
+    --accent: #1a3a2a;
+    --accent-light: #e8f0ec;
+    --accent-mid: #2d6b4a;
+    --tag-bg: #e8f0ec;
+    --tag-text: #1a3a2a;
+    --code-bg: #f0ede6;
+    --code-text: #2d4a38;
+    --warn-bg: #fdf3e3;
+    --warn-border: #e8c46a;
+    --warn-text: #7a5c1e;
+    --done-bg: #eef6f1;
+    --done-border: #7bbf99;
+    --done-text: #1a5c35;
+    --radius: 6px;
+    --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-kr: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  body.kr { font-family: var(--font-kr); }
+
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── Lang bar ──────────────────────────────── */
+  .lang-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+  }
+  .lang-bar-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lang-label {
+    font-size: 12px; color: var(--text-subtle);
+    font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .lang-toggle {
+    display: flex; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .lang-btn {
+    padding: 6px 18px; border: none; background: transparent; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    font-family: var(--font-mono); transition: background 0.15s, color 0.15s;
+  }
+  .lang-btn.active { background: var(--accent); color: #fff; }
+  .lang-btn:hover:not(.active) { background: var(--border); color: var(--text); }
+
+  /* ── Header ────────────────────────────────── */
+  .doc-header { border-bottom: 2px solid var(--accent); padding-bottom: 28px; margin-bottom: 36px; }
+  .doc-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--tag-bg); color: var(--tag-text);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 3px; margin-bottom: 16px; font-family: var(--font-mono);
+  }
+  .doc-title {
+    font-size: 28px; font-weight: 600; line-height: 1.2; color: var(--text);
+    margin-bottom: 18px; letter-spacing: -0.02em; text-wrap: balance;
+  }
+  .doc-meta {
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+    font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);
+  }
+  .doc-meta span { display: flex; align-items: center; gap: 6px; }
+  .status-chip {
+    padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-mono);
+  }
+  .status-active { background: var(--done-bg); color: var(--done-text); border: 1px solid var(--done-border); }
+  .status-tbw { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); }
+
+  /* ── TOC ───────────────────────────────────── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-subtle); font-family: var(--font-mono); margin-bottom: 14px;
+  }
+  .toc ol { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .toc li { font-size: 13px; display: flex; align-items: baseline; gap: 6px; }
+  .toc-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); min-width: 20px; }
+  .toc a { color: var(--accent-mid); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* ── Sections ──────────────────────────────── */
+  section { margin-bottom: 52px; scroll-margin-top: 56px; }
+  h2 {
+    font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); text-wrap: balance;
+  }
+  h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-muted); margin: 24px 0 10px; font-family: var(--font-mono);
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 20px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Data table ────────────────────────────── */
+  .schedule-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .schedule-table thead tr { background: var(--surface2); border-bottom: 2px solid var(--border-strong); }
+  .schedule-table th {
+    padding: 10px 14px; text-align: left; font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  .schedule-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  .schedule-table tr:last-child td { border-bottom: none; }
+  .schedule-table tbody tr { background: var(--surface); }
+  .schedule-table tbody tr:hover { background: var(--surface2); }
+  .toc-wrap { overflow-x: auto; }
+  .ticket-chip {
+    display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    background: var(--tag-bg); color: var(--tag-text); padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+  }
+  .ticket-chip.tbd { background: var(--warn-bg); color: var(--warn-text); }
+  .ticket-chip.auth { background: var(--accent); color: #fff; }
+
+  /* ── Step header ───────────────────────────── */
+  .step-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+  .step-num-badge {
+    flex-shrink: 0; width: 36px; height: 36px; background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600; margin-top: 2px;
+  }
+  .step-title-group { flex: 1; }
+  .step-ticket {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--accent-mid);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px;
+  }
+  .step-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin-bottom: 4px; }
+  .step-meta {
+    font-size: 12px; color: var(--text-subtle); font-family: var(--font-mono);
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+  }
+
+  /* ── Flow block ────────────────────────────── */
+  .flow-block {
+    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent-mid);
+    border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px;
+  }
+  .flow-title {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--accent-mid); margin-bottom: 12px;
+  }
+  .flow-block ul { margin: 0 0 0 14px; }
+  .flow-block li { font-size: 13px; margin-bottom: 5px; line-height: 1.55; }
+  .flow-block li strong { color: var(--text); font-weight: 600; }
+  .flow-block p { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
+
+  /* ── Pipeline diagram (self-contained, no external libs) ──── */
+  .pipeline {
+    display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 14px; overflow-x: auto;
+  }
+  .pipe-node {
+    flex: 1 1 0; min-width: 120px; background: var(--accent-light); border: 1px solid var(--done-border);
+    border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .pipe-node.plain { background: var(--surface2); border-color: var(--border); }
+  .pipe-node.db { background: var(--tag-bg); border-color: var(--accent-mid); }
+  .pipe-node .pn-title { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--accent); }
+  .pipe-node .pn-sub { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .pipe-arrow { display: flex; align-items: center; color: var(--border-strong); font-size: 18px; font-weight: 700; }
+  @media (max-width: 640px) { .pipe-arrow { transform: rotate(90deg); } }
+
+  /* ── Sub-flow (two-column split) ──── */
+  .sub-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .sub-flow { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .sub-flow-label {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--text-subtle); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .sub-flow ul { margin: 0 0 0 12px; }
+  .sub-flow li { font-size: 12px; margin-bottom: 4px; line-height: 1.5; color: var(--text-muted); }
+  .sub-flow p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+  /* ── Entity (DB schema) ───────────────────── */
+  .entity-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+  .entity-head {
+    background: var(--surface2); padding: 10px 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px;
+  }
+  .entity-name { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--accent); }
+  .entity-note { font-size: 11px; color: var(--text-subtle); font-style: italic; }
+  .entity-fields { padding: 10px 16px; }
+  .field-row {
+    display: grid; grid-template-columns: 190px 220px 1fr; gap: 8px; font-size: 12px;
+    padding: 5px 0; border-bottom: 1px solid var(--code-bg); align-items: baseline;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-name { font-family: var(--font-mono); color: var(--code-text); font-weight: 500; }
+  .field-type { font-family: var(--font-mono); color: var(--text-subtle); }
+  .field-desc { color: var(--text-muted); line-height: 1.4; }
+
+  code {
+    font-family: var(--font-mono); font-size: 12px; background: var(--code-bg);
+    padding: 1px 5px; border-radius: 3px; color: var(--code-text);
+  }
+  pre {
+    background: var(--text); color: #e8e6e0; border-radius: var(--radius);
+    padding: 14px 16px; overflow-x: auto; margin: 4px 0 14px; font-size: 12.5px; line-height: 1.6;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+  /* ── Callouts ──────────────────────────────── */
+  .callout, .callout-warn, .callout-done {
+    border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 16px; margin: 14px 0;
+    font-size: 13px; line-height: 1.6;
+  }
+  .callout { background: var(--accent-light); border-left: 3px solid var(--accent-mid); color: var(--accent); }
+  .callout-warn { background: var(--warn-bg); border-left: 3px solid var(--warn-border); color: var(--warn-text); }
+  .callout-done { background: var(--done-bg); border-left: 3px solid var(--done-border); color: var(--done-text); }
+  .callout strong, .callout-warn strong, .callout-done strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+  /* ── Dependency / sequence map ─────────────── */
+  .dep-map { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow-x: auto; }
+  .dep-row { display: flex; align-items: baseline; gap: 0; margin-bottom: 6px; font-family: var(--font-mono); font-size: 12px; }
+  .dep-indent { display: inline-block; color: var(--border-strong); white-space: pre; }
+  .dep-ticket { font-weight: 600; color: var(--accent-mid); margin-right: 8px; white-space: nowrap; }
+  .dep-label { color: var(--text-muted); }
+
+  /* ── Divider ───────────────────────────────── */
+  .step-divider { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
+
+  /* ── Responsive ────────────────────────────── */
+  @media (max-width: 640px) {
+    .sub-flow-grid { grid-template-columns: 1fr; }
+    .toc ol { grid-template-columns: 1fr; }
+    .field-row { grid-template-columns: 1fr; gap: 2px; }
+    .pipe-node { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Lang bar -->
+<div class="lang-bar">
+  <div class="lang-bar-inner">
+    <span class="lang-label">Language / 언어</span>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-kr" onclick="setLang('kr')">KO</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="doc-badge" data-en="📘 Implementation Documentation" data-kr="📘 구현 문서">📘 Implementation Documentation</div>
+    <h1 class="doc-title" data-en="KHBA Assistant — Retrieval-Augmented Legal Chat" data-kr="KHBA 어시스턴트 — 검색 증강(RAG) 법령 채팅">KHBA Assistant — Retrieval-Augmented Legal Chat</h1>
+    <div class="doc-meta">
+      <span><strong data-en="Project:" data-kr="프로젝트:">Project:</strong> KHBA Assistant · W Labs</span>
+      <span><strong data-en="Stack:" data-kr="스택:">Stack:</strong> Next.js 16 · Vercel AI SDK v7 · pgvector · Drizzle</span>
+      <span><strong data-en="Status:" data-kr="상태:">Status:</strong> <span class="status-chip status-active" data-en="PoC — RAG working" data-kr="PoC — RAG 동작">PoC — RAG working</span></span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title" data-en="Table of Contents" data-kr="목차">Table of Contents</div>
+    <ol>
+      <li><span class="toc-num">01</span><a href="#s-overview" data-en="What KHBA is" data-kr="KHBA란">What KHBA is</a></li>
+      <li><span class="toc-num">02</span><a href="#s-arch" data-en="System architecture" data-kr="시스템 아키텍처">System architecture</a></li>
+      <li><span class="toc-num">03</span><a href="#s-data" data-en="Data model" data-kr="데이터 모델">Data model</a></li>
+      <li><span class="toc-num">04</span><a href="#s-ingest" data-en="Ingestion pipeline" data-kr="인제스션 파이프라인">Ingestion pipeline</a></li>
+      <li><span class="toc-num">05</span><a href="#s-chunk" data-en="Semantic chunking" data-kr="시맨틱 청킹">Semantic chunking</a></li>
+      <li><span class="toc-num">06</span><a href="#s-embed" data-en="Embeddings" data-kr="임베딩">Embeddings</a></li>
+      <li><span class="toc-num">07</span><a href="#s-retrieval" data-en="Semantic retrieval" data-kr="시맨틱 검색">Semantic retrieval</a></li>
+      <li><span class="toc-num">08</span><a href="#s-agent" data-en="Chat agent" data-kr="채팅 에이전트">Chat agent</a></li>
+      <li><span class="toc-num">09</span><a href="#s-compact" data-en="Context compaction" data-kr="컨텍스트 압축">Context compaction</a></li>
+      <li><span class="toc-num">10</span><a href="#s-frontend" data-en="Frontend experience" data-kr="프론트엔드 경험">Frontend experience</a></li>
+      <li><span class="toc-num">11</span><a href="#s-workflow" data-en="Durable ingestion (POC)" data-kr="내구성 인제스션 (PoC)">Durable ingestion (POC)</a></li>
+      <li><span class="toc-num">12</span><a href="#s-api" data-en="API surface" data-kr="API 목록">API surface</a></li>
+      <li><span class="toc-num">13</span><a href="#s-env" data-en="Environment & commands" data-kr="환경 변수 및 명령어">Environment &amp; commands</a></li>
+    </ol>
+  </div>
+
+  <!-- ── 1. Overview ── -->
+  <section id="s-overview">
+    <h2 data-en="1 · What KHBA is" data-kr="1 · KHBA란">1 · What KHBA is</h2>
+    <p data-en="KHBA is a retrieval-augmented chat assistant for Korean legal and administrative documents (laws, ordinances, administrative rules, interpretations, association guides, member cases). A user asks in natural language; the assistant searches an indexed corpus, grounds its answer in the retrieved passages, and cites every claim back to the exact source document, which the user can open in a side panel."
+       data-kr="KHBA는 한국의 법령·행정 문서(법률, 조례, 행정규칙, 유권해석, 협회 지침, 회원 사례)를 위한 검색 증강(RAG) 채팅 어시스턴트입니다. 사용자가 자연어로 질문하면, 어시스턴트는 색인된 말뭉치를 검색하고 검색된 원문에 근거해 답변하며, 모든 주장을 정확한 출처 문서로 인용합니다. 사용자는 그 문서를 사이드 패널에서 바로 열어볼 수 있습니다.">KHBA is a retrieval-augmented chat assistant for Korean legal and administrative documents (laws, ordinances, administrative rules, interpretations, association guides, member cases). A user asks in natural language; the assistant searches an indexed corpus, grounds its answer in the retrieved passages, and cites every claim back to the exact source document, which the user can open in a side panel.</p>
+
+    <h3 data-en="Two halves" data-kr="두 부분">Two halves</h3>
+    <div class="pipeline">
+      <div class="pipe-node plain"><span class="pn-title">PDF</span><span class="pn-sub" data-en="Source documents" data-kr="원본 문서">Source documents</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title">Agentic OCR</span><span class="pn-sub" data-en="→ markdown" data-kr="→ 마크다운">→ markdown</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="Chunk" data-kr="청킹">Chunk</span><span class="pn-sub" data-en="semantic" data-kr="시맨틱">semantic</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="Embed" data-kr="임베딩">Embed</span><span class="pn-sub">1536-d</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node db"><span class="pn-title">pgvector</span><span class="pn-sub" data-en="indexed store" data-kr="색인 저장소">indexed store</span></div>
+    </div>
+    <div class="sub-flow-grid">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Ingestion — offline / admin" data-kr="인제스션 — 오프라인 / 관리자">Ingestion — offline / admin</div>
+        <p data-en="Turn source PDFs into searchable, embedded evidence rows in Postgres." data-kr="원본 PDF를 Postgres의 검색 가능한 임베딩 증거 행으로 변환합니다.">Turn source PDFs into searchable, embedded evidence rows in Postgres.</p>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Query — online / user" data-kr="질의 — 온라인 / 사용자">Query — online / user</div>
+        <p data-en="Retrieve relevant evidence and answer with inline citations." data-kr="관련 증거를 검색해 인라인 인용과 함께 답변합니다.">Retrieve relevant evidence and answer with inline citations.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 2. Architecture ── -->
+  <section id="s-arch">
+    <h2 data-en="2 · System architecture" data-kr="2 · 시스템 아키텍처">2 · System architecture</h2>
+    <p data-en="A single Next.js App Router project. The RAG code is grouped by responsibility:" data-kr="하나의 Next.js App Router 프로젝트입니다. RAG 코드는 책임별로 구성됩니다:">A single Next.js App Router project. The RAG code is grouped by responsibility:</p>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th data-en="Layer" data-kr="계층">Layer</th>
+          <th data-en="Location" data-kr="위치">Location</th>
+          <th data-en="Responsibility" data-kr="책임">Responsibility</th>
+        </tr></thead>
+        <tbody>
+          <tr><td data-en="Chat agent" data-kr="채팅 에이전트">Chat agent</td><td><code>lib/ai/khba-agent.ts</code></td><td data-en="ToolLoopAgent, instructions, citation rules, step budget" data-kr="ToolLoopAgent, 지침, 인용 규칙, 스텝 예산">ToolLoopAgent, instructions, citation rules, step budget</td></tr>
+          <tr><td data-en="Search tool" data-kr="검색 도구">Search tool</td><td><code>lib/ai/tools/search-khba.tool.ts</code></td><td data-en="The searchKhba tool the model calls" data-kr="모델이 호출하는 searchKhba 도구">The searchKhba tool the model calls</td></tr>
+          <tr><td data-en="Retrieval" data-kr="검색">Retrieval</td><td><code>lib/ai/retrieval.ts</code></td><td data-en="pgvector semantic search + full-document fetch" data-kr="pgvector 시맨틱 검색 + 전체 문서 조회">pgvector semantic search + full-document fetch</td></tr>
+          <tr><td data-en="Embeddings" data-kr="임베딩">Embeddings</td><td><code>lib/ai/embeddings.ts</code></td><td data-en="OpenAI text-embedding-3-small wrappers" data-kr="OpenAI text-embedding-3-small 래퍼">OpenAI text-embedding-3-small wrappers</td></tr>
+          <tr><td data-en="Chunking" data-kr="청킹">Chunking</td><td><code>lib/ai/chunking.ts</code></td><td data-en="Paragraph-first + embedding-based semantic chunking" data-kr="문단 우선 + 임베딩 기반 시맨틱 청킹">Paragraph-first + embedding-based semantic chunking</td></tr>
+          <tr><td data-en="History compaction" data-kr="이력 압축">History compaction</td><td><code>lib/ai/compact-history.ts</code></td><td data-en="Strips prior-turn snippets from model context" data-kr="이전 턴 스니펫을 모델 컨텍스트에서 제거">Strips prior-turn snippets from model context</td></tr>
+          <tr><td>OCR</td><td><code>lib/ingest/parse.ts</code></td><td data-en="LlamaCloud agentic OCR → markdown" data-kr="LlamaCloud agentic OCR → 마크다운">LlamaCloud agentic OCR → markdown</td></tr>
+          <tr><td data-en="Upsert" data-kr="업서트">Upsert</td><td><code>lib/ingest/upsert.ts</code></td><td data-en="Idempotent write into the document schema" data-kr="문서 스키마로의 멱등 저장">Idempotent write into the document schema</td></tr>
+          <tr><td data-en="CLI ingest" data-kr="CLI 인제스트">CLI ingest</td><td><code>scripts/ingest.ts</code></td><td data-en="pnpm ingest — one-shot ingestion" data-kr="pnpm ingest — 일회성 인제스션">pnpm ingest — one-shot ingestion</td></tr>
+          <tr><td data-en="Durable ingest" data-kr="내구성 인제스트">Durable ingest</td><td><code>workflows/ingest.ts</code></td><td data-en="Vercel Workflow POC" data-kr="Vercel Workflow PoC">Vercel Workflow POC</td></tr>
+          <tr><td data-en="Schema" data-kr="스키마">Schema</td><td><code>drizzle/schemas/documents/*</code></td><td data-en="Drizzle tables + pgvector column" data-kr="Drizzle 테이블 + pgvector 컬럼">Drizzle tables + pgvector column</td></tr>
+          <tr><td data-en="Chat UI" data-kr="채팅 UI">Chat UI</td><td><code>components/chat/*</code></td><td data-en="Streaming chat, citations, source panel" data-kr="스트리밍 채팅, 인용, 원문 패널">Streaming chat, citations, source panel</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <strong data-en="Request flow" data-kr="요청 흐름">Request flow</strong>
+      <span data-en="Chat UI → POST /api/chat → khbaAgent → searchKhba tool → semanticSearchKhba → pgvector, then the streamed answer (with citations) flows back to the UI. Clicking a source calls GET /api/documents/[code] → getDocumentByCode → pgvector."
+            data-kr="채팅 UI → POST /api/chat → khbaAgent → searchKhba 도구 → semanticSearchKhba → pgvector, 이후 스트리밍 답변(인용 포함)이 UI로 되돌아옵니다. 원문 클릭 시 GET /api/documents/[code] → getDocumentByCode → pgvector.">Chat UI → POST /api/chat → khbaAgent → searchKhba tool → semanticSearchKhba → pgvector, then the streamed answer (with citations) flows back to the UI. Clicking a source calls GET /api/documents/[code] → getDocumentByCode → pgvector.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 3. Data model ── -->
+  <section id="s-data">
+    <h2 data-en="3 · Data model" data-kr="3 · 데이터 모델">3 · Data model</h2>
+    <p data-en="The corpus follows the WS-1267 document model: a four-level hierarchy from the logical document down to the smallest citable unit of evidence, which carries the embedding vector."
+       data-kr="말뭉치는 WS-1267 문서 모델을 따릅니다. 논리적 문서에서 임베딩 벡터를 담는 가장 작은 인용 가능 증거 단위까지 4단계 계층 구조입니다.">The corpus follows the WS-1267 document model: a four-level hierarchy from the logical document down to the smallest citable unit of evidence, which carries the embedding vector.</p>
+
+    <div class="dep-map">
+      <div class="dep-row"><span class="dep-ticket">document</span><span class="dep-label" data-en="logical document master" data-kr="논리적 문서 마스터">logical document master</span></div>
+      <div class="dep-row"><span class="dep-indent">  └── </span><span class="dep-ticket">document_version</span><span class="dep-label" data-en="effective version at a point in time" data-kr="특정 시점의 유효 버전">effective version at a point in time</span></div>
+      <div class="dep-row"><span class="dep-indent">        └── </span><span class="dep-ticket">content_node</span><span class="dep-label" data-en="article / clause / table hierarchy" data-kr="조문 / 항 / 표 계층">article / clause / table hierarchy</span></div>
+      <div class="dep-row"><span class="dep-indent">              └── </span><span class="dep-ticket">source_evidence</span><span class="dep-label" data-en="smallest citable unit — holds the embedding" data-kr="가장 작은 인용 단위 — 임베딩 보유">smallest citable unit — holds the embedding</span></div>
+    </div>
+
+    <div class="entity-block">
+      <div class="entity-head"><span class="entity-name">document</span><span class="entity-note" data-en="logical master" data-kr="논리 마스터">logical master</span></div>
+      <div class="entity-fields">
+        <div class="field-row"><span class="field-name">document_code</span><span class="field-type">varchar, unique</span><span class="field-desc" data-en="human-readable key, e.g. LAW-2026-000210" data-kr="사람이 읽는 키, 예: LAW-2026-000210">human-readable key, e.g. LAW-2026-000210</span></div>
+        <div class="field-row"><span class="field-name">authority_type</span><span class="field-type">enum</span><span class="field-desc" data-en="LAW … MEMBER_CASE (6-grade taxonomy)" data-kr="LAW … MEMBER_CASE (6등급 분류)">LAW … MEMBER_CASE (6-grade taxonomy)</span></div>
+        <div class="field-row"><span class="field-name">jurisdiction_code</span><span class="field-type">varchar, nullable</span><span class="field-desc" data-en="admin-district code (41390); null = nationwide" data-kr="행정구역 코드(41390); null = 전국">admin-district code (41390); null = nationwide</span></div>
+        <div class="field-row"><span class="field-name">security_class</span><span class="field-type">enum, default PUBLIC</span><span class="field-desc" data-en="PUBLIC / INTERNAL / CONFIDENTIAL" data-kr="PUBLIC / INTERNAL / CONFIDENTIAL">PUBLIC / INTERNAL / CONFIDENTIAL</span></div>
+      </div>
+    </div>
+
+    <div class="entity-block">
+      <div class="entity-head"><span class="entity-name">document_version</span><span class="entity-note" data-en="versioned" data-kr="버전 관리">versioned</span></div>
+      <div class="entity-fields">
+        <div class="field-row"><span class="field-name">version_no</span><span class="field-type">integer</span><span class="field-desc" data-en="unique per document" data-kr="문서별 고유">unique per document</span></div>
+        <div class="field-row"><span class="field-name">effective_from / to</span><span class="field-type">date, nullable</span><span class="field-desc" data-en="effective_to null = currently effective" data-kr="effective_to null = 현재 유효">effective_to null = currently effective</span></div>
+        <div class="field-row"><span class="field-name">source_hash</span><span class="field-type">char(64)</span><span class="field-desc" data-en="SHA-256 of code + raw path" data-kr="코드 + 원본 경로의 SHA-256">SHA-256 of code + raw path</span></div>
+        <div class="field-row"><span class="field-name">approval_status</span><span class="field-type">enum, default DRAFT</span><span class="field-desc" data-en="ingest writes PUBLISHED" data-kr="인제스트는 PUBLISHED로 기록">ingest writes PUBLISHED</span></div>
+      </div>
+    </div>
+
+    <div class="entity-block">
+      <div class="entity-head"><span class="entity-name">content_node</span><span class="entity-note" data-en="hierarchy" data-kr="계층">hierarchy</span></div>
+      <div class="entity-fields">
+        <div class="field-row"><span class="field-name">parent_node_id</span><span class="field-type">uuid, self-ref</span><span class="field-desc" data-en="article → clause, case → 4 parts" data-kr="조문 → 항, 사례 → 4부 구조">article → clause, case → 4 parts</span></div>
+        <div class="field-row"><span class="field-name">node_path</span><span class="field-type">text</span><span class="field-desc" data-en="notation like 제3조/제1항; ingest writes CODE#n" data-kr="제3조/제1항 표기; 인제스트는 CODE#n 기록">notation like 제3조/제1항; ingest writes CODE#n</span></div>
+        <div class="field-row"><span class="field-name">chunk_type</span><span class="field-type">enum</span><span class="field-desc" data-en="LAW_ARTICLE, TABLE, GUIDE_TOPIC, CASE_*" data-kr="LAW_ARTICLE, TABLE, GUIDE_TOPIC, CASE_*">LAW_ARTICLE, TABLE, GUIDE_TOPIC, CASE_*</span></div>
+      </div>
+    </div>
+
+    <div class="entity-block">
+      <div class="entity-head"><span class="entity-name">source_evidence</span><span class="entity-note" data-en="carries the vector" data-kr="벡터 보유">carries the vector</span></div>
+      <div class="entity-fields">
+        <div class="field-row"><span class="field-name">original_text</span><span class="field-type">text</span><span class="field-desc" data-en="the chunk text; what gets cited" data-kr="청크 텍스트; 인용되는 대상">the chunk text; what gets cited</span></div>
+        <div class="field-row"><span class="field-name">locator_json</span><span class="field-type">jsonb</span><span class="field-desc" data-en="page / coords / chunkIndex" data-kr="페이지 / 좌표 / chunkIndex">page / coords / chunkIndex</span></div>
+        <div class="field-row"><span class="field-name">evidence_grade</span><span class="field-type">char(1)</span><span class="field-desc" data-en="A–F, derived from authority_type" data-kr="A–F, authority_type에서 파생">A–F, derived from authority_type</span></div>
+        <div class="field-row"><span class="field-name">evidence_embedding</span><span class="field-type">halfvec(1536)</span><span class="field-desc" data-en="half-precision vector; HNSW cosine index" data-kr="반정밀도 벡터; HNSW 코사인 색인">half-precision vector; HNSW cosine index</span></div>
+        <div class="field-row"><span class="field-name">index_status</span><span class="field-type">enum, default PENDING</span><span class="field-desc" data-en="only INDEXED rows are searchable" data-kr="INDEXED 행만 검색 대상">only INDEXED rows are searchable</span></div>
+      </div>
+    </div>
+
+    <h3 data-en="The vector column & index" data-kr="벡터 컬럼 및 색인">The vector column &amp; index</h3>
+    <pre><code>// source-evidence.schema.ts — HNSW over cosine
+index("source_evidence_embedding_hnsw")
+  .using("hnsw", t.evidenceEmbedding.op("halfvec_cosine_ops"))</code></pre>
+    <div class="callout-warn">
+      <strong data-en="drizzle-kit caveat" data-kr="drizzle-kit 주의사항">drizzle-kit caveat</strong>
+      <span data-en="drizzle-kit strips the operator class from generated DDL (drizzle-orm #5792), so halfvec_cosine_ops is patched into the migration SQL by hand."
+            data-kr="drizzle-kit이 생성 DDL에서 연산자 클래스를 제거하므로(drizzle-orm #5792), halfvec_cosine_ops는 마이그레이션 SQL에 수동으로 추가합니다.">drizzle-kit strips the operator class from generated DDL (drizzle-orm #5792), so halfvec_cosine_ops is patched into the migration SQL by hand.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 4. Ingestion ── -->
+  <section id="s-ingest">
+    <div class="step-header">
+      <div class="step-num-badge">04</div>
+      <div class="step-title-group">
+        <div class="step-ticket" data-en="Offline · Admin" data-kr="오프라인 · 관리자">Offline · Admin</div>
+        <div class="step-title" data-en="Ingestion pipeline" data-kr="인제스션 파이프라인">Ingestion pipeline</div>
+        <div class="step-meta"><span data-en="manifest → OCR → chunk → embed → upsert" data-kr="매니페스트 → OCR → 청크 → 임베딩 → 업서트">manifest → OCR → chunk → embed → upsert</span></div>
+      </div>
+    </div>
+    <p data-en="Ingestion turns a source PDF into embedded, searchable source_evidence rows. The document list lives in data/ingest/manifest.json — each entry names a file plus its metadata (code, title, authority type, jurisdiction, security class, version)."
+       data-kr="인제스션은 원본 PDF를 임베딩되어 검색 가능한 source_evidence 행으로 변환합니다. 문서 목록은 data/ingest/manifest.json에 있으며, 각 항목은 파일과 메타데이터(코드, 제목, authority type, 관할, 보안 등급, 버전)를 담습니다.">Ingestion turns a source PDF into embedded, searchable source_evidence rows. The document list lives in data/ingest/manifest.json — each entry names a file plus its metadata (code, title, authority type, jurisdiction, security class, version).</p>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Stage 1 — Agentic OCR (lib/ingest/parse.ts)" data-kr="1단계 — Agentic OCR (lib/ingest/parse.ts)">Stage 1 — Agentic OCR (lib/ingest/parse.ts)</div>
+      <p data-en="LlamaCloud's agentic tier parses the whole document in a single OCR + vision + reasoning pass, keeping tables and cross-page layout coherent. Two options matter for RAG quality:"
+         data-kr="LlamaCloud의 agentic 티어는 문서 전체를 OCR + 비전 + 추론 단일 패스로 파싱하여 표와 페이지 간 레이아웃 일관성을 유지합니다. RAG 품질에 중요한 두 옵션:">LlamaCloud's agentic tier parses the whole document in a single OCR + vision + reasoning pass, keeping tables and cross-page layout coherent. Two options matter for RAG quality:</p>
+    </div>
+    <pre><code>output_options: {
+  markdown: {
+    tables: {
+      output_tables_as_markdown: true,  // pipe tables, not HTML &lt;table&gt;
+      merge_continued_tables: true,     // stitch tables spanning pages
+    },
+  },
+}</code></pre>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Stage 4 — Idempotent upsert (lib/ingest/upsert.ts)" data-kr="4단계 — 멱등 업서트 (lib/ingest/upsert.ts)">Stage 4 — Idempotent upsert (lib/ingest/upsert.ts)</div>
+      <ul>
+        <li data-en="Deletes existing rows for the same document_code first (cascades), then re-inserts — re-ingesting is always safe." data-kr="동일 document_code의 기존 행을 먼저 삭제(캐스케이드)한 뒤 재삽입 — 재인제스션은 항상 안전.">Deletes existing rows for the same <strong>document_code</strong> first (cascades), then re-inserts — re-ingesting is always safe.</li>
+        <li data-en="Per chunk: a content_node (path CODE#n) + a source_evidence row." data-kr="청크마다: content_node(경로 CODE#n) + source_evidence 행.">Per chunk: a <strong>content_node</strong> (path CODE#n) + a <strong>source_evidence</strong> row.</li>
+        <li data-en="evidence_grade from authority type (LAW→A, ORDINANCE→B, ADMIN_RULE→C, INTERPRETATION→D, ASSOCIATION_GUIDE→E, MEMBER_CASE→F)." data-kr="authority type에서 evidence_grade (LAW→A, ORDINANCE→B, ADMIN_RULE→C, INTERPRETATION→D, ASSOCIATION_GUIDE→E, MEMBER_CASE→F).">evidence_grade from authority type (LAW→A, ORDINANCE→B, ADMIN_RULE→C, INTERPRETATION→D, ASSOCIATION_GUIDE→E, MEMBER_CASE→F).</li>
+        <li data-en="Embedding cast to halfvec(1536); index_status = INDEXED so it's immediately searchable." data-kr="임베딩을 halfvec(1536)으로 캐스팅; index_status = INDEXED로 즉시 검색 가능.">Embedding cast to <code>halfvec(1536)</code>; index_status = INDEXED so it's immediately searchable.</li>
+      </ul>
+    </div>
+
+    <h3 data-en="Running it" data-kr="실행">Running it</h3>
+    <p data-en="scripts/ingest.ts (pnpm ingest) drives the whole pipeline. It loads .env, then connects to Supabase's transaction pooler with the settings the pooler requires:"
+       data-kr="scripts/ingest.ts(pnpm ingest)가 전체 파이프라인을 구동합니다. .env를 로드한 뒤 Supabase 트랜잭션 풀러가 요구하는 설정으로 연결합니다:">scripts/ingest.ts (pnpm ingest) drives the whole pipeline. It loads .env, then connects to Supabase's transaction pooler with the settings the pooler requires:</p>
+    <pre><code>postgres(process.env.DATABASE_URL, {
+  ssl: "require",   // pooler rejects plaintext
+  prepare: false,   // no prepared statements over the pooler
+  max: 1,
+})</code></pre>
+    <div class="callout-warn">
+      <strong data-en="The pooler gotcha" data-kr="풀러 함정">The pooler gotcha</strong>
+      <span data-en="Without ssl: 'require', the connection hangs silently. This was the single biggest blocker during bring-up. The current manifest holds 11 documents — 5 generated Korean samples + 6 Seoul Metropolitan Government ordinances."
+            data-kr="ssl: 'require' 없이는 연결이 조용히 멈춥니다. 초기 구축 중 가장 큰 걸림돌이었습니다. 현재 매니페스트에는 문서 11개가 있습니다 — 생성된 한국어 샘플 5개 + 서울특별시 조례 6개.">Without ssl: 'require', the connection hangs silently. This was the single biggest blocker during bring-up. The current manifest holds 11 documents — 5 generated Korean samples + 6 Seoul Metropolitan Government ordinances.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 5. Chunking ── -->
+  <section id="s-chunk">
+    <h2 data-en="5 · Semantic chunking" data-kr="5 · 시맨틱 청킹">5 · Semantic chunking</h2>
+    <p data-en="Fixed-size chunking cuts across sentences and articles; KHBA chunks semantically so each chunk is a topically-coherent unit. lib/ai/chunking.ts does this in three steps:"
+       data-kr="고정 크기 청킹은 문장과 조문을 가로질러 잘라버립니다. KHBA는 각 청크가 주제적으로 일관된 단위가 되도록 시맨틱하게 청킹합니다. lib/ai/chunking.ts가 3단계로 처리합니다:">Fixed-size chunking cuts across sentences and articles; KHBA chunks semantically so each chunk is a topically-coherent unit. lib/ai/chunking.ts does this in three steps:</p>
+
+    <div class="pipeline">
+      <div class="pipe-node plain"><span class="pn-title" data-en="1 · Paragraphs" data-kr="1 · 문단">1 · Paragraphs</span><span class="pn-sub" data-en="blank-line split; long ones sub-split by RecursiveCharacterTextSplitter" data-kr="빈 줄 분할; 긴 문단은 RecursiveCharacterTextSplitter로 하위 분할">blank-line split; long ones sub-split</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="2 · Embed" data-kr="2 · 임베딩">2 · Embed</span><span class="pn-sub" data-en="every base unit" data-kr="모든 기본 단위">every base unit</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="3 · Merge" data-kr="3 · 병합">3 · Merge</span><span class="pn-sub" data-en="cosine distance < 0.12 AND ≤ 1200 chars → merge; topic shift → new chunk" data-kr="코사인 거리 < 0.12 그리고 ≤ 1200자 → 병합; 주제 전환 → 새 청크">distance &lt; 0.12 → merge; else new chunk</span></div>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Why paragraph-first" data-kr="왜 문단 우선인가">Why paragraph-first</div>
+      <ul>
+        <li data-en="Paragraphs are the natural unit for legal/administrative text. Long paragraphs are sub-split by langchain's RecursiveCharacterTextSplitter with a separator list tuned for Korean & English (newlines, 。 . ! ? ； ; spaces)." data-kr="문단은 법령·행정 텍스트의 자연스러운 단위입니다. 긴 문단은 langchain의 RecursiveCharacterTextSplitter가 한국어·영어에 맞춘 구분자(개행, 。 . ! ? ； ; 공백)로 하위 분할합니다.">Paragraphs are the natural unit for legal text. Long paragraphs are sub-split by langchain's RecursiveCharacterTextSplitter with a separator list tuned for Korean &amp; English.</li>
+        <li data-en="Merge pass: each unit is embedded, then adjacent units merge while cosine distance stays below 0.12 AND combined length stays under 1200 chars. A topic shift starts a new chunk." data-kr="병합 패스: 각 단위를 임베딩한 뒤, 코사인 거리가 0.12 미만이고 결합 길이가 1200자 미만인 동안 인접 단위를 병합합니다. 주제 전환 시 새 청크를 시작합니다.">Merge pass: each unit is embedded, then adjacent units merge while cosine distance &lt; 0.12 AND combined length &lt; 1200 chars. A topic shift starts a new chunk.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <strong data-en="Bug fixed along the way" data-kr="해결한 버그">Bug fixed along the way</strong>
+      <span data-en="An earlier version collapsed each document to a single chunk (the minimum-size threshold was too high). The paragraph-first design fixed that."
+            data-kr="이전 버전은 각 문서를 단일 청크로 뭉갰습니다(최소 크기 임계값이 너무 높았음). 문단 우선 설계가 이를 해결했습니다.">An earlier version collapsed each document to a single chunk (the minimum-size threshold was too high). The paragraph-first design fixed that.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 6. Embeddings ── -->
+  <section id="s-embed">
+    <h2 data-en="6 · Embeddings" data-kr="6 · 임베딩">6 · Embeddings</h2>
+    <p data-en="lib/ai/embeddings.ts wraps the Vercel AI SDK's embed / embedMany over OpenAI text-embedding-3-small."
+       data-kr="lib/ai/embeddings.ts는 OpenAI text-embedding-3-small 위에서 Vercel AI SDK의 embed / embedMany를 래핑합니다.">lib/ai/embeddings.ts wraps the Vercel AI SDK's embed / embedMany over OpenAI text-embedding-3-small.</p>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr><th data-en="Item" data-kr="항목">Item</th><th data-en="Value" data-kr="값">Value</th></tr></thead>
+        <tbody>
+          <tr><td><code>EMBEDDING_MODEL_ID</code></td><td><code>text-embedding-3-small</code></td></tr>
+          <tr><td><code>EMBEDDING_DIMENSIONS</code></td><td><code>1536</code></td></tr>
+          <tr><td><code>embedText(value)</code></td><td data-en="single vector — used for the query at retrieval time" data-kr="단일 벡터 — 검색 시 질의에 사용">single vector — used for the query at retrieval time</td></tr>
+          <tr><td><code>embedTexts(values)</code></td><td data-en="batch via embedMany — used during chunking & ingestion" data-kr="embedMany 배치 — 청킹·인제스션에 사용">batch via embedMany — used during chunking &amp; ingestion</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <strong data-en="Dimension is load-bearing" data-kr="차원은 핵심 제약">Dimension is load-bearing</strong>
+      <span data-en="1536 is fixed to match the halfvec(1536) column. Change the model and you must change the column dimension and re-embed the whole corpus."
+            data-kr="1536은 halfvec(1536) 컬럼과 맞추기 위해 고정됩니다. 모델을 바꾸면 컬럼 차원도 바꾸고 말뭉치 전체를 재임베딩해야 합니다.">1536 is fixed to match the halfvec(1536) column. Change the model and you must change the column dimension and re-embed the whole corpus.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 7. Retrieval ── -->
+  <section id="s-retrieval">
+    <h2 data-en="7 · Semantic retrieval" data-kr="7 · 시맨틱 검색">7 · Semantic retrieval</h2>
+    <p data-en="semanticSearchKhba(query, limit) in lib/ai/retrieval.ts is the read path. It embeds the query, then runs a cosine-distance search over source_evidence."
+       data-kr="lib/ai/retrieval.ts의 semanticSearchKhba(query, limit)가 읽기 경로입니다. 질의를 임베딩한 뒤 source_evidence에 대해 코사인 거리 검색을 수행합니다.">semanticSearchKhba(query, limit) in lib/ai/retrieval.ts is the read path. It embeds the query, then runs a cosine-distance search over source_evidence.</p>
+
+    <div class="pipeline">
+      <div class="pipe-node plain"><span class="pn-title" data-en="Query" data-kr="질의">Query</span><span class="pn-sub" data-en="→ 1536-d vector" data-kr="→ 1536차원 벡터">→ 1536-d vector</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="Cosine search" data-kr="코사인 검색">Cosine search</span><span class="pn-sub" data-en="ORDER BY embedding <=> query; similarity = 1 - distance" data-kr="ORDER BY embedding <=> query; similarity = 1 - 거리">sim = 1 − distance</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="Over-fetch ×4" data-kr="오버페치 ×4">Over-fetch ×4</span><span class="pn-sub" data-en="then dedupe by document_code" data-kr="이후 document_code로 중복 제거">dedupe by document_code</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node db"><span class="pn-title" data-en="Top results" data-kr="상위 결과">Top results</span><span class="pn-sub" data-en="best passage per document" data-kr="문서당 최적 원문">best passage / document</span></div>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Hard filters (unauthenticated endpoint)" data-kr="강제 필터 (비인증 엔드포인트)">Hard filters (unauthenticated endpoint)</div>
+      <ul>
+        <li><code>security_class = 'PUBLIC'</code></li>
+        <li><code>deleted_at IS NULL</code></li>
+        <li><code>index_status = 'INDEXED'</code></li>
+        <li><code>evidence_embedding IS NOT NULL</code></li>
+      </ul>
+      <p data-en="One result per document: over-fetch limit × 4 rows and dedupe by document_code, keeping each document's best-matching passage, so five near-duplicate chunks from one ordinance don't crowd out other documents."
+         data-kr="문서당 결과 하나: limit × 4 행을 오버페치하고 document_code로 중복 제거하여 각 문서의 최적 매칭 원문만 남깁니다. 이렇게 하면 한 조례의 유사 중복 청크 5개가 다른 문서를 밀어내지 않습니다.">One result per document: over-fetch limit × 4 rows and dedupe by document_code, keeping each document's best-matching passage.</p>
+    </div>
+    <div class="callout">
+      <strong data-en="Full-document view" data-kr="전체 문서 보기">Full-document view</strong>
+      <span data-en="getDocumentByCode(code) returns the entire latest version of a PUBLIC document — all passages ordered by their stored chunkIndex — so the user reads the whole thing, not just the cited snippet."
+            data-kr="getDocumentByCode(code)는 PUBLIC 문서의 최신 버전 전체(저장된 chunkIndex 순서의 모든 원문)를 반환하여, 사용자가 인용된 스니펫뿐 아니라 문서 전체를 읽게 합니다.">getDocumentByCode(code) returns the entire latest version of a PUBLIC document — all passages ordered by their stored chunkIndex — so the user reads the whole thing, not just the cited snippet.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 8. Agent ── -->
+  <section id="s-agent">
+    <h2 data-en="8 · Chat agent" data-kr="8 · 채팅 에이전트">8 · Chat agent</h2>
+    <p data-en="lib/ai/khba-agent.ts defines a single ToolLoopAgent (Vercel AI SDK v7) used by the /api/chat route handler."
+       data-kr="lib/ai/khba-agent.ts는 /api/chat 라우트 핸들러가 사용하는 단일 ToolLoopAgent(Vercel AI SDK v7)를 정의합니다.">lib/ai/khba-agent.ts defines a single ToolLoopAgent (Vercel AI SDK v7) used by the /api/chat route handler.</p>
+
+    <div class="dep-map">
+      <div class="dep-row"><span class="dep-ticket">User</span><span class="dep-label" data-en="POST messages → /api/chat" data-kr="메시지 POST → /api/chat">POST messages → /api/chat</span></div>
+      <div class="dep-row"><span class="dep-indent">  └── </span><span class="dep-ticket">Agent</span><span class="dep-label" data-en="prepareStep compacts prior-turn snippets" data-kr="prepareStep이 이전 턴 스니펫 압축">prepareStep compacts prior-turn snippets</span></div>
+      <div class="dep-row"><span class="dep-indent">        └── </span><span class="dep-ticket">searchKhba</span><span class="dep-label" data-en="semanticSearchKhba → pgvector → { query, count, results }" data-kr="semanticSearchKhba → pgvector → { query, count, results }">semanticSearchKhba → pgvector → { query, count, results }</span></div>
+      <div class="dep-row"><span class="dep-indent">              └── </span><span class="dep-ticket">Answer</span><span class="dep-label" data-en="streamed text with [n](cite:n) citations" data-kr="[n](cite:n) 인용이 포함된 스트리밍 텍스트">streamed text with [n](cite:n) citations</span></div>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Configuration" data-kr="설정">Configuration</div>
+      <ul>
+        <li data-en="Model: openai('gpt-4o-mini')." data-kr="모델: openai('gpt-4o-mini').">Model: <code>openai('gpt-4o-mini')</code>.</li>
+        <li data-en="Instructions: call searchKhba first, ground the answer in results, cite inline as [n](cite:n) where n is the 1-based position in results. Never invent a citation; if nothing relevant, say so." data-kr="지침: 먼저 searchKhba 호출, 결과에 근거해 답변, results의 1-기반 위치 n으로 [n](cite:n) 인라인 인용. 인용을 지어내지 않으며, 관련 결과가 없으면 그렇다고 답함.">Instructions: call searchKhba first, ground the answer, cite inline as [n](cite:n). Never invent a citation.</li>
+        <li data-en="Step budget: stopWhen stepCountIs(5) — search then answer (and re-search if needed) without runaway loops." data-kr="스텝 예산: stopWhen stepCountIs(5) — 검색 후 답변(필요 시 재검색), 무한 루프 방지.">Step budget: <code>stopWhen: stepCountIs(5)</code>.</li>
+        <li data-en="prepareStep compacts historical search results before each step (see §9)." data-kr="prepareStep이 각 스텝 전에 과거 검색 결과 압축 (§9 참조).">prepareStep compacts historical search results (see §9).</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <strong data-en="No fabrication" data-kr="날조 없음">No fabrication</strong>
+      <span data-en="The searchKhba tool returns no results on failure rather than inventing sources — the assistant then honestly says nothing relevant was found instead of citing an invented document."
+            data-kr="searchKhba 도구는 실패 시 출처를 지어내지 않고 빈 결과를 반환합니다 — 그러면 어시스턴트는 지어낸 문서를 인용하는 대신 관련 결과가 없다고 정직하게 답합니다.">The searchKhba tool returns no results on failure rather than inventing sources — the assistant then honestly says nothing relevant was found.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 9. Compaction ── -->
+  <section id="s-compact">
+    <h2 data-en="9 · Context compaction" data-kr="9 · 컨텍스트 압축">9 · Context compaction</h2>
+    <p data-en="A multi-turn conversation re-sends prior tool results on every step. Each searchKhba result carries full passage snippets, so a long chat balloons the model's context with text it already used. lib/ai/compact-history.ts fixes this via the agent's prepareStep hook."
+       data-kr="멀티턴 대화는 매 스텝마다 이전 도구 결과를 재전송합니다. 각 searchKhba 결과는 전체 원문 스니펫을 담고 있어, 긴 대화는 이미 사용한 텍스트로 모델 컨텍스트를 부풀립니다. lib/ai/compact-history.ts가 에이전트의 prepareStep 훅으로 이를 해결합니다.">A multi-turn conversation re-sends prior tool results on every step. Each searchKhba result carries full passage snippets, so a long chat balloons the model's context. lib/ai/compact-history.ts fixes this via prepareStep.</p>
+
+    <div class="sub-flow-grid">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Prior turn — full (before)" data-kr="이전 턴 — 전체 (전)">Prior turn — full (before)</div>
+        <p data-en="query + 5 results, each with full snippet text — hundreds of tokens, re-sent every step." data-kr="query + 결과 5개, 각각 전체 스니펫 텍스트 — 수백 토큰, 매 스텝 재전송.">query + 5 results, each with full snippet text — hundreds of tokens, re-sent every step.</p>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Compacted for the model (after)" data-kr="모델용 압축 (후)">Compacted for the model (after)</div>
+        <p data-en="query + citation map: n → documentCode, authorityType, securityClass. No snippets." data-kr="query + 인용 맵: n → documentCode, authorityType, securityClass. 스니펫 없음.">query + citation map: n → documentCode, authorityType, securityClass. No snippets.</p>
+      </div>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="How it stays grounded" data-kr="근거를 유지하는 방법">How it stays grounded</div>
+      <ul>
+        <li data-en="Historical searchKhba calls are identified by their toolCallId in initialMessages (results from prior turns)." data-kr="과거 searchKhba 호출은 initialMessages의 toolCallId로 식별합니다(이전 턴 결과).">Historical searchKhba calls are identified by their <strong>toolCallId</strong> in initialMessages.</li>
+        <li data-en="Those results' output.value is replaced with the compact citation map." data-kr="해당 결과의 output.value를 간결한 인용 맵으로 대체합니다.">Those results' output.value is replaced with the compact citation map.</li>
+        <li data-en="The current turn's result is left fully intact, so the answer stays grounded in real passage text." data-kr="현재 턴의 결과는 완전히 그대로 두어 답변이 실제 원문에 근거하도록 합니다.">The current turn's result is left fully intact.</li>
+        <li data-en="Only what the model sees is rewritten — the UI message stream is untouched, so source cards and the document panel keep the full data." data-kr="모델이 보는 것만 다시 씁니다 — UI 메시지 스트림은 건드리지 않으므로 원문 카드와 문서 패널은 전체 데이터를 유지합니다.">Only what the model sees is rewritten — the UI stream is untouched.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 10. Frontend ── -->
+  <section id="s-frontend">
+    <h2 data-en="10 · Frontend chat experience" data-kr="10 · 프론트엔드 채팅 경험">10 · Frontend chat experience</h2>
+    <p data-en="The chat UI (components/chat/*) is built on the Vercel AI SDK React hooks. ChatPane orchestrates the whole surface."
+       data-kr="채팅 UI(components/chat/*)는 Vercel AI SDK React 훅으로 구성됩니다. ChatPane이 전체 화면을 조율합니다.">The chat UI (components/chat/*) is built on the Vercel AI SDK React hooks. ChatPane orchestrates the whole surface.</p>
+
+    <div class="sub-flow-grid">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Streaming & citations" data-kr="스트리밍 & 인용">Streaming &amp; citations</div>
+        <ul>
+          <li data-en="useChat drives the message list; sendMessage({ text }) posts to /api/chat. A fresh /chat mints a UUID, stashes the first message, routes to /chat/[id]." data-kr="useChat이 메시지 목록을 구동; sendMessage({ text })가 /api/chat에 전송. 새 /chat은 UUID 발급, 첫 메시지 보관, /chat/[id]로 이동.">useChat drives messages; sendMessage({ text }) posts to /api/chat. A fresh /chat mints a UUID, stashes the first message, routes to /chat/[id].</li>
+          <li data-en="Answers contain [n](cite:n) links. Markdown preserves the cite: scheme via urlTransform and renders each as a CitationChip (numbered button + hover tooltip). Clicking opens the source panel." data-kr="답변에 [n](cite:n) 링크 포함. Markdown이 urlTransform으로 cite: 스킴을 보존하고 각각을 CitationChip(번호 버튼 + 호버 툴팁)으로 렌더링. 클릭 시 원문 패널이 열림.">Answers contain [n](cite:n) links. Markdown preserves the cite: scheme and renders each as a CitationChip. Clicking opens the source panel.</li>
+          <li data-en="Source cards: pulled from the tool part (tool-searchKhba, state output-available), listed under 'Where this came from'." data-kr="원문 카드: 도구 파트(tool-searchKhba, 상태 output-available)에서 추출, '이 답변의 출처' 아래 나열.">Source cards: pulled from the tool part (state output-available).</li>
+        </ul>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Panel, suggestions, polish" data-kr="패널, 제안, 마감">Panel, suggestions, polish</div>
+        <ul>
+          <li data-en="Search skeleton shows while the tool part is in an input state (input-streaming / input-available) — driven purely by the tool-call lifecycle." data-kr="검색 스켈레톤은 도구 파트가 입력 상태(input-streaming / input-available)일 동안 표시 — 도구 호출 생명주기가 구동.">Search skeleton shows while the tool part is in an input state.</li>
+          <li data-en="ArtifactPanel lazy-loads the full document via React Query (/api/documents/[code]), highlights the cited passage, falls back to the snippet on error." data-kr="ArtifactPanel이 React Query(/api/documents/[code])로 전체 문서를 지연 로드, 인용 원문 하이라이트, 오류 시 스니펫 폴백.">ArtifactPanel lazy-loads the full document via React Query, highlights the cited passage, falls back to the snippet.</li>
+          <li data-en="useObject streams up to 4 follow-up suggestions (streamObject + Zod schema); useCompletion streams a 3–6 word title into the sidebar." data-kr="useObject가 후속 제안 최대 4개 스트리밍(streamObject + Zod 스키마); useCompletion이 3–6단어 제목을 사이드바로 스트리밍.">useObject streams up to 4 suggestions; useCompletion streams the title.</li>
+          <li data-en="Scroll auto-follows streaming only if the user is at the bottom, using useLayoutEffect (before paint, no flicker) + a scroll-to-bottom button." data-kr="스크롤은 사용자가 맨 아래일 때만 스트리밍을 자동 추적, useLayoutEffect(페인트 전, 깜빡임 없음) + 맨 아래 이동 버튼 사용.">Scroll auto-follows only when at the bottom (useLayoutEffect, no flicker).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 11. Workflow ── -->
+  <section id="s-workflow">
+    <div class="step-header">
+      <div class="step-num-badge">11</div>
+      <div class="step-title-group">
+        <div class="step-ticket" data-en="Prototype · POC" data-kr="프로토타입 · PoC">Prototype · POC</div>
+        <div class="step-title" data-en="Durable ingestion — Vercel Workflow" data-kr="내구성 인제스션 — Vercel Workflow">Durable ingestion — Vercel Workflow</div>
+        <div class="step-meta"><span class="status-chip status-tbw" data-en="Build-verified; not the default path" data-kr="빌드 검증됨; 기본 경로 아님">Build-verified; not the default path</span></div>
+      </div>
+    </div>
+    <p data-en="The CLI script is fine locally, but agentic OCR is slow and occasionally flaky, and a serverless function would time out. workflows/ingest.ts prototypes a durable version with the Vercel Workflow SDK: work is split into steps that retry independently and survive crashes/timeouts, observable in the Workflows dashboard."
+       data-kr="CLI 스크립트는 로컬에서는 충분하지만 agentic OCR은 느리고 이따금 불안정하며 서버리스 함수는 타임아웃됩니다. workflows/ingest.ts는 Vercel Workflow SDK로 내구성 버전을 프로토타이핑합니다: 작업을 독립 재시도되고 크래시/타임아웃을 견디는 스텝으로 분할하며, Workflows 대시보드에서 관찰 가능합니다.">The CLI script is fine locally, but agentic OCR is slow and occasionally flaky, and a serverless function would time out. workflows/ingest.ts prototypes a durable version with the Vercel Workflow SDK.</p>
+
+    <div class="dep-map">
+      <div class="dep-row"><span class="dep-ticket">ocrStep</span><span class="dep-label" data-en="'use step' — expensive OCR, isolated so an embed/DB failure never re-runs (and re-charges) OCR" data-kr="'use step' — 비싼 OCR, 격리되어 embed/DB 실패가 OCR을 재실행(재청구)하지 않음">'use step' — expensive OCR, isolated so a later failure never re-runs OCR</span></div>
+      <div class="dep-row"><span class="dep-indent">  └── </span><span class="dep-ticket">indexStep</span><span class="dep-label" data-en="'use step' — chunk + embed + upsert; embeddings stay inside the step (never cross the event log)" data-kr="'use step' — 청크 + 임베딩 + 업서트; 임베딩은 스텝 내부에 머묾(이벤트 로그를 넘지 않음)">'use step' — chunk + embed + upsert; embeddings stay inside the step</span></div>
+      <div class="dep-row"><span class="dep-indent">        └── </span><span class="dep-ticket">workflow</span><span class="dep-label" data-en="ingestDocumentWorkflow ('use workflow') — deterministic orchestrator; all I/O in steps" data-kr="ingestDocumentWorkflow ('use workflow') — 결정론적 오케스트레이터; 모든 I/O는 스텝 안에">ingestDocumentWorkflow — deterministic orchestrator; all I/O in steps</span></div>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Trigger & wiring" data-kr="트리거 & 배선">Trigger &amp; wiring</div>
+      <ul>
+        <li data-en="app/api/ingest/route.ts is a requireAuth-gated POST that reads the manifest and fans out one start(ingestDocumentWorkflow, [entry]) run per document (independent retries + parallelism), returning run IDs immediately." data-kr="app/api/ingest/route.ts는 requireAuth로 보호되는 POST로, 매니페스트를 읽고 문서당 실행 하나씩 start(ingestDocumentWorkflow, [entry])로 팬아웃(독립 재시도 + 병렬성)하며 실행 ID를 즉시 반환.">app/api/ingest/route.ts is a <strong>requireAuth</strong>-gated POST that fans out one run per document, returning run IDs immediately.</li>
+        <li data-en="next.config.ts wraps the config with withWorkflow, which generates the /.well-known/workflow/v1/* routes." data-kr="next.config.ts는 설정을 withWorkflow로 감싸며, 이것이 /.well-known/workflow/v1/* 라우트를 생성.">next.config.ts wraps the config with <code>withWorkflow</code>, generating the /.well-known/workflow/v1/* routes.</li>
+      </ul>
+    </div>
+    <div class="callout-warn">
+      <strong data-en="Scope of the POC" data-kr="PoC 범위">Scope of the POC</strong>
+      <span data-en="The durable path runs only via the Next app (the withWorkflow runtime), not via tsx. pnpm ingest remains the CLI path; the workflow is the production-shaped alternative."
+            data-kr="내구성 경로는 (withWorkflow 런타임이 있는) Next 앱을 통해서만 실행되며 tsx로는 실행되지 않습니다. pnpm ingest는 CLI 경로로 남고, 워크플로는 프로덕션 형태의 대안입니다.">The durable path runs only via the Next app (the withWorkflow runtime), not via tsx. pnpm ingest remains the CLI path; the workflow is the production-shaped alternative.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 12. API ── -->
+  <section id="s-api">
+    <h2 data-en="12 · API surface" data-kr="12 · API 목록">12 · API surface</h2>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th data-en="Route" data-kr="라우트">Route</th>
+          <th data-en="Method" data-kr="메서드">Method</th>
+          <th data-en="Auth" data-kr="인증">Auth</th>
+          <th data-en="Purpose" data-kr="목적">Purpose</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><code>/api/chat</code></td><td>POST</td><td><span class="ticket-chip" data-en="public" data-kr="공개">public</span></td><td data-en="Stream a grounded, cited answer (the agent)" data-kr="근거 있는 인용 답변 스트리밍 (에이전트)">Stream a grounded, cited answer (the agent)</td></tr>
+          <tr><td><code>/api/chat/title</code></td><td>POST</td><td><span class="ticket-chip" data-en="public" data-kr="공개">public</span></td><td data-en="Stream a short conversation title" data-kr="짧은 대화 제목 스트리밍">Stream a short conversation title</td></tr>
+          <tr><td><code>/api/chat/suggestions</code></td><td>POST</td><td><span class="ticket-chip" data-en="public" data-kr="공개">public</span></td><td data-en="Stream up to 4 follow-up questions" data-kr="후속 질문 최대 4개 스트리밍">Stream up to 4 follow-up questions</td></tr>
+          <tr><td><code>/api/documents/[code]</code></td><td>GET</td><td><span class="ticket-chip" data-en="public" data-kr="공개">public</span></td><td data-en="Full PUBLIC document for the source panel" data-kr="원문 패널용 PUBLIC 문서 전체">Full PUBLIC document for the source panel</td></tr>
+          <tr><td><code>/api/ingest</code></td><td>POST</td><td><span class="ticket-chip auth" data-en="auth" data-kr="인증">auth</span></td><td data-en="Start durable ingestion runs (Workflow POC)" data-kr="내구성 인제스션 실행 시작 (Workflow PoC)">Start durable ingestion runs (Workflow POC)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p data-en="All non-streaming responses use the shared { success, data } / { success, error } shape from lib/response.ts with status codes from constants/http-status.constant.ts."
+       data-kr="모든 비스트리밍 응답은 lib/response.ts의 공유 { success, data } / { success, error } 형태와 constants/http-status.constant.ts의 상태 코드를 사용합니다.">All non-streaming responses use the shared { success, data } / { success, error } shape from lib/response.ts.</p>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- ── 13. Env ── -->
+  <section id="s-env">
+    <h2 data-en="13 · Environment & commands" data-kr="13 · 환경 변수 및 명령어">13 · Environment &amp; commands</h2>
+    <h3 data-en="Required environment variables" data-kr="필수 환경 변수">Required environment variables</h3>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr><th data-en="Variable" data-kr="변수">Variable</th><th data-en="Used by" data-kr="사용처">Used by</th></tr></thead>
+        <tbody>
+          <tr><td><code>DATABASE_URL</code></td><td data-en="Drizzle / retrieval / ingestion (Supabase Postgres)" data-kr="Drizzle / 검색 / 인제스션 (Supabase Postgres)">Drizzle / retrieval / ingestion (Supabase Postgres)</td></tr>
+          <tr><td><code>OPENAI_API_KEY</code></td><td data-en="Embeddings, chat, title, suggestions" data-kr="임베딩, 채팅, 제목, 제안">Embeddings, chat, title, suggestions</td></tr>
+          <tr><td><code>LLAMA_CLOUD_API_KEY</code></td><td data-en="Agentic OCR during ingestion" data-kr="인제스션 중 agentic OCR">Agentic OCR during ingestion</td></tr>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td data-en="Supabase client" data-kr="Supabase 클라이언트">Supabase client</td></tr>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code></td><td data-en="Supabase client" data-kr="Supabase 클라이언트">Supabase client</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 data-en="Commands" data-kr="명령어">Commands</h3>
+    <pre><code>pnpm dev            # Next.js dev server
+pnpm ingest         # Run ingestion over data/ingest/manifest.json
+pnpm sample:pdf     # Regenerate the sample Korean PDFs
+pnpm db:push        # Push the Drizzle schema (incl. pgvector column)
+pnpm build          # Production build (also generates Workflow routes)</code></pre>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Ingesting new documents" data-kr="새 문서 인제스션">Ingesting new documents</div>
+      <ul>
+        <li data-en="Drop the PDF into data/documents/." data-kr="PDF를 data/documents/에 넣습니다.">Drop the PDF into <code>data/documents/</code>.</li>
+        <li data-en="Add an entry to data/ingest/manifest.json (file, documentCode, title, authorityType, jurisdictionCode, securityClass, version)." data-kr="data/ingest/manifest.json에 항목 추가 (file, documentCode, title, authorityType, jurisdictionCode, securityClass, version).">Add an entry to <code>data/ingest/manifest.json</code>.</li>
+        <li data-en="Run pnpm ingest. Re-ingesting is idempotent (delete-by-code, then insert)." data-kr="pnpm ingest 실행. 재인제스션은 멱등적(코드 기준 삭제 후 삽입).">Run <code>pnpm ingest</code>. Re-ingesting is idempotent.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function setLang(lang) {
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-kr').classList.toggle('active', lang === 'kr');
+  document.documentElement.lang = lang === 'kr' ? 'ko' : 'en';
+  document.body.classList.toggle('kr', lang === 'kr');
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const val = el.getAttribute(lang === 'kr' ? 'data-kr' : 'data-en');
+    if (val !== null) el.innerHTML = val;
+  });
+}
+</script>
+</body>
+</html>
