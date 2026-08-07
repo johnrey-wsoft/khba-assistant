@@ -98,6 +98,240 @@
       "jurisdictionCode": "11000",
       "securityClass": "PUBLIC",
       "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/seoul-rental-housing-operation-guide.docx",
+      "documentCode": "ADMIN-11000-000101",
+      "title": "서울시 공공임대주택 운영 지침",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-04-01" }
+    },
+    {
+      "file": "documents/building-use-approval-procedure-rule.docx",
+      "documentCode": "ADMIN-11000-000210",
+      "title": "건축물 사용승인 절차에 관한 규칙",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-02-15" }
+    },
+    {
+      "file": "documents/public-parking-fee-schedule.xlsx",
+      "documentCode": "ADMIN-11000-000301",
+      "title": "공영주차장 요금 및 감면 기준표",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/housing-benefit-income-standard.xlsx",
+      "documentCode": "ADMIN-11000-000302",
+      "title": "주거급여 소득기준 및 지급 상한표",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/parking-fee-adjustment-notice.png",
+      "documentCode": "ADMIN-11000-000401",
+      "title": "공영주차장 요금 조정 공고",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-07-25" }
+    },
+    {
+      "file": "documents/resident-parking-permit-guide.jpg",
+      "documentCode": "ADMIN-11000-000402",
+      "title": "거주자 우선주차 신청 안내",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-06-30" }
+    },
+    {
+      "file": "documents/ev-charging-facility-ordinance.docx",
+      "documentCode": "ORD-11000-000010",
+      "title": "전기자동차 충전시설 설치 및 운영 조례",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-05-01" }
+    },
+    {
+      "file": "documents/outdoor-advertising-permit-guide.docx",
+      "documentCode": "ADMIN-11000-000103",
+      "title": "옥외광고물 표시 허가 세부 지침",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-03-20" }
+    },
+    {
+      "file": "documents/association-training-completion-guide.docx",
+      "documentCode": "GUIDE-2026-000102",
+      "title": "협회 회원 교육 이수 기준 안내",
+      "authorityType": "ASSOCIATION_GUIDE",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-06-10" }
+    },
+    {
+      "file": "documents/property-tax-bracket-table.xlsx",
+      "documentCode": "LAW-2026-000310",
+      "title": "재산세 과세표준 및 세율표",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/waterworks-fee-table.xlsx",
+      "documentCode": "ORD-11000-000011",
+      "title": "상수도 요금표",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/apartment-management-fee-items.xlsx",
+      "documentCode": "ADMIN-11000-000303",
+      "title": "공동주택 관리비 항목표",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/road-control-notice.png",
+      "documentCode": "ADMIN-11000-000403",
+      "title": "도로 공사 통제 안내문",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-07-28" }
+    },
+    {
+      "file": "documents/waste-collection-schedule-notice.jpg",
+      "documentCode": "ORD-11000-000012",
+      "title": "생활폐기물 배출 요일제 시행 공고",
+      "authorityType": "ORDINANCE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-06-15" }
+    },
+    {
+      "file": "documents/civil-complaint-processing-period.png",
+      "documentCode": "ADMIN-11000-000404",
+      "title": "민원 처리 기간 안내",
+      "authorityType": "ADMIN_RULE",
+      "jurisdictionCode": "11000",
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": "2026-05-30" }
+    },
+    {
+      "file": "documents/income-tax-return-form-40-1.hwp",
+      "documentCode": "LAW-2026-000501",
+      "title": "Individual Income Tax Return (Form 40-1)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/income-tax-return-form-40-4.hwp",
+      "documentCode": "LAW-2026-000502",
+      "title": "Individual Income Tax Return (Form 40-4)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/income-tax-return-form-40-5.hwp",
+      "documentCode": "LAW-2026-000503",
+      "title": "Individual Income Tax Return (Form 40-5)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/income-tax-return-form-40-6.hwp",
+      "documentCode": "LAW-2026-000504",
+      "title": "Individual Income Tax Return (Form 40-6)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/wage-salary-income-tax-withholding-receipt.hwp",
+      "documentCode": "LAW-2026-000505",
+      "title": "Receipt for Wage & Salary Income Tax Withholding",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/form-72-6-tax-exemption-gb-msb-foreign-corporation.hwp",
+      "documentCode": "LAW-2026-000506",
+      "title": "Application for Tax Exemption on Interest Income/Capital Gains from GB and MSB (Form 72-6, foreign corporation)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/form-19-13-2-tax-exemption-gb-msb-qfi.hwp",
+      "documentCode": "LAW-2026-000507",
+      "title": "Application for Tax Exemption on Interest Income/Capital Gains from GB and MSB (Form 19-13(2), QFIs)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/form-19-13-1-tax-exemption-gb-msb-non-resident.hwp",
+      "documentCode": "LAW-2026-000508",
+      "title": "Application for Tax Exemption on Interest Income/Capital Gains from GB and MSB (Form 19-13(1), non-residents)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/form-19-12-qfi-approval-application.hwp",
+      "documentCode": "LAW-2026-000509",
+      "title": "Application for Approval as Qualified Foreign Intermediary (Form 19-12)",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/form-23-4-resident-statement-other-income.hwp",
+      "documentCode": "LAW-2026-000510",
+      "title": "Report of A Resident's Statement of Payment of Other Income (Form 23(4))",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
+    },
+    {
+      "file": "documents/report-of-deduction-tax-credit-from-income.hwp",
+      "documentCode": "LAW-2026-000511",
+      "title": "Report of Deduction·Tax Credit from Income",
+      "authorityType": "LAW",
+      "jurisdictionCode": null,
+      "securityClass": "PUBLIC",
+      "version": { "versionNo": 1, "effectiveFrom": null }
     }
   ]
 }
