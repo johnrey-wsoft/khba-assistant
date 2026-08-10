@@ -4,11 +4,12 @@ import type { MockMessage } from "@/constants/chat.constant";
 
 // Turn canned mock messages into UIMessage[] that useChat can seed from.
 // Assistant messages with sources get a synthetic `tool-searchKhba` output part
-// so the same rendering path (SourceCard, "Well sourced") lights up as it would
-// for a live tool call.
+// so the same rendering path (source cards) lights up as it would for a live
+// tool call. Parts mirror a real turn's order — the search tool call first, then
+// the answer text — so the answer-extraction logic treats seeds like live turns.
 export const toUIMessages = (messages: MockMessage[]): UIMessage[] =>
   messages.map((m, i) => {
-    const parts: UIMessage["parts"] = [{ type: "text", text: m.text }];
+    const parts: UIMessage["parts"] = [];
 
     if (m.role === "assistant" && m.sources?.length) {
       parts.push({
@@ -23,6 +24,8 @@ export const toUIMessages = (messages: MockMessage[]): UIMessage[] =>
         },
       } as UIMessage["parts"][number]);
     }
+
+    parts.push({ type: "text", text: m.text });
 
     return {
       id: `seed-${i}`,

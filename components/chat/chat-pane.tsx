@@ -21,7 +21,7 @@ import {
   stashPendingMessage,
   takePendingMessage,
 } from "@/lib/chat/session";
-import { CHAT_SUGGESTIONS, type ChatThread } from "@/constants/chat.constant";
+import { CHAT_EXAMPLES, CHAT_SUGGESTIONS, type ChatThread } from "@/constants/chat.constant";
 
 type ChatPaneProps = {
   chatId?: string;
@@ -145,16 +145,18 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
           messages={messages}
           isThinking={status === "submitted"}
           dateLabel={thread?.when?.split(" ")[0]}
+          examples={CHAT_EXAMPLES}
+          onExample={submit}
+          suggestions={suggestions}
+          loadingSuggestions={loadingSuggestions}
+          onSuggestion={submit}
         />
         <Composer
           value={input}
           onChange={setInput}
           onSubmit={() => submit(input)}
-          onSuggestion={submit}
           onStop={stop}
           isBusy={isBusy}
-          suggestions={suggestions}
-          loadingSuggestions={loadingSuggestions}
         />
       </div>
 

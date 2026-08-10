@@ -4,32 +4,16 @@ import { ArrowUp, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Chip } from "@/components/chat/primitives";
-
-const SKELETON_WIDTHS = ["w-44", "w-36", "w-40", "w-32"];
 
 type ComposerProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  onSuggestion: (value: string) => void;
   onStop: () => void;
   isBusy: boolean;
-  suggestions: string[];
-  loadingSuggestions?: boolean;
 };
 
-export const Composer = ({
-  value,
-  onChange,
-  onSubmit,
-  onSuggestion,
-  onStop,
-  isBusy,
-  suggestions,
-  loadingSuggestions = false,
-}: ComposerProps) => {
+export const Composer = ({ value, onChange, onSubmit, onStop, isBusy }: ComposerProps) => {
   const canSend = value.trim().length > 0 && !isBusy;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -40,40 +24,22 @@ export const Composer = ({
   };
 
   return (
-    <div className="sticky bottom-0 bg-gradient-to-t from-background from-[16%] to-transparent px-7 pt-6 pb-5.5">
+    <div className="sticky bottom-0 bg-gradient-to-t from-background from-[16%] to-transparent px-7 pt-6 pb-5">
       <div className="mx-auto max-w-[820px]">
-        <div
-          className="mb-3 flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none]"
-          style={{
-            maskImage: "linear-gradient(90deg, #000 calc(100% - 28px), transparent)",
-            WebkitMaskImage: "linear-gradient(90deg, #000 calc(100% - 28px), transparent)",
-          }}
-        >
-          {loadingSuggestions
-            ? SKELETON_WIDTHS.map((w, i) => (
-                <Skeleton key={i} className={`h-9 flex-none rounded-full ${w}`} />
-              ))
-            : suggestions.map((s, i) => (
-                <Chip key={`${i}-${s}`} onClick={() => onSuggestion(s)} disabled={isBusy}>
-                  {s}
-                </Chip>
-              ))}
-        </div>
-
-        <div className="flex items-end gap-2.5 rounded-2xl border-2 border-primary bg-card p-3 pl-4.5 shadow-sm">
+        <div className="flex items-end gap-2 rounded-[16px] border border-input bg-card py-2 pr-2 pl-4 shadow-sm transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/12">
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder="Ask a follow-up. Adding the district and the case helps."
-            className="max-h-30 min-h-0 resize-none border-none bg-transparent p-0 py-2 text-base shadow-none focus-visible:ring-0 dark:bg-transparent"
+            className="max-h-30 min-h-0 resize-none border-none bg-transparent p-0 py-1.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 md:text-[15px] dark:bg-transparent"
           />
           {isBusy ? (
             <Button
               size="icon"
               variant="secondary"
-              className="size-11 rounded-xl"
+              className="size-10 rounded-[11px]"
               onClick={onStop}
               title="Stop"
               aria-label="Stop generating"
@@ -83,7 +49,7 @@ export const Composer = ({
           ) : (
             <Button
               size="icon"
-              className="size-11 rounded-xl"
+              className="size-10 rounded-[11px]"
               onClick={onSubmit}
               disabled={!canSend}
               title="Send"
@@ -94,7 +60,7 @@ export const Composer = ({
           )}
         </div>
 
-        <p className="mt-2.5 text-[13px] font-medium text-muted-foreground">
+        <p className="mt-2.5 text-center text-[11.5px] font-medium text-muted-foreground/70">
           Answers are reference material. The official text and the competent authority decide.
         </p>
       </div>
