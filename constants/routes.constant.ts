@@ -1,6 +1,8 @@
 export const PUBLIC_ROUTES = {
   ROOT: "/",
   CHAT: "/chat",
+  ABOUT: "/about",
+  TERMS: "/terms",
 } as const;
 
 export const AUTH_ROUTES = {

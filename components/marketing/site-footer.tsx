@@ -1,0 +1,74 @@
+import Link from "next/link";
+
+import { PUBLIC_ROUTES, AUTH_ROUTES } from "@/constants/routes.constant";
+
+const PRODUCT = [
+  { href: PUBLIC_ROUTES.ROOT, label: "Home" },
+  { href: PUBLIC_ROUTES.ABOUT, label: "About us" },
+  { href: AUTH_ROUTES.REGISTER, label: "Sign up" },
+];
+
+const LEGAL = [
+  { href: PUBLIC_ROUTES.TERMS, label: "Terms of service" },
+  { href: PUBLIC_ROUTES.TERMS, label: "Privacy notice" },
+  { href: PUBLIC_ROUTES.ABOUT, label: "What's covered" },
+];
+
+const FooterCol = ({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) => (
+  <div className="flex flex-col gap-2.5">
+    <div className="text-sm font-extrabold text-foreground">{title}</div>
+    {links.map((l, i) => (
+      <Link
+        key={`${l.href}-${i}`}
+        href={l.href}
+        className="text-sm text-muted-foreground transition-colors hover:text-primary"
+      >
+        {l.label}
+      </Link>
+    ))}
+  </div>
+);
+
+export const SiteFooter = () => (
+  <footer className="mt-auto border-t border-border bg-card">
+    <div className="mx-auto grid max-w-6xl gap-9 px-6 py-13 sm:grid-cols-2 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr]">
+      <div>
+        <span className="flex items-center gap-2.5 font-extrabold tracking-tight text-foreground">
+          <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground">
+            K
+          </span>
+          KHBA Assistant
+        </span>
+        <p className="mt-3.5 max-w-[32ch] text-sm text-muted-foreground">
+          A member consultation channel that answers with the source document, the issuing body, and
+          the base date attached.
+        </p>
+      </div>
+      <FooterCol title="Product" links={PRODUCT} />
+      <FooterCol title="Legal" links={LEGAL} />
+      <div className="flex flex-col gap-2.5">
+        <div className="text-sm font-extrabold text-foreground">Talk to the desk</div>
+        <span className="text-sm text-muted-foreground">assistant@khba.example</span>
+        <span className="text-sm text-muted-foreground">Weekdays 09:00 to 18:00, KST</span>
+        <span className="text-[13px] text-muted-foreground/70">
+          Operated by the Korea Housing Builders Association secretariat
+        </span>
+      </div>
+    </div>
+    <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 border-t border-border px-6 py-5">
+      <span className="text-[13px] text-muted-foreground">
+        Answers are reference material. The official text and the competent authority decide.
+      </span>
+      <span className="flex-1" />
+      <span className="font-mono text-xs font-bold tabular-nums text-muted-foreground/70">
+        Base date 2026-07-01
+      </span>
+    </div>
+  </footer>
+);
