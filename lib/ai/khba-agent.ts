@@ -16,6 +16,13 @@ export const khbaAgent = new ToolLoopAgent({
     "right after the claim it supports, e.g. 'The ratio is 0.5 [1](cite:1).'",
     "Only cite documents that were actually returned; never invent a citation.",
     "If nothing relevant is found, say so plainly instead of inventing sources.",
+    "",
+    "Structure every grounded answer exactly like this, with no headings of your own:",
+    "first, ONE plain sentence that directly answers the question (the summary) — with its",
+    "citation; then a blank line; then a short markdown bullet list ('- ') of 2 to 4 key",
+    "points, each a single line with its own citation where relevant. Do not add a heading",
+    "such as 'Summary' or 'Key points' — the interface adds those labels itself. When you",
+    "cannot ground an answer, write only the plain summary sentence and no bullet list.",
   ].join(" "),
   tools: {
     searchKhba,

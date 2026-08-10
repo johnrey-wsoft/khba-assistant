@@ -1,14 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Notice } from "@/components/chat/primitives";
+import { Notice, Seal } from "@/components/chat/primitives";
 import type { ChatSource } from "@/components/chat/primitives";
-import { authorityGlyph, authorityLabel } from "@/lib/chat/authority";
+import { authorityLabel } from "@/lib/chat/authority";
 
 type DocumentPassage = { nodePath: string; text: string };
 type FullDocument = {
@@ -20,13 +22,6 @@ type FullDocument = {
   effectiveFrom: string | null;
   passages: DocumentPassage[];
 };
-
-const MetaRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-baseline justify-between gap-3 py-2">
-    <span className="text-xs font-medium text-muted-foreground">{label}</span>
-    <span className="text-right text-sm font-semibold text-foreground">{value}</span>
-  </div>
-);
 
 const BodySkeleton = () => (
   <div className="flex flex-col gap-3">
@@ -40,13 +35,39 @@ const BodySkeleton = () => (
   </div>
 );
 
+// Wrap the exact snippet the answer cited in a gold <mark>, matching the
+// prototype's "excerpt used in the answer" highlight.
+const HighlightedText = ({ text, snippet }: { text: string; snippet?: string }) => {
+  if (!snippet) return <>{text}</>;
+  const idx = text.indexOf(snippet);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="evidence-flash rounded-[3px] bg-highlight px-1 py-0.5 font-medium text-highlight-foreground">
+        {snippet}
+      </mark>
+      {text.slice(idx + snippet.length)}
+    </>
+  );
+};
+
+// A short article label from the node path (e.g. "…/제12조" -> "제12조").
+const articleLabel = (nodePath: string): string | null => {
+  const tail = nodePath.split(/[/>]/).pop()?.trim();
+  return tail && tail.length <= 40 ? tail : null;
+};
+
 type ArtifactPanelProps = {
-  source: ChatSource;
+  sources: ChatSource[];
+  initialIndex: number;
   onClose: () => void;
 };
 
-export const ArtifactPanel = ({ source, onClose }: ArtifactPanelProps) => {
-  const glyph = authorityGlyph(source.authorityType);
+export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelProps) => {
+  const [active, setActive] = useState(initialIndex);
+  const source = sources[active] ?? sources[0];
+  const citedRef = useRef<HTMLParagraphElement>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["document", source.documentCode],
@@ -59,6 +80,15 @@ export const ArtifactPanel = ({ source, onClose }: ArtifactPanelProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const baseDate = data?.effectiveFrom;
+
+  // Bring the cited passage into view once the (active) document resolves.
+  useEffect(() => {
+    if (data && citedRef.current) {
+      citedRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [data]);
+
   return (
     <>
       {/* Mobile-only backdrop: tap to dismiss the overlay panel. */}
@@ -67,80 +97,111 @@ export const ArtifactPanel = ({ source, onClose }: ArtifactPanelProps) => {
         aria-hidden
         className="fixed inset-0 z-40 bg-black/50 duration-200 animate-in fade-in md:hidden"
       />
-      <aside className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[520px] flex-none flex-col border-l border-border bg-card shadow-xl duration-200 animate-in slide-in-from-right-4 fade-in md:static md:z-auto md:shadow-none">
-        <header className="flex items-center gap-3 border-b border-border px-5 py-3.5">
-          <span className="grid size-9 flex-none place-items-center rounded-lg bg-accent text-lg font-bold text-accent-foreground">
-            {glyph}
+      <aside className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[540px] flex-none flex-col border-l border-border bg-card shadow-xl duration-200 animate-in slide-in-from-right-4 fade-in md:static md:z-auto md:shadow-none">
+        {/* Pane head — title + the excerpt legend. */}
+        <header className="flex items-center gap-3 border-b border-border bg-muted/40 px-5 py-3.5">
+          <span className="text-sm font-extrabold text-foreground">Original text viewer</span>
+          <span className="ml-auto hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
+            <span className="h-3 w-5 rounded-[3px] border border-seal-border bg-highlight" />
+            Excerpt used in the answer
           </span>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-extrabold text-foreground">Source document</span>
-            <span className="truncate font-mono text-xs text-muted-foreground">
-              {source.documentCode}
-            </span>
-          </div>
           <Button
             variant="outline"
             size="icon"
             onClick={onClose}
             title="Close"
             aria-label="Close source panel"
+            className="ml-1"
           >
             <X />
           </Button>
         </header>
 
+        {/* Tabs — one per source cited in the answer. */}
+        {sources.length > 1 && (
+          <div className="flex gap-1 overflow-x-auto border-b border-border bg-muted/40 px-4 [scrollbar-width:none]">
+            {sources.map((s, i) => (
+              <button
+                key={s.documentCode}
+                type="button"
+                onClick={() => setActive(i)}
+                className={cn(
+                  "flex items-center gap-2 border-b-2 px-3 py-3 text-[12.5px] font-semibold whitespace-nowrap transition-colors",
+                  i === active
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="grid size-[15px] flex-none place-items-center rounded-[4px] bg-foreground font-mono text-[10px] font-bold text-background">
+                  {i + 1}
+                </span>
+                <span className="max-w-[140px] truncate">{s.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Doc meta — title, type, base-date seal, jurisdiction. */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3">
+          <span className="text-sm font-bold text-foreground">{source.title}</span>
+          <Badge variant="outline" className="rounded-[5px] border-primary/20 bg-primary/5 text-primary">
+            {authorityLabel(source.authorityType)}
+          </Badge>
+          {baseDate && <Seal>Base date {baseDate}</Seal>}
+          {source.jurisdictionCode && (
+            <span className="font-mono text-xs text-muted-foreground">{source.jurisdictionCode}</span>
+          )}
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-5 p-6">
-            <h2 className="text-lg font-extrabold tracking-tight text-foreground">
-              {source.title}
-            </h2>
+            {isLoading && <BodySkeleton />}
 
-            <div className="rounded-xl border border-border bg-muted/40 px-4 py-1">
-              <MetaRow label="Type" value={authorityLabel(source.authorityType)} />
-              <MetaRow label="Document code" value={source.documentCode} />
-              {source.jurisdictionCode && (
-                <MetaRow label="Jurisdiction" value={source.jurisdictionCode} />
-              )}
-              <MetaRow label="Classification" value={source.securityClass ?? "PUBLIC"} />
-              {data?.effectiveFrom && <MetaRow label="Base date" value={data.effectiveFrom} />}
-            </div>
-
-            <div className="flex flex-col gap-2.5">
-              <span className="text-sm font-extrabold text-foreground">Document</span>
-
-              {isLoading && <BodySkeleton />}
-
-              {isError && source.snippet && (
-                // Fallback to the cited passage if the full document can't load.
-                <blockquote className="rounded-xl border border-border border-l-4 border-l-primary bg-background px-4 py-3.5 text-base leading-relaxed font-medium text-foreground">
-                  {source.snippet}
-                </blockquote>
-              )}
-
-              {data?.passages.map((passage) => {
-                // Highlight the passage that was cited in the answer.
-                const isCited =
-                  !!source.snippet &&
-                  (passage.text === source.snippet || passage.text.includes(source.snippet));
-                return (
-                  <p
-                    key={passage.nodePath}
-                    className={cn(
-                      "rounded-xl border px-4 py-3.5 text-base leading-relaxed font-medium whitespace-pre-wrap text-foreground",
-                      isCited
-                        ? "border-border border-l-4 border-l-primary bg-accent/40"
-                        : "border-border bg-background"
-                    )}
-                  >
-                    {passage.text}
+            {/* Paper "document page" — faint ruling behind the article text. */}
+            {(isError || (data && data.passages.length > 0)) && (
+              <div
+                className="rounded-xl border border-border bg-background px-5 py-4"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(var(--background) 0 31px, var(--border) 31px 32px)",
+                }}
+              >
+                {isError && source.snippet && (
+                  // Fallback to the cited passage if the full document can't load.
+                  <p className="text-[15px] leading-8 whitespace-pre-wrap text-foreground/90">
+                    <mark className="evidence-flash rounded-[3px] bg-highlight px-1 py-0.5 font-medium text-highlight-foreground">
+                      {source.snippet}
+                    </mark>
                   </p>
-                );
-              })}
-            </div>
+                )}
 
-            <Notice>
-              This is a reference excerpt from the KHBA index. Confirm the current wording against
-              the official published text before relying on it.
+                {data?.passages.map((passage) => {
+                  const isCited =
+                    !!source.snippet &&
+                    (passage.text === source.snippet || passage.text.includes(source.snippet));
+                  const label = articleLabel(passage.nodePath);
+                  return (
+                    <p
+                      key={passage.nodePath}
+                      ref={isCited ? citedRef : undefined}
+                      className="scroll-mt-6 text-[15px] leading-8 whitespace-pre-wrap text-foreground/90"
+                    >
+                      {label && <span className="mr-1.5 font-bold text-foreground">{label}</span>}
+                      {isCited ? (
+                        <HighlightedText text={passage.text} snippet={source.snippet} />
+                      ) : (
+                        passage.text
+                      )}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
+
+            <Notice tone="seal">
+              <span className="font-bold text-seal">Final check</span> — a reference excerpt from the
+              KHBA index, current as of the base date shown. Confirm the wording against the official
+              published text before relying on it.
             </Notice>
           </div>
         </div>

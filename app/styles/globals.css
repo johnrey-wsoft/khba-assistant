@@ -69,6 +69,11 @@
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-seal: var(--seal);
+  --color-seal-muted: var(--seal-muted);
+  --color-seal-border: var(--seal-border);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
 }
 
 :root {
@@ -125,6 +130,13 @@
   --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
+  /* Seal gold — the "base date / evidence" trust signal (the prototype's 직인). */
+  --seal: oklch(0.585 0.107 78);
+  --seal-muted: oklch(0.945 0.028 92);
+  --seal-border: oklch(0.78 0.093 85);
+  /* Highlight — the excerpt actually used in the answer. */
+  --highlight: oklch(0.925 0.09 98);
+  --highlight-foreground: oklch(0.33 0.055 74);
 }
 
 .dark {
@@ -180,6 +192,11 @@
   --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
   --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --seal: oklch(0.8 0.1 84);
+  --seal-muted: oklch(0.31 0.045 82);
+  --seal-border: oklch(0.52 0.075 82);
+  --highlight: oklch(0.52 0.1 90);
+  --highlight-foreground: oklch(0.94 0.05 92);
 }
 
 @layer base {
@@ -189,5 +206,23 @@
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
+  }
+}
+
+/* Evidence viewer: flash the cited excerpt when its document opens. */
+@keyframes evidence-flash {
+  0% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--seal) 40%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.evidence-flash {
+  animation: evidence-flash 1.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .evidence-flash {
+    animation: none;
   }
 }

@@ -41,7 +41,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "Under 30㎡ exclusive area it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6 [1](cite:1). Any remainder in the total is rounded up before it applies [2](cite:2).",
+        text: "Under 30㎡ exclusive area it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6 [1](cite:1).\n\n- Any remainder in the total is rounded up before it applies [2](cite:2).\n- The exclusive-area brackets are set by the Suwon ordinance, not the national decree [1](cite:1).",
         time: "16:19",
         query: "Suwon parking ratio small multi-family",
         sources: [
@@ -70,7 +70,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "It counts under the national decree [1](cite:1). Whether Suwon caps that share is decided in the ordinance, and that article is not in our index yet, so we are not going to guess at the number.",
+        text: "It counts under the national decree [1](cite:1).\n\n- Whether Suwon caps that share is set in the ordinance, not the decree.\n- That article is not in our index yet, so we are not going to guess at the number.",
         time: "16:25",
         query: "mechanical parking required count decree",
         sources: [
@@ -102,7 +102,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "Applications close 2026-08-08, and the revised unit table applies from this notice [1](cite:1). Income and asset limits follow the standard purchase-rental bracket.",
+        text: "Applications close 2026-08-08, and the revised unit table applies from this notice [1](cite:1).\n\n- Income and asset limits follow the standard purchase-rental bracket.\n- Only online submissions are accepted; late submissions are not recognised [1](cite:1).",
         time: "11:02",
         query: "LH purchase-rental notice conditions",
         sources: [
@@ -155,7 +155,7 @@ export const CHAT_THREADS: ChatThread[] = [
       },
       {
         role: "assistant",
-        text: "File Form 3 with its appendix, using the current base date on the cover [1](cite:1).",
+        text: "File Form 3 with its appendix, using the current base date on the cover [1](cite:1).\n\n- Check member eligibility and the land-securing documents before you submit [1](cite:1).\n- The prior form version is inactive and excluded from search.",
         time: "17:30",
         query: "association quarterly filing forms",
         sources: [
@@ -201,4 +201,35 @@ export const CHAT_SUGGESTIONS = [
   "Relaxation conditions",
   "Compare with Yongin",
   "Open the ordinance",
+];
+
+// Landing-screen starters, shown when a consultation is still empty.
+// A short `label` keeps the cluster tidy; `prompt` is the full question sent.
+export type ChatExample = { label: string; prompt: string };
+
+export const CHAT_EXAMPLES: ChatExample[] = [
+  {
+    label: "Suwon parking ratio",
+    prompt: "What is the parking ratio for small multi-family housing in Suwon?",
+  },
+  {
+    label: "Latest LH notice",
+    prompt: "What are the conditions in the latest LH purchase-rental notice?",
+  },
+  {
+    label: "Association filing forms",
+    prompt: "Which forms do we file for the quarterly association report?",
+  },
+  {
+    label: "Relaxing parking rules",
+    prompt: "Can the attached parking lot requirement be relaxed?",
+  },
+  {
+    label: "Mechanical parking",
+    prompt: "Does mechanical parking count toward the required spaces?",
+  },
+  {
+    label: "Suwon vs. Yongin",
+    prompt: "How does Suwon's parking ordinance compare with Yongin's?",
+  },
 ];

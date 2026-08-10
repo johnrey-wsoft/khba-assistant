@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Info } from "lucide-react";
+import { ArrowUpRight, Info, Stamp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { authorityGlyph } from "@/lib/chat/authority";
+import { authorityLabel } from "@/lib/chat/authority";
 
 // --- Tone badge -----------------------------------------------------------
 // "Well sourced" (mint) / "Thin evidence" (amber) — built on shadcn Badge,
@@ -27,33 +27,87 @@ export const ToneBadge = ({
 
 // --- Chip -----------------------------------------------------------------
 // Suggestion / follow-up pill. Interactive when onClick is provided.
+// `example` chips lead with a gold diamond (the base-date / evidence signal);
+// follow-up chips lead with a return arrow, echoing the prototype.
 
-export const Chip = ({ className, ...props }: React.ComponentProps<"button">) => (
+type ChipVariant = "followup" | "example";
+
+export const Chip = ({
+  className,
+  children,
+  variant = "followup",
+  ...props
+}: React.ComponentProps<"button"> & { variant?: ChipVariant }) => (
   <button
     type="button"
     className={cn(
-      "inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
-      className
-    )}
-    {...props}
-  />
-);
-
-// --- Notice ---------------------------------------------------------------
-// Advisory callout ("confirm the official text …").
-
-export const Notice = ({ className, children, ...props }: React.ComponentProps<"div">) => (
-  <div
-    className={cn(
-      "flex gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3.5 text-sm font-medium text-muted-foreground",
+      "inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-[13px] font-medium text-foreground/80 transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
       className
     )}
     {...props}
   >
-    <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-    <div className="min-w-0">{children}</div>
-  </div>
+    <span
+      aria-hidden
+      className={cn(
+        "font-bold",
+        variant === "example" ? "text-[10px] text-seal" : "text-muted-foreground/50"
+      )}
+    >
+      {variant === "example" ? "◆" : "↳"}
+    </span>
+    {children}
+  </button>
 );
+
+// --- Seal -----------------------------------------------------------------
+// Gold "base date" stamp — the evidence trust signal (the prototype's 직인).
+
+export const Seal = ({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"span">) => (
+  <span
+    className={cn(
+      "inline-flex items-center gap-1.5 rounded-full border border-seal-border bg-seal-muted px-2.5 py-1 font-mono text-[11px] font-bold tracking-tight text-seal",
+      className
+    )}
+    {...props}
+  >
+    <Stamp className="size-3" />
+    {children}
+  </span>
+);
+
+// --- Notice ---------------------------------------------------------------
+// Advisory callout. `seal` tone is the gold "final confirmation" trust notice
+// (the prototype's 최종 확인 안내); `neutral` is a plain muted advisory.
+
+type NoticeTone = "neutral" | "seal";
+
+export const Notice = ({
+  className,
+  children,
+  tone = "neutral",
+  ...props
+}: React.ComponentProps<"div"> & { tone?: NoticeTone }) => {
+  const Icon = tone === "seal" ? Stamp : Info;
+  return (
+    <div
+      className={cn(
+        "flex gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium",
+        tone === "seal"
+          ? "border-seal-border/70 bg-seal-muted text-highlight-foreground"
+          : "border-border bg-muted/50 text-muted-foreground",
+        className
+      )}
+      {...props}
+    >
+      <Icon className={cn("mt-0.5 size-4 shrink-0", tone === "seal" ? "text-seal" : "text-muted-foreground")} />
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+};
 
 // --- Source card ----------------------------------------------------------
 // A cited document. Shaped for the KHBA `document` fields.
@@ -67,33 +121,87 @@ export type ChatSource = {
   snippet?: string;
 };
 
-export const SourceCard = ({ source, onOpen }: { source: ChatSource; onOpen?: () => void }) => {
-  const glyph = authorityGlyph(source.authorityType);
+// Per-authority accent (spine gradient + type badge), theme-safe: ordinance =
+// gold seal, law = neutral, everything else = brand. Mirrors the prototype's
+// colour-coded .source spine and type badge.
+type SourceAccent = { spine: string; badge: string };
+
+const AUTHORITY_ACCENT: Record<string, SourceAccent> = {
+  ORDINANCE: {
+    spine: "bg-gradient-to-b from-seal to-seal-border",
+    badge: "border-seal-border bg-seal-muted text-seal",
+  },
+  LAW: {
+    spine: "bg-gradient-to-b from-muted-foreground/70 to-muted-foreground/35",
+    badge: "border-border bg-muted text-muted-foreground",
+  },
+};
+
+const DEFAULT_ACCENT: SourceAccent = {
+  spine: "bg-gradient-to-b from-primary to-primary/55",
+  badge: "border-primary/20 bg-primary/5 text-primary",
+};
+
+export const SourceCard = ({
+  source,
+  index,
+  onOpen,
+}: {
+  source: ChatSource;
+  index?: number;
+  onOpen?: () => void;
+}) => {
+  const accent = AUTHORITY_ACCENT[source.authorityType] ?? DEFAULT_ACCENT;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-start gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-    >
-      <span className="grid size-10 flex-none place-items-center rounded-lg bg-accent text-lg font-bold text-accent-foreground">
-        {glyph}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-[15px] font-bold text-foreground">{source.title}</span>
-        <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-          <span>{source.documentCode}</span>
-          {source.jurisdictionCode ? (
-            <>
-              <span aria-hidden>·</span>
-              <span>{source.jurisdictionCode}</span>
-            </>
-          ) : null}
+    <div className="grid grid-cols-[4px_1fr_auto] overflow-hidden rounded-xl border border-border bg-card transition-[box-shadow,border-color] hover:border-border/80 hover:shadow-sm">
+      <span aria-hidden className={cn("h-full", accent.spine)} />
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex min-w-0 flex-col gap-1 px-4 py-3 text-left focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+      >
+        <span className="flex flex-wrap items-center gap-2">
+          {index != null && (
+            <span className="grid size-[18px] flex-none place-items-center rounded-[5px] bg-foreground font-mono text-[11px] font-bold text-background">
+              {index}
+            </span>
+          )}
+          <span className="min-w-0 truncate text-sm font-bold text-foreground">
+            {source.title}
+          </span>
+          <Badge variant="outline" className={cn("rounded-[5px] px-1.5 py-0 text-[11px]", accent.badge)}>
+            {authorityLabel(source.authorityType)}
+          </Badge>
         </span>
-        {source.snippet ? (
-          <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">{source.snippet}</span>
-        ) : null}
+
+        {source.jurisdictionCode && (
+          <span className="text-xs font-semibold text-foreground/70">
+            {source.jurisdictionCode}
+          </span>
+        )}
+
+        {source.snippet && (
+          <span className="mt-1 line-clamp-2 border-l-2 border-border pl-2.5 text-[12.5px] leading-snug text-muted-foreground">
+            {source.snippet}
+          </span>
+        )}
+      </button>
+
+      <div className="flex flex-col items-end justify-between gap-2 border-l border-border bg-muted/40 px-3 py-3">
+        <span className="font-mono text-[10px] whitespace-nowrap text-muted-foreground">
+          {source.documentCode}
+        </span>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-primary hover:underline focus-visible:outline-none"
+        >
+          View source
+          <ArrowUpRight className="size-3.5" />
+        </button>
       </div>
-    </button>
+    </div>
   );
 };
