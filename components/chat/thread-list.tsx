@@ -27,9 +27,11 @@ type ThreadListProps = {
   activeId: string | null;
   filter: string;
   onFilterChange: (value: string) => void;
+  // Fired when a link is followed — lets the mobile drawer close on navigation.
+  onNavigate?: () => void;
 };
 
-export const ThreadList = ({ activeId, filter, onFilterChange }: ThreadListProps) => {
+export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: ThreadListProps) => {
   const { conversations } = useChatStore();
 
   // Live conversations started this session, then the sample threads.
@@ -66,7 +68,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange }: ThreadListProps
         </div>
 
         <Button asChild className="w-full">
-          <Link href="/chat">
+          <Link href="/chat" onClick={onNavigate}>
             <Plus />
             New consultation
           </Link>
@@ -94,6 +96,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange }: ThreadListProps
             <Link
               key={t.id}
               href={`/chat/${t.id}`}
+              onClick={onNavigate}
               className={cn(
                 "flex w-full min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-3 text-left transition-colors",
                 activeId === t.id ? "bg-accent" : "hover:bg-muted"

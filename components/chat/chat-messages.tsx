@@ -2,7 +2,7 @@
 
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ThumbsUp, HelpCircle, Bookmark, ChevronDown } from "lucide-react";
+import { ThumbsUp, HelpCircle, Bookmark, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,14 +90,20 @@ const UserMessage = ({ text, time }: { text: string; time?: string }) => (
   </div>
 );
 
+// Show this many source cards before collapsing the rest behind "See all".
+const SOURCE_PREVIEW_COUNT = 3;
+
 const AssistantMessage = ({ message }: { message: UIMessage }) => {
   const { openSource } = useArtifact();
+  const [showAllSources, setShowAllSources] = useState(false);
   const text = getText(message);
   const sources = getSources(message);
   const citations: Citation[] = sources.map((source, i) => ({
     number: i + 1,
     source,
   }));
+  const visibleSources = showAllSources ? sources : sources.slice(0, SOURCE_PREVIEW_COUNT);
+  const hiddenSourceCount = sources.length - SOURCE_PREVIEW_COUNT;
   const time = getTime(message);
   const searching = isSearching(message);
   const hasContent = Boolean(text) || sources.length > 0;
@@ -127,10 +133,30 @@ const AssistantMessage = ({ message }: { message: UIMessage }) => {
 
         {sources.length > 0 && (
           <div className="flex flex-col gap-2.5">
-            <span className="text-sm font-extrabold text-foreground">Where this came from</span>
-            {sources.map((s) => (
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-sm font-extrabold text-foreground">Where this came from</span>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {sources.length}
+              </span>
+            </div>
+            {visibleSources.map((s) => (
               <SourceCard key={s.documentCode} source={s} onOpen={() => openSource(s)} />
             ))}
+            {sources.length > SOURCE_PREVIEW_COUNT && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllSources((v) => !v)}
+                className="self-start rounded-full text-muted-foreground"
+              >
+                {showAllSources ? "Show fewer" : `See all ${sources.length} sources`}
+                {showAllSources ? (
+                  <ChevronUp className="size-4" />
+                ) : (
+                  <span className="font-mono text-xs tabular-nums">+{hiddenSourceCount}</span>
+                )}
+              </Button>
+            )}
           </div>
         )}
 
