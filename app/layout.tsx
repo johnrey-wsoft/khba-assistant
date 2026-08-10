@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 
 import { AppProvider } from "@/components/providers/app-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -20,26 +22,30 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = buildMetadata({});
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ReactQueryProvider>
-          <AppProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </AppProvider>
-        </ReactQueryProvider>
+        <NextIntlClientProvider>
+          <ReactQueryProvider>
+            <AppProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </AppProvider>
+          </ReactQueryProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

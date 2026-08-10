@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { type ForgotPasswordFormValues, forgotPasswordSchema } from "@/schemas/a
 
 export const PageClient = () => {
   const supabase = getSupabaseClient();
+  const t = useTranslations("auth.forgot");
 
   const [isPending, startTransition] = useTransition();
 
@@ -35,21 +37,21 @@ export const PageClient = () => {
         });
 
         if (error) {
-          toast.error("Reset password failed", {
-            description: "Please check your email address and try again.",
+          toast.error(t("toastFailTitle"), {
+            description: t("toastFailBody"),
           });
           return;
         }
 
-        toast.success("Reset email sent", {
-          description: "Please check your email for the password reset link.",
+        toast.success(t("toastSuccessTitle"), {
+          description: t("toastSuccessBody"),
         });
 
         form.reset();
       } catch (error) {
         console.error(error);
-        toast.error("Something went wrong", {
-          description: "There was an issue sending the reset email. Please try again later.",
+        toast.error(t("toastErrorTitle"), {
+          description: t("toastErrorBody"),
         });
       }
     });
@@ -59,8 +61,8 @@ export const PageClient = () => {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Forgot Password</CardTitle>
-          <CardDescription>Enter your email to receive a password reset link</CardDescription>
+          <CardTitle className="text-xl">{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onFormSubmit)}>
@@ -70,12 +72,12 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder={t("emailPlaceholder")}
                       aria-invalid={fieldState.invalid}
                       disabled={isPending}
                     />
@@ -86,10 +88,10 @@ export const PageClient = () => {
 
               <Field>
                 <Button type="submit" disabled={isPending}>
-                  Reset Password
+                  {t("submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Remembered your password? <Link href="/login">Login</Link>
+                  {t("remembered")} <Link href="/login">{t("loginLink")}</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>
@@ -97,8 +99,10 @@ export const PageClient = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <Link href="#">Terms of Service</Link> and{" "}
-        <Link href="#">Privacy Policy</Link>.
+        {t.rich("consent", {
+          terms: (c) => <Link href="/terms">{c}</Link>,
+          privacy: (c) => <Link href="/terms">{c}</Link>,
+        })}
       </FieldDescription>
     </div>
   );
