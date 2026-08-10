@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Seal } from "@/components/chat/primitives";
+import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteFooter } from "@/components/marketing/site-footer";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 
 type Tone = "primary" | "mint" | "amber" | "violet";
 
@@ -70,46 +70,9 @@ const HERO_STATS = [
 ];
 
 export const PageClient = () => {
-  const { user } = useAuth();
-
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-3.5">
-          <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground shadow-sm">
-              K
-            </span>
-            KHBA Assistant
-          </Link>
-          <span className="flex-1" />
-          <nav className="flex items-center gap-1.5">
-            <Link href="#features" className="hidden sm:block">
-              <Button variant="ghost" size="sm">
-                Features
-              </Button>
-            </Link>
-            {user ? (
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost" size="sm">
-                  Sign in
-                </Button>
-              </Link>
-            )}
-            <Link href="/chat">
-              <Button size="sm">Start a consultation</Button>
-            </Link>
-            <ModeToggle />
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="flex-1">
         {/* Hero */}
@@ -282,10 +245,7 @@ export const PageClient = () => {
         </section>
       </main>
 
-      <footer className="border-t border-border py-9 text-center text-sm text-muted-foreground">
-        KHBA RAG AI · Answers are reference material; confirm with the official text and the
-        competent authority.
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
