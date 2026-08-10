@@ -1,8 +1,8 @@
 "use client";
 
 import type { UIMessage } from "ai";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,22 +68,51 @@ const isSearching = (message: UIMessage): boolean =>
       (p.state === "input-streaming" || p.state === "input-available")
   );
 
-const SourcesSkeleton = () => (
-  <div className="flex flex-col gap-2.5">
-    <span className="flex items-center gap-2 text-sm font-extrabold text-foreground">
-      <span className="inline-block size-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
-      Searching sources…
-    </span>
-    {[0, 1].map((i) => (
-      <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3.5">
-        <Skeleton className="size-10 flex-none rounded-lg" />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-3 w-1/3" />
-          <Skeleton className="h-3 w-full" />
+// True once the searchKhba call has returned (output available).
+const hasSearchOutput = (message: UIMessage): boolean =>
+  message.parts.some(
+    (p) => p.type === "tool-searchKhba" && "state" in p && p.state === "output-available"
+  );
+
+// The evidence-search steps, mirroring the prototype's "근거 검색 단계".
+const SEARCH_STEPS = [
+  "Question received",
+  "Searching approved sources",
+  "Checking scope and base date",
+  "Drafting the grounded answer",
+];
+
+// Stepped loader: steps before `activeStep` are done (filled check), the current
+// one pulses, the rest wait — the prototype's evidence-search progress.
+const SearchSteps = ({ activeStep }: { activeStep: number }) => (
+  <div className="flex flex-col gap-2.5 rounded-[16px_16px_16px_4px] border border-border bg-card p-5 shadow-sm">
+    {SEARCH_STEPS.map((label, i) => {
+      const done = i < activeStep;
+      const active = i === activeStep;
+      return (
+        <div
+          key={label}
+          className={cn(
+            "flex items-center gap-2.5 text-[13px] transition-colors",
+            active ? "font-semibold text-foreground" : "text-muted-foreground"
+          )}
+        >
+          <span
+            className={cn(
+              "grid size-4 flex-none place-items-center rounded-full border-2 transition-colors",
+              done ? "border-chart-2 bg-chart-2" : active ? "border-primary" : "border-border"
+            )}
+          >
+            {done ? (
+              <Check className="size-2.5 text-white" strokeWidth={3.5} />
+            ) : active ? (
+              <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+            ) : null}
+          </span>
+          {label}
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 );
 
@@ -95,14 +124,8 @@ const DateDivider = ({ label }: { label: string }) => (
   </div>
 );
 
-const KhbaAvatar = () => (
-  <span className="grid size-8 flex-none place-items-center rounded-lg bg-primary text-sm font-extrabold text-primary-foreground">
-    KH
-  </span>
-);
-
-const UserMessage = ({ text, time }: { text: string; time?: string }) => (
-  <div className="flex flex-col items-end gap-1.5">
+const UserMessage = ({ id, text, time }: { id?: string; text: string; time?: string }) => (
+  <div data-mid={id} className="flex flex-col items-end gap-1.5">
     <div className="w-fit max-w-[80%] rounded-[18px_18px_4px_18px] bg-primary px-4.5 py-3 text-primary-foreground">
       {text}
     </div>
@@ -220,11 +243,17 @@ const AssistantMessage = ({
   const visibleSources = showAllSources ? sources : sources.slice(0, SOURCE_PREVIEW_COUNT);
   const hiddenSourceCount = sources.length - SOURCE_PREVIEW_COUNT;
   const time = getTime(message);
-  const searching = isSearching(message);
   const hasContent = Boolean(text) || sources.length > 0;
   const sourceLabel =
     sources.length > 0 ? `${sources.length} ${sources.length === 1 ? "source" : "sources"}` : null;
   const footerMeta = [time, sourceLabel].filter(Boolean).join(" · ");
+
+  // Before any answer text streams in, show the evidence-search steps: the
+  // search is running (step 1) or has returned and we're drafting (step 3).
+  if (!text) {
+    const activeStep = isSearching(message) ? 1 : hasSearchOutput(message) ? 3 : 1;
+    return <SearchSteps activeStep={activeStep} />;
+  }
 
   return (
     <div className="flex flex-col gap-5 rounded-[16px_16px_16px_4px] border border-border bg-card p-6 shadow-sm">
@@ -246,8 +275,6 @@ const AssistantMessage = ({
           </div>
         </div>
       )}
-
-      {searching && sources.length === 0 && <SourcesSkeleton />}
 
       {sources.length > 0 && (
         <div className="flex flex-col gap-2.5">
@@ -313,18 +340,6 @@ const AssistantMessage = ({
   );
 };
 
-const ThinkingBubble = () => (
-  <div className="flex w-fit items-center gap-2.5 rounded-[16px_16px_16px_4px] border border-border bg-card px-5 py-3.5">
-    <KhbaAvatar />
-    <span className="text-sm text-muted-foreground">Checking the ordinance and the decree</span>
-    <span className="flex gap-1">
-      <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-      <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]" />
-      <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40" />
-    </span>
-  </div>
-);
-
 const EmptyState = ({
   examples = [],
   onExample,
@@ -377,33 +392,70 @@ export const ChatMessages = ({
   onSuggestion,
 }: ChatMessagesProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const atBottomRef = useRef(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const anchoredRef = useRef<string | null>(null);
+  const firstRunRef = useRef(true);
+  const [reserve, setReserve] = useState(0);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
-    const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
-  }, []);
+  const TOP_GAP = 16; // px kept above the pinned question
+
+  // The turn to anchor: the most recent user message.
+  const lastUserId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") return messages[i].id;
+    }
+    return null;
+  }, [messages]);
 
   const handleScroll = () => {
     const el = scrollRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const atBottom = distanceFromBottom < 80;
-    atBottomRef.current = atBottom;
-    setShowScrollButton(!atBottom);
+    const content = contentRef.current;
+    if (!el || !content) return;
+    const belowFold = content.offsetHeight - el.scrollTop - el.clientHeight;
+    setShowScrollButton(belowFold > 120);
   };
 
-  // Follow new/streaming content, but only if the user hasn't scrolled up.
-  // Layout effect keeps the initial jump-to-bottom before paint (no flicker).
+  const scrollToLatest = () => {
+    const el = scrollRef.current;
+    const content = contentRef.current;
+    if (!el || !content) return;
+    el.scrollTo({ top: Math.max(0, content.offsetHeight - el.clientHeight), behavior: "smooth" });
+  };
+
+  // Pin the latest question near the top of the viewport and let its answer
+  // stream in below — instead of chasing the bottom. A spacer reserves just
+  // enough room to reach the top, and shrinks as the answer grows.
   useIsomorphicLayoutEffect(() => {
-    if (atBottomRef.current) scrollToBottom("auto");
-  }, [messages, isThinking, scrollToBottom]);
+    const container = scrollRef.current;
+    const content = contentRef.current;
+    if (!container || !content || !lastUserId) return;
+    const target = content.querySelector<HTMLElement>(`[data-mid="${lastUserId}"]`);
+    if (!target) return;
+
+    const userTop = target.offsetTop;
+    const belowUser = content.offsetHeight - userTop;
+    setReserve(Math.max(0, container.clientHeight - belowUser - TOP_GAP));
+
+    // Scroll only when the turn is new — never mid-stream, so the user can read
+    // and scroll freely while the answer fills in below.
+    if (anchoredRef.current !== lastUserId) {
+      anchoredRef.current = lastUserId;
+      const behavior: ScrollBehavior = firstRunRef.current ? "auto" : "smooth";
+      firstRunRef.current = false;
+      requestAnimationFrame(() => {
+        container.scrollTo({ top: Math.max(0, userTop - TOP_GAP), behavior });
+      });
+    }
+  }, [messages, isThinking, lastUserId]);
 
   return (
     <div className="relative min-h-0 flex-1">
       <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto bg-background">
-        <div className="mx-auto flex max-w-[820px] flex-col gap-4.5 px-7 py-7">
+        <div
+          ref={contentRef}
+          className="relative mx-auto flex max-w-[820px] flex-col gap-4.5 px-7 py-7"
+        >
           {messages.length === 0 && !isThinking ? (
             <EmptyState examples={examples} onExample={onExample} />
           ) : (
@@ -412,7 +464,12 @@ export const ChatMessages = ({
               {messages.map((message, i) => {
                 if (message.role === "user") {
                   return (
-                    <UserMessage key={message.id} text={getText(message)} time={getTime(message)} />
+                    <UserMessage
+                      key={message.id}
+                      id={message.id}
+                      text={getText(message)}
+                      time={getTime(message)}
+                    />
                   );
                 }
                 // Follow-ups belong to the latest completed answer (the prototype
@@ -430,17 +487,16 @@ export const ChatMessages = ({
               })}
             </>
           )}
-          {isThinking && <ThinkingBubble />}
+          {isThinking && <SearchSteps activeStep={1} />}
         </div>
+        {/* Reserved room so the newest question can sit at the top while its
+            answer streams; collapses to nothing once the turn fills the view. */}
+        <div aria-hidden style={{ height: reserve }} />
       </div>
 
       <button
         type="button"
-        onClick={() => {
-          atBottomRef.current = true;
-          setShowScrollButton(false);
-          scrollToBottom("smooth");
-        }}
+        onClick={scrollToLatest}
         aria-label="Scroll to latest"
         className={cn(
           "absolute bottom-4 left-1/2 grid size-9 -translate-x-1/2 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition-all hover:bg-accent hover:text-accent-foreground",
