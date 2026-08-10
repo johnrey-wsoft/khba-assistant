@@ -1,55 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, HelpCircle, FolderCheck, CalendarClock, Lightbulb, Building2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import {
+  Check,
+  HelpCircle,
+  FolderCheck,
+  CalendarClock,
+  Lightbulb,
+  Building2,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { AUTH_ROUTES, PUBLIC_ROUTES } from "@/constants/routes.constant";
 
-export const metadata: Metadata = {
-  title: "About us · KHBA Assistant",
-  description:
-    "A member consultation desk that answers, then shows you where the answer came from.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("about");
+  return { title: `${t("eyebrow")} · KHBA Assistant`, description: t("lede") };
+}
 
-const TODAY = [
-  "Search association materials, public notices and statutes together.",
-  "Summarise the answer in one sentence, then unpack the conditions.",
-  "Attach source cards with the issuing body and the base date.",
-  "Say plainly when the evidence is thin or missing.",
-];
-
-const NOT_YET = [
-  "Feasibility review or profitability modelling for a site.",
-  "Automated design or code compliance checking of drawings.",
-  "Replacing a filing decision. The official text and the competent authority still decide.",
-  "Answering on documents we do not hold. We tell you instead of guessing.",
-];
-
-const PRINCIPLES = [
-  {
-    icon: FolderCheck,
-    title: "Sources first",
-    body: "An answer without a document behind it does not ship. If we cannot cite it, we tell you what is missing and what you can check instead.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Dates stay visible",
-    body: "Housing rules move. Every source keeps its base date so you can judge whether it is current for your case.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Limits stated up front",
-    body: "We would rather narrow the promise than overstate it. The scope is stated in the product, not buried in a footnote.",
-  },
-];
-
-const OPERATOR = [
-  { label: "Operator", value: "Korea Housing Builders Association secretariat" },
-  { label: "Service", value: "KHBA Assistant, member consultation channel" },
-  { label: "Contact", value: "assistant@khba.example" },
-  { label: "Hours", value: "Weekdays 09:00 to 18:00, KST" },
+const PRINCIPLES: { icon: LucideIcon; key: string }[] = [
+  { icon: FolderCheck, key: "sources" },
+  { icon: CalendarClock, key: "dates" },
+  { icon: Lightbulb, key: "limits" },
 ];
 
 const ListCard = ({
@@ -57,7 +32,7 @@ const ListCard = ({
   title,
   items,
 }: {
-  icon: typeof Check;
+  icon: LucideIcon;
   title: string;
   items: string[];
 }) => (
@@ -74,38 +49,50 @@ const ListCard = ({
   </div>
 );
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const t = await getTranslations("about");
+  const tc = await getTranslations("common");
+  const today = t.raw("today") as string[];
+  const notYet = t.raw("notYet") as string[];
+
+  const operator = [
+    { label: t("operator.operatorLabel"), value: t("operator.operatorValue") },
+    { label: t("operator.serviceLabel"), value: t("operator.serviceValue") },
+    { label: t("operator.contactLabel"), value: "assistant@khba.example" },
+    { label: t("operator.hoursLabel"), value: t("operator.hoursValue") },
+  ];
+
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-16">
-        <span className="text-sm font-bold text-muted-foreground">About us</span>
+        <span className="text-sm font-bold text-muted-foreground">{t("eyebrow")}</span>
         <h1 className="mt-2.5 text-[clamp(30px,4vw,42px)] leading-tight font-extrabold tracking-tight text-foreground">
-          We built a counter that hands you the evidence
+          {t("title")}
         </h1>
-        <p className="mt-4 max-w-[52ch] text-lg text-muted-foreground">
-          KHBA Assistant is run for association members by the association secretariat. It is not a
-          search engine dressed up as a chat window. It is a consultation desk that answers, then
-          shows you where the answer came from.
-        </p>
+        <p className="mt-4 max-w-[52ch] text-lg text-muted-foreground">{t("lede")}</p>
 
         <div className="mt-11 grid gap-5 md:grid-cols-2">
-          <ListCard icon={Check} title="What we do today" items={TODAY} />
-          <ListCard icon={HelpCircle} title="What we cannot do yet" items={NOT_YET} />
+          <ListCard icon={Check} title={t("todayTitle")} items={today} />
+          <ListCard icon={HelpCircle} title={t("notYetTitle")} items={notYet} />
         </div>
 
         <h2 className="mt-14 text-[clamp(26px,3.4vw,38px)] font-extrabold tracking-tight text-foreground">
-          How we decide what to say
+          {t("principlesTitle")}
         </h2>
         <div className="mt-7 grid gap-5 md:grid-cols-3">
-          {PRINCIPLES.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="rounded-3xl border border-border bg-card p-7 shadow-sm">
+          {PRINCIPLES.map(({ icon: Icon, key }) => (
+            <div key={key} className="rounded-3xl border border-border bg-card p-7 shadow-sm">
               <span className="mb-5 grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
                 <Icon className="size-6" />
               </span>
-              <h3 className="text-lg font-extrabold text-foreground">{title}</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
+              <h3 className="text-lg font-extrabold text-foreground">
+                {t(`principles.${key}Title`)}
+              </h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+                {t(`principles.${key}Body`)}
+              </p>
             </div>
           ))}
         </div>
@@ -114,10 +101,10 @@ export default function AboutPage() {
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-3.5 flex items-center gap-2 text-sm font-extrabold text-foreground">
               <Building2 className="size-4.5 text-primary" />
-              Who runs this
+              {t("whoRunsTitle")}
             </div>
             <div className="flex flex-col gap-3 text-sm text-muted-foreground">
-              {OPERATOR.map((row) => (
+              {operator.map((row) => (
                 <div key={row.label}>
                   <div className="font-bold text-foreground">{row.label}</div>
                   {row.value}
@@ -128,19 +115,17 @@ export default function AboutPage() {
 
           <div className="rounded-3xl border border-border bg-card p-7 shadow-sm">
             <div className="text-xl font-extrabold tracking-tight text-foreground">
-              Where this is going
+              {t("roadmapTitle")}
             </div>
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              Next, we&apos;re building an in-place document viewer, so the cited passage opens where
-              you are instead of sending you to another portal. Feasibility and design review remain
-              out of scope until the evidence behind them is good enough to stand behind.
+              {t("roadmapBody")}
             </p>
             <div className="mt-6 flex flex-wrap gap-2.5">
               <Link href={AUTH_ROUTES.REGISTER}>
-                <Button>Create an account</Button>
+                <Button>{tc("createAccount")}</Button>
               </Link>
               <Link href={PUBLIC_ROUTES.TERMS}>
-                <Button variant="secondary">Read the terms</Button>
+                <Button variant="secondary">{t("readTerms")}</Button>
               </Link>
             </div>
           </div>

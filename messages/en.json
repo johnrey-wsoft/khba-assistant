@@ -1,0 +1,257 @@
+{
+  "common": {
+    "appName": "KHBA Assistant",
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "dashboard": "Dashboard",
+    "startConsultation": "Start a consultation",
+    "createAccount": "Create an account",
+    "member": "Member"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About us",
+    "terms": "Terms of service"
+  },
+  "footer": {
+    "tagline": "A member consultation channel that answers with the source document, the issuing body, and the base date attached.",
+    "product": "Product",
+    "legal": "Legal",
+    "desk": "Talk to the desk",
+    "privacyNotice": "Privacy notice",
+    "whatsCovered": "What's covered",
+    "hours": "Weekdays 09:00 to 18:00, KST",
+    "operatedBy": "Operated by the Korea Housing Builders Association secretariat",
+    "disclaimer": "Answers are reference material. The official text and the competent authority decide.",
+    "baseDate": "Base date {date}"
+  },
+  "landing": {
+    "pill": "For KHBA members",
+    "titleLine": "Small-housing work,",
+    "titleHighlight": "answered with the sources.",
+    "lede": "Search approved association materials, notices, and statutes at once — with the source and its base date alongside.",
+    "ctaStart": "Start a consultation",
+    "ctaHow": "How it helps",
+    "stats": {
+      "sourcedValue": "90%+ sourced",
+      "sourcedLabel": "answers cite their basis",
+      "oneScreenValue": "One screen",
+      "oneScreenLabel": "materials · notices · statutes",
+      "baseDateValue": "Base date",
+      "baseDateLabel": "current-state guidance"
+    },
+    "demo": {
+      "answerReady": "Answer ready",
+      "question": "What is the parking ratio for small housing in Suwon?",
+      "answer": "Under 30㎡ it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6.",
+      "sourceTitle": "수원시 주차장 설치 및 관리 조례",
+      "sourceOrg": "Suwon · Ordinance"
+    },
+    "features": {
+      "title": "Here's how it helps",
+      "subtitle": "Not just search — the basis and the next thing to do, handled for you.",
+      "sourcedTitle": "Sourced, first",
+      "sourcedBody": "Every answer shows the document, authority, base date, and a link to the original. No basis? It says “not confirmed” plainly.",
+      "datedTitle": "Always dated",
+      "datedBody": "Time-sensitive facts always carry a base-date seal and a final-check note, so you can confirm with confidence.",
+      "nextTitle": "Next steps, too",
+      "nextBody": "Filing documents and deadlines land in a checklist with a D-day. It doesn't stop at the answer.",
+      "oneTitle": "All in one place",
+      "oneBody": "Search association materials, notices, and statutes by type, authority, region, and period — no site-hopping."
+    },
+    "steps": {
+      "title": "Three steps, done",
+      "subtitle": "No setup — just ask what you need.",
+      "askTitle": "Ask",
+      "askBody": "Ask what you need in plain words, just like you'd say it.",
+      "answerTitle": "Grounded answer",
+      "answerBody": "Get the summary and key points with the source and base date.",
+      "nextTitle": "Next actions",
+      "nextBody": "Continue with follow-up questions and a checklist."
+    },
+    "cta": {
+      "title": "Ask right now",
+      "body": "Sign in to check association materials, notices, and statutes — always with the sources.",
+      "button": "Start a consultation"
+    }
+  },
+  "about": {
+    "eyebrow": "About us",
+    "title": "We built a counter that hands you the evidence",
+    "lede": "KHBA Assistant is run for association members by the association secretariat. It is not a search engine dressed up as a chat window. It is a consultation desk that answers, then shows you where the answer came from.",
+    "todayTitle": "What we do today",
+    "today": [
+      "Search association materials, public notices and statutes together.",
+      "Summarise the answer in one sentence, then unpack the conditions.",
+      "Attach source cards with the issuing body and the base date.",
+      "Say plainly when the evidence is thin or missing."
+    ],
+    "notYetTitle": "What we cannot do yet",
+    "notYet": [
+      "Feasibility review or profitability modelling for a site.",
+      "Automated design or code compliance checking of drawings.",
+      "Replacing a filing decision. The official text and the competent authority still decide.",
+      "Answering on documents we do not hold. We tell you instead of guessing."
+    ],
+    "principlesTitle": "How we decide what to say",
+    "principles": {
+      "sourcesTitle": "Sources first",
+      "sourcesBody": "An answer without a document behind it does not ship. If we cannot cite it, we tell you what is missing and what you can check instead.",
+      "datesTitle": "Dates stay visible",
+      "datesBody": "Housing rules move. Every source keeps its base date so you can judge whether it is current for your case.",
+      "limitsTitle": "Limits stated up front",
+      "limitsBody": "We would rather narrow the promise than overstate it. The scope is stated in the product, not buried in a footnote."
+    },
+    "whoRunsTitle": "Who runs this",
+    "operator": {
+      "operatorLabel": "Operator",
+      "operatorValue": "Korea Housing Builders Association secretariat",
+      "serviceLabel": "Service",
+      "serviceValue": "KHBA Assistant, member consultation channel",
+      "contactLabel": "Contact",
+      "hoursLabel": "Hours",
+      "hoursValue": "Weekdays 09:00 to 18:00, KST"
+    },
+    "roadmapTitle": "Where this is going",
+    "roadmapBody": "Next, we're building an in-place document viewer, so the cited passage opens where you are instead of sending you to another portal. Feasibility and design review remain out of scope until the evidence behind them is good enough to stand behind.",
+    "readTerms": "Read the terms"
+  },
+  "terms": {
+    "eyebrow": "Terms of service",
+    "title": "Terms of use for KHBA Assistant",
+    "effective": "Effective {date}",
+    "versionNote": "Version {version} · applies to all member accounts",
+    "tocTitle": "What is in here",
+    "notice": "Answers are reference material. Before filing or applying, the official text and the competent authority are what decide, so please confirm there.",
+    "contactNote": "Questions about these terms go to <link>assistant@khba.example</link>. Changes are announced at least seven days before they take effect.",
+    "articles": [
+      {
+        "id": "a1",
+        "title": "Article 1. What these terms cover",
+        "body": "These terms govern how members of the Korea Housing Builders Association use KHBA Assistant. By opening an account you accept them, and by continuing to use the service after a change takes effect you accept the changed version."
+      },
+      {
+        "id": "a2",
+        "title": "Article 2. Who may hold an account",
+        "body": "Accounts are for verified member companies and the staff they nominate. The secretariat confirms the company against association records before an account is activated, and an account belongs to one person only.",
+        "items": [
+          "Sharing credentials across staff is grounds for suspension.",
+          "Leaving a member company means the account is closed on request of the company.",
+          "A company may ask the desk to transfer or revoke the accounts it nominated."
+        ]
+      },
+      {
+        "id": "a3",
+        "title": "Article 3. What the service does, and does not do",
+        "body": "The service searches association materials, public notices and statutes, summarises what it finds, and cites the documents behind the summary with their base dates. It does not include feasibility review, profitability modelling, or automated checking of drawings."
+      },
+      {
+        "id": "a4",
+        "title": "Article 4. Answers are reference material",
+        "body": "Answers support your judgement, they do not replace it. Before filing, applying, or committing money, the official text and the competent authority govern, and confirming there is your responsibility. The association is not liable for decisions made on an answer alone."
+      },
+      {
+        "id": "a5",
+        "title": "Article 5. Base dates and revisions",
+        "body": "Every cited source carries the date the content reflects. Rules change, and a document that was current at its base date may since have been revised. Where we know a revision exists, we say so in the answer."
+      },
+      {
+        "id": "a6",
+        "title": "Article 6. How your data is handled",
+        "body": "We keep the account details you provide, the questions you ask, and the answers returned, so the desk can improve coverage and resolve disputes.",
+        "items": [
+          "Question history is retained for one year, then deleted.",
+          "Account details are kept while the account is open and for five years after closure where law requires.",
+          "Content is not sold, and is not shared outside the secretariat except where law compels it."
+        ]
+      },
+      {
+        "id": "a7",
+        "title": "Article 7. Things you agree not to do",
+        "body": "Automated bulk extraction, resale of answers as a commercial data product, attempts to bypass access control, and uploading material you have no right to share are all prohibited. We may suspend an account while we look into suspected misuse."
+      },
+      {
+        "id": "a8",
+        "title": "Article 8. Interruptions and changes",
+        "body": "Maintenance, source outages and force majeure can interrupt the service. Planned maintenance is announced in advance where practical. Material changes to these terms are announced at least seven days before they take effect, and thirty days where the change reduces member rights."
+      }
+    ]
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in with your email and password",
+      "email": "Email",
+      "emailPlaceholder": "m@example.com",
+      "password": "Password",
+      "forgot": "Forgot your password?",
+      "submit": "Login",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "consent": "By clicking continue, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "toastFailTitle": "Login failed",
+      "toastSuccessTitle": "Welcome back!",
+      "toastSuccessBody": "You have been logged in successfully.",
+      "toastErrorTitle": "Something went wrong",
+      "toastErrorBody": "Please try again."
+    },
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Register with your email and password",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "emailPlaceholder": "m@example.com",
+      "password": "Password",
+      "submit": "Submit",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Login",
+      "consent": "By clicking continue, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "toastFailTitle": "Registration failed",
+      "toastSuccessTitle": "Registration successful",
+      "toastSuccessBody": "You can now login with your credentials.",
+      "toastErrorTitle": "Something went wrong",
+      "toastErrorBody": "Please try again."
+    },
+    "forgot": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to receive a password reset link",
+      "email": "Email",
+      "emailPlaceholder": "m@example.com",
+      "submit": "Reset Password",
+      "remembered": "Remembered your password?",
+      "loginLink": "Login",
+      "consent": "By clicking continue, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+      "toastFailTitle": "Reset password failed",
+      "toastFailBody": "Please check your email address and try again.",
+      "toastSuccessTitle": "Reset email sent",
+      "toastSuccessBody": "Please check your email for the password reset link.",
+      "toastErrorTitle": "Something went wrong",
+      "toastErrorBody": "There was an issue sending the reset email. Please try again later."
+    },
+    "reset": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password below",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Submit",
+      "consent": "By clicking continue, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+      "toastFailTitle": "Reset password failed",
+      "toastFailBody": "Please check your credentials and try again.",
+      "toastSuccessTitle": "Password reset successful",
+      "toastSuccessBody": "Your password has been updated successfully.",
+      "toastErrorTitle": "Something went wrong",
+      "toastErrorBody": "There was an issue resetting your password. Please try again later."
+    }
+  },
+  "locale": {
+    "switchLabel": "Language",
+    "en": "English",
+    "ko": "한국어"
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Search,
   CalendarClock,
@@ -16,6 +17,7 @@ import { Seal } from "@/components/chat/primitives";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { cn } from "@/lib/utils";
+import { PUBLIC_ROUTES } from "@/constants/routes.constant";
 
 type Tone = "primary" | "mint" | "amber" | "violet";
 
@@ -26,50 +28,20 @@ const TONE_CLASS: Record<Tone, string> = {
   violet: "bg-chart-4/10 text-chart-4",
 };
 
-const FEATURES: { icon: LucideIcon; tone: Tone; title: string; body: string }[] = [
-  {
-    icon: Search,
-    tone: "primary",
-    title: "Sourced, first",
-    body: "Every answer shows the document, authority, base date, and a link to the original. No basis? It says “not confirmed” plainly.",
-  },
-  {
-    icon: CalendarClock,
-    tone: "mint",
-    title: "Always dated",
-    body: "Time-sensitive facts always carry a base-date seal and a final-check note, so you can confirm with confidence.",
-  },
-  {
-    icon: ListChecks,
-    tone: "amber",
-    title: "Next steps, too",
-    body: "Filing documents and deadlines land in a checklist with a D-day. It doesn’t stop at the answer.",
-  },
-  {
-    icon: FolderSearch,
-    tone: "violet",
-    title: "All in one place",
-    body: "Search association materials, notices, and statutes by type, authority, region, and period — no site-hopping.",
-  },
+const FEATURES: { icon: LucideIcon; tone: Tone; key: string }[] = [
+  { icon: Search, tone: "primary", key: "sourced" },
+  { icon: CalendarClock, tone: "mint", key: "dated" },
+  { icon: ListChecks, tone: "amber", key: "next" },
+  { icon: FolderSearch, tone: "violet", key: "one" },
 ];
 
-const STEPS = [
-  { n: 1, title: "Ask", body: "Ask what you need in plain words, just like you’d say it." },
-  {
-    n: 2,
-    title: "Grounded answer",
-    body: "Get the summary and key points with the source and base date.",
-  },
-  { n: 3, title: "Next actions", body: "Continue with follow-up questions and a checklist." },
-];
-
-const HERO_STATS = [
-  { value: "90%+ sourced", label: "answers cite their basis" },
-  { value: "One screen", label: "materials · notices · statutes" },
-  { value: "Base date", label: "current-state guidance" },
-];
+const STEPS = ["ask", "answer", "next"];
+const STATS = ["sourced", "oneScreen", "baseDate"];
 
 export const PageClient = () => {
+  const t = useTranslations("landing");
+  const tc = useTranslations("common");
+
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <SiteHeader />
@@ -89,38 +61,39 @@ export const PageClient = () => {
             <div className="text-center md:text-left">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-bold text-primary">
                 <span className="size-1.5 rounded-full bg-chart-2" />
-                For KHBA members
+                {t("pill")}
               </span>
               <h1 className="mt-5 text-[clamp(34px,4.6vw,56px)] leading-[1.12] font-extrabold tracking-tight text-foreground">
-                Small-housing work,
+                {t("titleLine")}
                 <br />
-                <span className="text-primary">answered with the sources.</span>
+                <span className="text-primary">{t("titleHighlight")}</span>
               </h1>
               <p className="mx-auto mt-5 max-w-[34ch] text-lg leading-relaxed text-muted-foreground md:mx-0">
-                Search approved association materials, notices, and statutes at once — with the
-                source and its base date alongside.
+                {t("lede")}
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
-                <Link href="/chat">
+                <Link href={PUBLIC_ROUTES.CHAT}>
                   <Button size="lg" className="gap-2">
-                    Start a consultation
+                    {t("ctaStart")}
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
                 <Link href="#features">
                   <Button size="lg" variant="secondary">
-                    How it helps
+                    {t("ctaHow")}
                   </Button>
                 </Link>
               </div>
               <div className="mt-9 flex flex-wrap justify-center gap-x-6 gap-y-4 md:justify-start">
-                {HERO_STATS.map((s, i) => (
-                  <div key={s.value} className="flex items-center gap-6">
+                {STATS.map((key, i) => (
+                  <div key={key} className="flex items-center gap-6">
                     {i > 0 && <span className="hidden h-8 w-px bg-border sm:block" />}
                     <div className="flex flex-col">
-                      <span className="text-xl font-extrabold text-foreground">{s.value}</span>
+                      <span className="text-xl font-extrabold text-foreground">
+                        {t(`stats.${key}Value`)}
+                      </span>
                       <span className="text-[13px] font-semibold text-muted-foreground">
-                        {s.label}
+                        {t(`stats.${key}Label`)}
                       </span>
                     </div>
                   </div>
@@ -134,19 +107,19 @@ export const PageClient = () => {
                 <span className="grid size-8 place-items-center rounded-[9px] bg-primary text-xs font-extrabold text-primary-foreground">
                   KH
                 </span>
-                <b className="text-sm text-foreground">KHBA Assistant</b>
+                <b className="text-sm text-foreground">{tc("appName")}</b>
                 <span className="ml-auto flex items-center gap-1.5 text-xs font-bold text-chart-2">
                   <span className="size-1.5 rounded-full bg-chart-2" />
-                  Answer ready
+                  {t("demo.answerReady")}
                 </span>
               </div>
               <div className="flex flex-col gap-3.5 bg-muted/40 p-5">
                 <div className="ml-auto w-fit max-w-[82%] rounded-[16px_16px_4px_16px] bg-primary px-4 py-3 text-sm font-medium text-primary-foreground">
-                  What is the parking ratio for small housing in Suwon?
+                  {t("demo.question")}
                 </div>
                 <div className="rounded-[16px_16px_16px_4px] border border-border bg-card p-4 shadow-sm">
                   <p className="text-[15px] leading-relaxed font-bold text-foreground">
-                    Under 30㎡ it is 0.5 space per unit, and 30㎡ to 60㎡ is 0.6.
+                    {t("demo.answer")}
                   </p>
                   <div className="mt-3.5 flex items-center gap-3 rounded-xl bg-muted/60 p-3">
                     <span className="grid size-9 flex-none place-items-center rounded-[10px] bg-primary/10 text-primary">
@@ -154,9 +127,9 @@ export const PageClient = () => {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13.5px] font-bold text-foreground">
-                        수원시 주차장 설치 및 관리 조례
+                        {t("demo.sourceTitle")}
                       </div>
-                      <div className="text-xs text-muted-foreground">Suwon · Ordinance</div>
+                      <div className="text-xs text-muted-foreground">{t("demo.sourceOrg")}</div>
                     </div>
                     <Seal className="flex-none">2026-03-15</Seal>
                   </div>
@@ -170,16 +143,14 @@ export const PageClient = () => {
         <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20">
           <div className="mx-auto mb-12 max-w-[36ch] text-center">
             <h2 className="text-[clamp(28px,3.6vw,40px)] font-extrabold tracking-tight text-foreground">
-              Here’s how it helps
+              {t("features.title")}
             </h2>
-            <p className="mt-3.5 text-lg text-muted-foreground">
-              Not just search — the basis and the next thing to do, handled for you.
-            </p>
+            <p className="mt-3.5 text-lg text-muted-foreground">{t("features.subtitle")}</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, tone, title, body }) => (
+            {FEATURES.map(({ icon: Icon, tone, key }) => (
               <div
-                key={title}
+                key={key}
                 className="rounded-3xl border border-border bg-card p-7 shadow-sm transition-shadow hover:shadow-md"
               >
                 <span
@@ -190,8 +161,12 @@ export const PageClient = () => {
                 >
                   <Icon className="size-6" />
                 </span>
-                <h3 className="text-lg font-extrabold text-foreground">{title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
+                <h3 className="text-lg font-extrabold text-foreground">
+                  {t(`features.${key}Title`)}
+                </h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+                  {t(`features.${key}Body`)}
+                </p>
               </div>
             ))}
           </div>
@@ -202,23 +177,23 @@ export const PageClient = () => {
           <div className="mx-auto max-w-6xl px-6 py-20">
             <div className="mx-auto mb-12 max-w-[36ch] text-center">
               <h2 className="text-[clamp(28px,3.6vw,40px)] font-extrabold tracking-tight text-foreground">
-                Three steps, done
+                {t("steps.title")}
               </h2>
-              <p className="mt-3.5 text-lg text-muted-foreground">
-                No setup — just ask what you need.
-              </p>
+              <p className="mt-3.5 text-lg text-muted-foreground">{t("steps.subtitle")}</p>
             </div>
             <div className="grid gap-5 md:grid-cols-3">
-              {STEPS.map((s) => (
+              {STEPS.map((key, i) => (
                 <div
-                  key={s.n}
+                  key={key}
                   className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm"
                 >
                   <span className="mx-auto mb-5 grid size-11 place-items-center rounded-full bg-primary text-lg font-extrabold text-primary-foreground">
-                    {s.n}
+                    {i + 1}
                   </span>
-                  <h4 className="text-lg font-extrabold text-foreground">{s.title}</h4>
-                  <p className="mt-2 text-[15px] text-muted-foreground">{s.body}</p>
+                  <h4 className="text-lg font-extrabold text-foreground">
+                    {t(`steps.${key}Title`)}
+                  </h4>
+                  <p className="mt-2 text-[15px] text-muted-foreground">{t(`steps.${key}Body`)}</p>
                 </div>
               ))}
             </div>
@@ -229,15 +204,14 @@ export const PageClient = () => {
         <section className="mx-auto max-w-6xl px-6 py-20">
           <div className="rounded-3xl bg-primary px-8 py-16 text-center text-primary-foreground shadow-lg">
             <h2 className="text-[clamp(28px,3.6vw,38px)] font-extrabold tracking-tight text-primary-foreground">
-              Ask right now
+              {t("cta.title")}
             </h2>
             <p className="mx-auto mt-4 max-w-[40ch] text-lg text-primary-foreground/85">
-              Sign in to check association materials, notices, and statutes — always with the
-              sources.
+              {t("cta.body")}
             </p>
-            <Link href="/chat" className="mt-8 inline-block">
+            <Link href={PUBLIC_ROUTES.CHAT} className="mt-8 inline-block">
               <Button size="lg" variant="secondary" className="gap-2">
-                Start a consultation
+                {t("cta.button")}
                 <ArrowRight className="size-4" />
               </Button>
             </Link>

@@ -6,16 +6,11 @@ import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PasswordInput } from "@/components/shared/password-input";
 
@@ -28,6 +23,7 @@ import { AUTH_ROUTES, DEFAULT_AUTH_REDIRECT } from "@/constants/routes.constant"
 export const PageClient = () => {
   const router = useRouter();
   const supabase = getSupabaseClient();
+  const t = useTranslations("auth.login");
 
   const [isPending, startTransition] = useTransition();
 
@@ -45,20 +41,20 @@ export const PageClient = () => {
         const { error } = await supabase.auth.signInWithPassword(values);
 
         if (error) {
-          toast.error("Login failed", {
+          toast.error(t("toastFailTitle"), {
             description: error.message,
           });
           return;
         }
 
-        toast.success("Welcome back!", {
-          description: "You have been logged in successfully.",
+        toast.success(t("toastSuccessTitle"), {
+          description: t("toastSuccessBody"),
         });
         router.replace(DEFAULT_AUTH_REDIRECT);
       } catch (error) {
         console.error(error);
-        toast.error("Something went wrong", {
-          description: "Please try again.",
+        toast.error(t("toastErrorTitle"), {
+          description: t("toastErrorBody"),
         });
       }
     });
@@ -68,8 +64,8 @@ export const PageClient = () => {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Sign in with your email and password</CardDescription>
+          <CardTitle className="text-xl">{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onFormSubmit)}>
@@ -79,12 +75,12 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder={t("emailPlaceholder")}
                       aria-invalid={fieldState.invalid}
                       disabled={isPending}
                     />
@@ -98,12 +94,12 @@ export const PageClient = () => {
                 render={({ field, fieldState }) => (
                   <Field>
                     <div className="flex items-center">
-                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
                       <Link
                         href={AUTH_ROUTES.FORGOT_PASSWORD}
                         className="ml-auto text-sm underline-offset-4 hover:underline"
                       >
-                        Forgot your password?
+                        {t("forgot")}
                       </Link>
                     </div>
                     <PasswordInput
@@ -118,10 +114,10 @@ export const PageClient = () => {
               />
               <Field>
                 <Button type="submit" disabled={isPending}>
-                  Login
+                  {t("submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <Link href={AUTH_ROUTES.REGISTER}>Sign up</Link>
+                  {t("noAccount")} <Link href={AUTH_ROUTES.REGISTER}>{t("signUpLink")}</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>
@@ -129,8 +125,10 @@ export const PageClient = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <Link href="#">Terms of Service</Link> and{" "}
-        <Link href="#">Privacy Policy</Link>.
+        {t.rich("consent", {
+          terms: (c) => <Link href="/terms">{c}</Link>,
+          privacy: (c) => <Link href="/terms">{c}</Link>,
+        })}
       </FieldDescription>
     </div>
   );

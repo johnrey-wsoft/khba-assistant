@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { AUTH_ROUTES } from "@/constants/routes.constant";
 export const PageClient = () => {
   const router = useRouter();
   const supabase = getSupabaseClient();
+  const t = useTranslations("auth.register");
 
   const [isPending, startTransition] = useTransition();
 
@@ -48,22 +50,22 @@ export const PageClient = () => {
         });
 
         if (error) {
-          toast.error("Registration failed", {
+          toast.error(t("toastFailTitle"), {
             description: error.message,
           });
           return;
         }
 
-        toast.success("Registration successful", {
-          description: "You can now login with your credentials.",
+        toast.success(t("toastSuccessTitle"), {
+          description: t("toastSuccessBody"),
         });
 
         form.reset();
         router.push(AUTH_ROUTES.LOGIN);
       } catch (error) {
         console.error(error);
-        toast.error("Something went wrong", {
-          description: "Please try again.",
+        toast.error(t("toastErrorTitle"), {
+          description: t("toastErrorBody"),
         });
       }
     });
@@ -73,8 +75,8 @@ export const PageClient = () => {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create an account</CardTitle>
-          <CardDescription>Register with your email and password</CardDescription>
+          <CardTitle className="text-xl">{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onFormSubmit)}>
@@ -84,12 +86,12 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <FieldLabel htmlFor="name">{t("name")}</FieldLabel>
                     <Input
                       {...field}
                       id="name"
                       type="text"
-                      placeholder="John Doe"
+                      placeholder={t("namePlaceholder")}
                       aria-invalid={fieldState.invalid}
                       disabled={isPending}
                     />
@@ -102,12 +104,12 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder={t("emailPlaceholder")}
                       aria-invalid={fieldState.invalid}
                       disabled={isPending}
                     />
@@ -120,7 +122,7 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
                     <PasswordInput
                       {...field}
                       id="password"
@@ -133,10 +135,10 @@ export const PageClient = () => {
               />
               <Field>
                 <Button type="submit" disabled={isPending}>
-                  Submit
+                  {t("submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Already have an account? <Link href={AUTH_ROUTES.LOGIN}>Login</Link>
+                  {t("haveAccount")} <Link href={AUTH_ROUTES.LOGIN}>{t("loginLink")}</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>

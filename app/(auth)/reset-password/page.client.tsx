@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { resetPasswordSchema, type ResetPasswordFormValues } from "@/schemas/aut
 
 export const PageClient = () => {
   const supabase = getSupabaseClient();
+  const t = useTranslations("auth.reset");
 
   const [isPending, startTransition] = useTransition();
 
@@ -36,21 +38,21 @@ export const PageClient = () => {
         });
 
         if (error) {
-          toast.error("Reset password failed", {
-            description: "Please check your credentials and try again.",
+          toast.error(t("toastFailTitle"), {
+            description: t("toastFailBody"),
           });
           return;
         }
 
-        toast.success("Password reset successful", {
-          description: "Your password has been updated successfully.",
+        toast.success(t("toastSuccessTitle"), {
+          description: t("toastSuccessBody"),
         });
 
         form.reset();
       } catch (error) {
         console.error(error);
-        toast.error("Something went wrong", {
-          description: "There was an issue resetting your password. Please try again later.",
+        toast.error(t("toastErrorTitle"), {
+          description: t("toastErrorBody"),
         });
       }
     });
@@ -60,8 +62,8 @@ export const PageClient = () => {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Reset Password</CardTitle>
-          <CardDescription>Enter your new password below</CardDescription>
+          <CardTitle className="text-xl">{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onFormSubmit)}>
@@ -71,7 +73,7 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
                     <PasswordInput
                       {...field}
                       id="password"
@@ -87,7 +89,7 @@ export const PageClient = () => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                    <FieldLabel htmlFor="confirmPassword">{t("confirmPassword")}</FieldLabel>
                     <PasswordInput
                       {...field}
                       id="confirmPassword"
@@ -100,7 +102,7 @@ export const PageClient = () => {
               />
               <Field>
                 <Button type="submit" disabled={isPending}>
-                  Submit
+                  {t("submit")}
                 </Button>
               </Field>
             </FieldGroup>
@@ -108,8 +110,10 @@ export const PageClient = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <Link href="#">Terms of Service</Link> and{" "}
-        <Link href="#">Privacy Policy</Link>.
+        {t.rich("consent", {
+          terms: (c) => <Link href="/terms">{c}</Link>,
+          privacy: (c) => <Link href="/terms">{c}</Link>,
+        })}
       </FieldDescription>
     </div>
   );
