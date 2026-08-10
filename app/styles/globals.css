@@ -208,3 +208,21 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Evidence viewer: flash the cited excerpt when its document opens. */
+@keyframes evidence-flash {
+  0% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--seal) 40%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.evidence-flash {
+  animation: evidence-flash 1.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .evidence-flash {
+    animation: none;
+  }
+}

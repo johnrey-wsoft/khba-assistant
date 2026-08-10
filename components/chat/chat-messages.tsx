@@ -230,7 +230,7 @@ const AssistantMessage = ({
     <div className="flex flex-col gap-5 rounded-[16px_16px_16px_4px] border border-border bg-card p-6 shadow-sm">
       {summary && (
         <div className="border-l-[3px] border-primary pl-4 text-base leading-relaxed font-semibold text-foreground">
-          <Markdown citations={citations} onCite={openSource}>
+          <Markdown citations={citations} onCite={(src) => openSource(src, sources)}>
             {summary}
           </Markdown>
         </div>
@@ -240,7 +240,7 @@ const AssistantMessage = ({
         <div className="flex flex-col gap-2.5">
           <AnswerLabel>Key points</AnswerLabel>
           <div className="text-[15px] leading-relaxed text-foreground [&_li]:marker:text-primary [&_ul]:mb-0">
-            <Markdown citations={citations} onCite={openSource}>
+            <Markdown citations={citations} onCite={(src) => openSource(src, sources)}>
               {body}
             </Markdown>
           </div>
@@ -258,7 +258,12 @@ const AssistantMessage = ({
             </span>
           </div>
           {visibleSources.map((s, i) => (
-            <SourceCard key={s.documentCode} source={s} index={i + 1} onOpen={() => openSource(s)} />
+            <SourceCard
+              key={s.documentCode}
+              source={s}
+              index={i + 1}
+              onOpen={() => openSource(s, sources)}
+            />
           ))}
           {sources.length > SOURCE_PREVIEW_COUNT && (
             <Button

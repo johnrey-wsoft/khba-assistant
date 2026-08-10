@@ -5,7 +5,9 @@ import * as React from "react";
 import type { ChatSource } from "@/components/chat/primitives";
 
 type ArtifactValue = {
-  openSource: (source: ChatSource) => void;
+  // `siblings` are the other sources cited in the same answer — the panel shows
+  // them as tabs, opening on `source`.
+  openSource: (source: ChatSource, siblings?: ChatSource[]) => void;
 };
 
 const ArtifactContext = React.createContext<ArtifactValue>({

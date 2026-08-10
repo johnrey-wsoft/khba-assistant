@@ -39,7 +39,16 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const seed = useMemo(() => (thread ? toUIMessages(thread.messages) : []), [thread]);
 
   const [input, setInput] = useState("");
-  const [activeSource, setActiveSource] = useState<ChatSource | null>(null);
+  const [artifact, setArtifact] = useState<{ sources: ChatSource[]; index: number } | null>(null);
+
+  const openSource = (source: ChatSource, siblings?: ChatSource[]) => {
+    const list = siblings && siblings.length > 0 ? siblings : [source];
+    const index = Math.max(
+      0,
+      list.findIndex((s) => s.documentCode === source.documentCode)
+    );
+    setArtifact({ sources: list, index });
+  };
   const { messages, sendMessage, status, stop } = useChat({
     id: chatId,
     messages: seed,
@@ -132,7 +141,7 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const headerTitle = thread?.title ?? conversation?.title;
 
   return (
-    <ArtifactProvider openSource={setActiveSource}>
+    <ArtifactProvider openSource={openSource}>
       <div className="flex min-w-0 flex-1 flex-col">
         <ChatHeader
           title={headerTitle}
@@ -160,8 +169,13 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
         />
       </div>
 
-      {activeSource && (
-        <ArtifactPanel source={activeSource} onClose={() => setActiveSource(null)} />
+      {artifact && (
+        <ArtifactPanel
+          key={artifact.sources[artifact.index]?.documentCode}
+          sources={artifact.sources}
+          initialIndex={artifact.index}
+          onClose={() => setArtifact(null)}
+        />
       )}
     </ArtifactProvider>
   );
