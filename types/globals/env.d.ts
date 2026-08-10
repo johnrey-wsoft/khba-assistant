@@ -10,6 +10,7 @@ namespace NodeJS {
     RESEND_EMAIL_FROM: string;
 
     OPENAI_API_KEY: string;
+    LLAMA_CLOUD_API_KEY: string;
 
     UPSTASH_REDIS_REST_URL: string;
     UPSTASH_REDIS_REST_TOKEN: string;

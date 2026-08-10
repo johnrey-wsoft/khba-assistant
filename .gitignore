@@ -52,3 +52,5 @@ docs/.vitepress/cache/
 
 # vitepress
 docs/.vitepress/dist
+
+# Document ingestion (raw source files + real manifest are local)

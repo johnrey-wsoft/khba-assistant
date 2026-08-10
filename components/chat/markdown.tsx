@@ -6,12 +6,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ChatSource } from "@/components/chat/primitives";
-
-const AUTHORITY_LABEL: Record<string, string> = {
-  LAW: "Law / decree",
-  ORDINANCE: "Local ordinance",
-  GUIDELINE: "Guideline",
-};
+import { authorityLabel } from "@/lib/chat/authority";
 
 // A citation binds a display number to its source document (which carries the
 // type = authorityType and classification = securityClass).
@@ -43,8 +38,7 @@ const CitationChip = ({
       <div className="flex flex-col gap-0.5 text-left">
         <span className="font-semibold">{citation.source.title}</span>
         <span className="font-mono opacity-80">
-          {citation.source.documentCode} ·{" "}
-          {AUTHORITY_LABEL[citation.source.authorityType] ?? citation.source.authorityType} ·{" "}
+          {citation.source.documentCode} · {authorityLabel(citation.source.authorityType)} ·{" "}
           {citation.source.securityClass ?? "PUBLIC"}
         </span>
       </div>
