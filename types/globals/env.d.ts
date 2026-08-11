@@ -5,13 +5,13 @@ namespace NodeJS {
     NEXT_PUBLIC_SUPABASE_URL: string;
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
     NEXT_PUBLIC_SITE_URL: string;
+    NEXT_PUBLIC_API_URL?: string;
 
     RESEND_API_KEY: string;
     RESEND_EMAIL_FROM: string;
 
     OPENAI_API_KEY: string;
     LLAMA_CLOUD_API_KEY: string;
-    UPSTAGE_API_KEY: string;
 
     UPSTASH_REDIS_REST_URL: string;
     UPSTASH_REDIS_REST_TOKEN: string;

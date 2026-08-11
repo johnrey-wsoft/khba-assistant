@@ -16,3 +16,11 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_EMAIL_FROM: ${RESEND_EMAIL_FROM}
     restart: unless-stopped
+
+  hwp-api:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

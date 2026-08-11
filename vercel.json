@@ -1,0 +1,13 @@
+{
+  "buildCommand": "pnpm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "@supabase_anon_key",
+    "DATABASE_URL": "@database_url",
+    "RESEND_API_KEY": "@resend_api_key",
+    "RESEND_EMAIL_FROM": "@resend_email_from",
+    "NEXT_PUBLIC_API_URL": "@api_url"
+  }
+}
