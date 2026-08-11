@@ -3,6 +3,7 @@
 import type { UIMessage } from "ai";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,46 +76,44 @@ const hasSearchOutput = (message: UIMessage): boolean =>
   );
 
 // The evidence-search steps, mirroring the prototype's "근거 검색 단계".
-const SEARCH_STEPS = [
-  "Question received",
-  "Searching approved sources",
-  "Checking scope and base date",
-  "Drafting the grounded answer",
-];
+const SEARCH_STEP_KEYS = ["received", "searching", "checking", "drafting"] as const;
 
 // Stepped loader: steps before `activeStep` are done (filled check), the current
 // one pulses, the rest wait — the prototype's evidence-search progress.
-const SearchSteps = ({ activeStep }: { activeStep: number }) => (
-  <div className="flex flex-col gap-2.5 rounded-[16px_16px_16px_4px] border border-border bg-card p-5 shadow-sm">
-    {SEARCH_STEPS.map((label, i) => {
-      const done = i < activeStep;
-      const active = i === activeStep;
-      return (
-        <div
-          key={label}
-          className={cn(
-            "flex items-center gap-2.5 text-[13px] transition-colors",
-            active ? "font-semibold text-foreground" : "text-muted-foreground"
-          )}
-        >
-          <span
+const SearchSteps = ({ activeStep }: { activeStep: number }) => {
+  const t = useTranslations("chat.steps");
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[16px_16px_16px_4px] border border-border bg-card p-5 shadow-sm">
+      {SEARCH_STEP_KEYS.map((key, i) => {
+        const done = i < activeStep;
+        const active = i === activeStep;
+        return (
+          <div
+            key={key}
             className={cn(
-              "grid size-4 flex-none place-items-center rounded-full border-2 transition-colors",
-              done ? "border-chart-2 bg-chart-2" : active ? "border-primary" : "border-border"
+              "flex items-center gap-2.5 text-[13px] transition-colors",
+              active ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >
-            {done ? (
-              <Check className="size-2.5 text-white" strokeWidth={3.5} />
-            ) : active ? (
-              <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-            ) : null}
-          </span>
-          {label}
-        </div>
-      );
-    })}
-  </div>
-);
+            <span
+              className={cn(
+                "grid size-4 flex-none place-items-center rounded-full border-2 transition-colors",
+                done ? "border-chart-2 bg-chart-2" : active ? "border-primary" : "border-border"
+              )}
+            >
+              {done ? (
+                <Check className="size-2.5 text-white" strokeWidth={3.5} />
+              ) : active ? (
+                <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+              ) : null}
+            </span>
+            {t(key)}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const DateDivider = ({ label }: { label: string }) => (
   <div className="flex items-center gap-3">
@@ -161,6 +160,7 @@ type Feedback = "up" | "down" | "report" | null;
 
 const FeedbackBar = ({ meta }: { meta?: string }) => {
   const [value, setValue] = useState<Feedback>(null);
+  const t = useTranslations("chat");
   const pill =
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors";
   return (
@@ -176,7 +176,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
         )}
       >
         <ThumbsUp className="size-3.5" />
-        Helpful
+        {t("helpful")}
       </button>
       <button
         type="button"
@@ -189,7 +189,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
         )}
       >
         <HelpCircle className="size-3.5" />
-        Not quite
+        {t("notQuite")}
       </button>
       <button
         type="button"
@@ -202,15 +202,13 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
         )}
       >
         <Flag className="size-3.5" />
-        Report
+        {t("report")}
       </button>
       <span className="flex-1" />
       {value ? (
-        <span className="text-xs font-semibold text-chart-2">Feedback saved</span>
+        <span className="text-xs font-semibold text-chart-2">{t("feedbackSaved")}</span>
       ) : (
-        meta && (
-          <span className="font-mono text-xs tabular-nums text-muted-foreground">{meta}</span>
-        )
+        meta && <span className="font-mono text-xs tabular-nums text-muted-foreground">{meta}</span>
       )}
     </div>
   );
@@ -232,6 +230,7 @@ const AssistantMessage = ({
   onFollowup,
 }: AssistantMessageProps) => {
   const { openSource } = useArtifact();
+  const t = useTranslations("chat");
   const [showAllSources, setShowAllSources] = useState(false);
   const text = getText(message);
   const { summary, body } = splitAnswer(text);
@@ -244,8 +243,7 @@ const AssistantMessage = ({
   const hiddenSourceCount = sources.length - SOURCE_PREVIEW_COUNT;
   const time = getTime(message);
   const hasContent = Boolean(text) || sources.length > 0;
-  const sourceLabel =
-    sources.length > 0 ? `${sources.length} ${sources.length === 1 ? "source" : "sources"}` : null;
+  const sourceLabel = sources.length > 0 ? t("sourceCount", { count: sources.length }) : null;
   const footerMeta = [time, sourceLabel].filter(Boolean).join(" · ");
 
   // Before any answer text streams in, show the evidence-search steps: the
@@ -267,7 +265,7 @@ const AssistantMessage = ({
 
       {body && (
         <div className="flex flex-col gap-2.5">
-          <AnswerLabel>Key points</AnswerLabel>
+          <AnswerLabel>{t("keyPoints")}</AnswerLabel>
           <div className="text-[15px] leading-relaxed text-foreground [&_li]:marker:text-primary [&_ul]:mb-0">
             <Markdown citations={citations} onCite={(src) => openSource(src, sources)}>
               {body}
@@ -279,7 +277,7 @@ const AssistantMessage = ({
       {sources.length > 0 && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between gap-2">
-            <AnswerLabel>Sources · grounding</AnswerLabel>
+            <AnswerLabel>{t("sources")}</AnswerLabel>
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {sources.length}
             </span>
@@ -289,6 +287,7 @@ const AssistantMessage = ({
               key={s.documentCode}
               source={s}
               index={i + 1}
+              viewSourceLabel={t("viewSource")}
               onOpen={() => openSource(s, sources)}
             />
           ))}
@@ -299,7 +298,7 @@ const AssistantMessage = ({
               onClick={() => setShowAllSources((v) => !v)}
               className="self-start rounded-full text-muted-foreground"
             >
-              {showAllSources ? "Show fewer" : `See all ${sources.length} sources`}
+              {showAllSources ? t("showFewer") : t("seeAll", { count: sources.length })}
               {showAllSources ? (
                 <ChevronUp className="size-4" />
               ) : (
@@ -312,15 +311,13 @@ const AssistantMessage = ({
 
       {hasContent && (
         <Notice tone="seal">
-          <span className="font-bold text-seal">Final check</span> — this reflects the base date
-          shown. Confirm the current wording with the official text and the competent authority
-          before filing.
+          <span className="font-bold text-seal">{t("finalCheck")}</span> — {t("answerNotice")}
         </Notice>
       )}
 
       {hasContent && (loadingFollowups || followups.length > 0) && (
         <div className="flex flex-col gap-2.5">
-          <AnswerLabel>Ask next</AnswerLabel>
+          <AnswerLabel>{t("askNext")}</AnswerLabel>
           <div className="flex flex-wrap gap-2">
             {loadingFollowups
               ? FOLLOWUP_SKELETONS.map((w, i) => (
@@ -346,29 +343,31 @@ const EmptyState = ({
 }: {
   examples?: ChatExample[];
   onExample?: (value: string) => void;
-}) => (
-  <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-    <span className="mb-6 grid size-11 place-items-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
-      KH
-    </span>
-    <h1 className="text-[clamp(24px,4vw,32px)] leading-tight font-extrabold tracking-tight text-foreground">
-      What can I confirm <span className="text-primary">with the sources</span>?
-    </h1>
-    <p className="mt-3 max-w-md text-sm text-muted-foreground">
-      I search approved association materials, notices, and statutes — and answer with the source
-      and its base date alongside.
-    </p>
-    {examples.length > 0 && (
-      <div className="mt-7 flex max-w-xl flex-wrap justify-center gap-2.5">
-        {examples.map((ex) => (
-          <Chip key={ex.label} variant="example" onClick={() => onExample?.(ex.prompt)}>
-            {ex.label}
-          </Chip>
-        ))}
-      </div>
-    )}
-  </div>
-);
+}) => {
+  const t = useTranslations("chat");
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+      <span className="mb-6 grid size-11 place-items-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
+        KH
+      </span>
+      <h1 className="text-[clamp(24px,4vw,32px)] leading-tight font-extrabold tracking-tight text-foreground">
+        {t.rich("emptyTitle", {
+          hl: (c) => <span className="text-primary">{c}</span>,
+        })}
+      </h1>
+      <p className="mt-3 max-w-md text-sm text-muted-foreground">{t("emptyLede")}</p>
+      {examples.length > 0 && (
+        <div className="mt-7 flex max-w-xl flex-wrap justify-center gap-2.5">
+          {examples.map((ex) => (
+            <Chip key={ex.label} variant="example" onClick={() => onExample?.(ex.prompt)}>
+              {ex.label}
+            </Chip>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 type ChatMessagesProps = {
   messages: UIMessage[];

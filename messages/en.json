@@ -249,6 +249,71 @@
       "toastErrorBody": "There was an issue resetting your password. Please try again later."
     }
   },
+  "chat": {
+    "brandSub": "Member desk",
+    "newConsultation": "New consultation",
+    "searchThreads": "Search your threads",
+    "consultations": "Consultations",
+    "noThreads": "No threads match “{filter}”.",
+    "headerMetaFallback": "Ask about a statute, ordinance, or notice",
+    "messagesMeta": "{count} messages · {meta}",
+    "baseDate": "Base date",
+    "toggleThreads": "Toggle the thread list",
+    "saveAnswer": "Save this answer",
+    "sourcesInThread": "Sources in this thread",
+    "composerPlaceholder": "Ask a follow-up. Adding the district and the case helps.",
+    "composerHint": "Answers are reference material. The official text and the competent authority decide.",
+    "steps": {
+      "received": "Question received",
+      "searching": "Searching approved sources",
+      "checking": "Checking scope and base date",
+      "drafting": "Drafting the grounded answer"
+    },
+    "keyPoints": "Key points",
+    "sources": "Sources · grounding",
+    "askNext": "Ask next",
+    "finalCheck": "Final check",
+    "answerNotice": "this reflects the base date shown. Confirm the current wording with the official text and the competent authority before filing.",
+    "helpful": "Helpful",
+    "notQuite": "Not quite",
+    "report": "Report",
+    "feedbackSaved": "Feedback saved",
+    "seeAll": "See all {count} sources",
+    "showFewer": "Show fewer",
+    "sourceCount": "{count, plural, one {# source} other {# sources}}",
+    "viewSource": "View source",
+    "emptyTitle": "What can I confirm <hl>with the sources</hl>?",
+    "emptyLede": "I search approved association materials, notices, and statutes — and answer with the source and its base date alongside.",
+    "viewerTitle": "Original text viewer",
+    "excerptLegend": "Excerpt used in the answer",
+    "panelNotice": "a reference excerpt from the KHBA index, current as of the base date shown. Confirm the wording against the official published text before relying on it.",
+    "examples": [
+      {
+        "label": "Suwon parking ratio",
+        "prompt": "What is the parking ratio for small multi-family housing in Suwon?"
+      },
+      {
+        "label": "Latest LH notice",
+        "prompt": "What are the conditions in the latest LH purchase-rental notice?"
+      },
+      {
+        "label": "Association filing forms",
+        "prompt": "Which forms do we file for the quarterly association report?"
+      },
+      {
+        "label": "Relaxing parking rules",
+        "prompt": "Can the attached parking lot requirement be relaxed?"
+      },
+      {
+        "label": "Mechanical parking",
+        "prompt": "Does mechanical parking count toward the required spaces?"
+      },
+      {
+        "label": "Suwon vs. Yongin",
+        "prompt": "How does Suwon's parking ordinance compare with Yongin's?"
+      }
+    ]
+  },
   "locale": {
     "switchLabel": "Language",
     "en": "English",

@@ -62,11 +62,7 @@ export const Chip = ({
 // --- Seal -----------------------------------------------------------------
 // Gold "base date" stamp — the evidence trust signal (the prototype's 직인).
 
-export const Seal = ({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
+export const Seal = ({ children, className, ...props }: React.ComponentProps<"span">) => (
   <span
     className={cn(
       "inline-flex items-center gap-1.5 rounded-full border border-seal-border bg-seal-muted px-2.5 py-1 font-mono text-[11px] font-bold tracking-tight text-seal",
@@ -103,7 +99,12 @@ export const Notice = ({
       )}
       {...props}
     >
-      <Icon className={cn("mt-0.5 size-4 shrink-0", tone === "seal" ? "text-seal" : "text-muted-foreground")} />
+      <Icon
+        className={cn(
+          "mt-0.5 size-4 shrink-0",
+          tone === "seal" ? "text-seal" : "text-muted-foreground"
+        )}
+      />
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -146,10 +147,12 @@ export const SourceCard = ({
   source,
   index,
   onOpen,
+  viewSourceLabel = "View source",
 }: {
   source: ChatSource;
   index?: number;
   onOpen?: () => void;
+  viewSourceLabel?: string;
 }) => {
   const accent = AUTHORITY_ACCENT[source.authorityType] ?? DEFAULT_ACCENT;
 
@@ -168,10 +171,11 @@ export const SourceCard = ({
               {index}
             </span>
           )}
-          <span className="min-w-0 truncate text-sm font-bold text-foreground">
-            {source.title}
-          </span>
-          <Badge variant="outline" className={cn("rounded-[5px] px-1.5 py-0 text-[11px]", accent.badge)}>
+          <span className="min-w-0 truncate text-sm font-bold text-foreground">{source.title}</span>
+          <Badge
+            variant="outline"
+            className={cn("rounded-[5px] px-1.5 py-0 text-[11px]", accent.badge)}
+          >
             {authorityLabel(source.authorityType)}
           </Badge>
         </span>
@@ -198,7 +202,7 @@ export const SourceCard = ({
           onClick={onOpen}
           className="inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap text-primary hover:underline focus-visible:outline-none"
         >
-          View source
+          {viewSourceLabel}
           <ArrowUpRight className="size-3.5" />
         </button>
       </div>

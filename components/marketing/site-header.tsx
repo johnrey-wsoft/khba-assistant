@@ -80,7 +80,7 @@ export const SiteHeader = () => {
         {user ? (
           <div className="flex items-center gap-2.5">
             <Link
-              href={PROTECTED_ROUTES.DASHBOARD}
+              href={PROTECTED_ROUTES.CHAT}
               className="hidden items-center gap-2 rounded-full bg-accent py-1.5 pr-3.5 pl-1.5 text-sm font-bold text-accent-foreground sm:flex"
             >
               <span className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-extrabold text-primary-foreground">

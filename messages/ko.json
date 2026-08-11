@@ -249,6 +249,71 @@
       "toastErrorBody": "비밀번호 재설정 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
     }
   },
+  "chat": {
+    "brandSub": "회원 데스크",
+    "newConsultation": "새 상담",
+    "searchThreads": "상담 내역 검색",
+    "consultations": "상담 목록",
+    "noThreads": "“{filter}”와(과) 일치하는 상담이 없습니다.",
+    "headerMetaFallback": "법령·조례·공고에 대해 물어보세요",
+    "messagesMeta": "메시지 {count}개 · {meta}",
+    "baseDate": "기준일",
+    "toggleThreads": "상담 목록 열기/닫기",
+    "saveAnswer": "답변 저장",
+    "sourcesInThread": "이 상담의 출처",
+    "composerPlaceholder": "후속 질문을 입력하세요. 지역과 사례를 함께 적으면 더 정확합니다.",
+    "composerHint": "답변은 참고 자료입니다. 최종 판단은 공식 원문과 관할기관을 따릅니다.",
+    "steps": {
+      "received": "질문 접수",
+      "searching": "승인 자료 검색",
+      "checking": "공개 범위·기준일 확인",
+      "drafting": "근거 기반 답변 작성"
+    },
+    "keyPoints": "핵심 내용",
+    "sources": "출처 · 근거",
+    "askNext": "다음 질문",
+    "finalCheck": "최종 확인",
+    "answerNotice": "표시된 기준일 기준입니다. 신청·제출 전 공식 원문과 관할기관에서 최신 문구를 확인하세요.",
+    "helpful": "도움돼요",
+    "notQuite": "부족해요",
+    "report": "오류 신고",
+    "feedbackSaved": "피드백이 저장되었습니다",
+    "seeAll": "출처 {count}개 모두 보기",
+    "showFewer": "접기",
+    "sourceCount": "출처 {count}개",
+    "viewSource": "원문 보기",
+    "emptyTitle": "무엇을 <hl>근거와 함께</hl> 확인해 드릴까요?",
+    "emptyLede": "협회 승인자료·공고·법령을 검색해, 출처와 기준일을 함께 답해 드립니다.",
+    "viewerTitle": "원문 뷰어",
+    "excerptLegend": "답변에 사용된 발췌",
+    "panelNotice": "KHBA 색인의 참고 발췌이며, 표시된 기준일 기준입니다. 근거로 삼기 전 공식 공개 원문에서 문구를 확인하세요.",
+    "examples": [
+      {
+        "label": "수원시 주차대수",
+        "prompt": "수원시 소형 다세대주택의 주차대수 기준은 어떻게 되나요?"
+      },
+      {
+        "label": "최근 LH 공고",
+        "prompt": "최근 LH 매입임대 공고의 조건은 무엇인가요?"
+      },
+      {
+        "label": "협회 신고 서식",
+        "prompt": "분기 협회 신고에는 어떤 서식을 제출하나요?"
+      },
+      {
+        "label": "주차장 완화",
+        "prompt": "부설주차장 설치 기준을 완화할 수 있나요?"
+      },
+      {
+        "label": "기계식 주차",
+        "prompt": "기계식 주차가 필요 대수에 포함되나요?"
+      },
+      {
+        "label": "수원 vs 용인",
+        "prompt": "수원시와 용인시의 주차 조례는 어떻게 다른가요?"
+      }
+    ]
+  },
   "locale": {
     "switchLabel": "언어",
     "en": "English",

@@ -1,13 +1,28 @@
 "use client";
 
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "nextjs-toploader/app";
+import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { getSupabaseClient } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { useChatStore } from "@/components/chat/chat-store";
 import { CHAT_THREADS, type ThreadStatus } from "@/constants/chat.constant";
+import { PUBLIC_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
+
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
 
 const STATUS_DOT: Record<ThreadStatus, string> = {
   sourced: "bg-chart-2",
@@ -33,6 +48,20 @@ type ThreadListProps = {
 
 export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: ThreadListProps) => {
   const { conversations } = useChatStore();
+  const router = useRouter();
+  const { user, profile } = useAuth();
+  const [signingOut, startSignOut] = useTransition();
+  const t = useTranslations("common");
+  const tc = useTranslations("chat");
+
+  const signOut = () =>
+    startSignOut(async () => {
+      await getSupabaseClient().auth.signOut();
+      router.replace(PUBLIC_ROUTES.ROOT);
+      router.refresh();
+    });
+
+  const displayName = profile?.name ?? user?.email ?? t("member");
 
   // Live conversations started this session, then the sample threads.
   const items: ThreadItem[] = [
@@ -62,15 +91,15 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
             K
           </Link>
           <span className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-bold text-foreground">KHBA Assistant</span>
-            <span className="truncate text-xs text-muted-foreground">Member desk</span>
+            <span className="truncate text-sm font-bold text-foreground">{t("appName")}</span>
+            <span className="truncate text-xs text-muted-foreground">{tc("brandSub")}</span>
           </span>
         </div>
 
         <Button asChild className="w-full">
-          <Link href="/chat" onClick={onNavigate}>
+          <Link href={PROTECTED_ROUTES.CHAT} onClick={onNavigate}>
             <Plus />
-            New consultation
+            {tc("newConsultation")}
           </Link>
         </Button>
 
@@ -79,14 +108,16 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
           <Input
             value={filter}
             onChange={(e) => onFilterChange(e.target.value)}
-            placeholder="Search your threads"
+            placeholder={tc("searchThreads")}
             className="pl-9"
           />
         </div>
       </div>
 
       <div className="flex items-baseline justify-between px-5 pt-4 pb-1">
-        <span className="text-sm font-extrabold tracking-tight text-foreground">Consultations</span>
+        <span className="text-sm font-extrabold tracking-tight text-foreground">
+          {tc("consultations")}
+        </span>
         <span className="font-mono text-xs tabular-nums text-muted-foreground">{items.length}</span>
       </div>
 
@@ -115,9 +146,31 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
           {threads.length === 0 && (
             <p className="px-3.5 py-6 text-center text-sm text-muted-foreground">
-              No threads match “{filter}”.
+              {tc("noThreads", { filter })}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Account controls — theme, language, and sign out. */}
+      <div className="flex flex-col gap-2.5 border-t border-border p-3">
+        <div className="flex items-center gap-2.5 px-1">
+          <span className="grid size-8 flex-none place-items-center rounded-full bg-primary text-[11px] font-extrabold text-primary-foreground">
+            {initials(displayName)}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
+            {displayName}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={signOut}
+            disabled={signingOut}
+            title={t("signOut")}
+            aria-label={t("signOut")}
+          >
+            <LogOut />
+          </Button>
         </div>
       </div>
     </section>
