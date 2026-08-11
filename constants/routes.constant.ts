@@ -13,6 +13,7 @@ export const AUTH_ROUTES = {
 
 export const PROTECTED_ROUTES = {
   CHAT: "/chat",
+  ONBOARDING: "/onboarding",
 } as const;
 
 export const API_ROUTES = {
@@ -24,6 +25,7 @@ export const API_ROUTES = {
   },
   CHAT: "/api/chat",
   HEALTHCHECK: "/api/healthcheck",
+  ONBOARDING: "/api/onboarding",
 } as const;
 
 export const PROTECTED_ROUTE_PATTERNS: string[] = Object.values(PROTECTED_ROUTES).map(
