@@ -3,6 +3,7 @@
 import { useChat, useCompletion, useObject } from "@ai-sdk/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
+import { useTranslations } from "next-intl";
 
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatMessages } from "@/components/chat/chat-messages";
@@ -21,7 +22,7 @@ import {
   stashPendingMessage,
   takePendingMessage,
 } from "@/lib/chat/session";
-import { CHAT_EXAMPLES, CHAT_SUGGESTIONS, type ChatThread } from "@/constants/chat.constant";
+import { CHAT_SUGGESTIONS, type ChatExample, type ChatThread } from "@/constants/chat.constant";
 
 type ChatPaneProps = {
   chatId?: string;
@@ -30,6 +31,8 @@ type ChatPaneProps = {
 
 export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const router = useRouter();
+  const t = useTranslations("chat");
+  const examples = t.raw("examples") as ChatExample[];
   const { toggleThreadList } = useChatShell();
   const { conversations, upsertConversation, setConversationTitle } = useChatStore();
 
@@ -154,7 +157,7 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
           messages={messages}
           isThinking={status === "submitted"}
           dateLabel={thread?.when?.split(" ")[0]}
-          examples={CHAT_EXAMPLES}
+          examples={examples}
           onExample={submit}
           suggestions={suggestions}
           loadingSuggestions={loadingSuggestions}

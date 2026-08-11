@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUp, Square } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ type ComposerProps = {
 };
 
 export const Composer = ({ value, onChange, onSubmit, onStop, isBusy }: ComposerProps) => {
+  const t = useTranslations("chat");
   const canSend = value.trim().length > 0 && !isBusy;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -32,7 +34,7 @@ export const Composer = ({ value, onChange, onSubmit, onStop, isBusy }: Composer
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder="Ask a follow-up. Adding the district and the case helps."
+            placeholder={t("composerPlaceholder")}
             className="max-h-30 min-h-0 resize-none border-none bg-transparent p-0 py-1.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 md:text-[15px] dark:bg-transparent"
           />
           {isBusy ? (
@@ -61,7 +63,7 @@ export const Composer = ({ value, onChange, onSubmit, onStop, isBusy }: Composer
         </div>
 
         <p className="mt-2.5 text-center text-[11.5px] font-medium text-muted-foreground/70">
-          Answers are reference material. The official text and the competent authority decide.
+          {t("composerHint")}
         </p>
       </div>
     </div>

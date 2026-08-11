@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ type ArtifactPanelProps = {
 };
 
 export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelProps) => {
+  const t = useTranslations("chat");
   const [active, setActive] = useState(initialIndex);
   const source = sources[active] ?? sources[0];
   const citedRef = useRef<HTMLParagraphElement>(null);
@@ -100,10 +102,10 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
       <aside className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[540px] flex-none flex-col border-l border-border bg-card shadow-xl duration-200 animate-in slide-in-from-right-4 fade-in md:static md:z-auto md:shadow-none">
         {/* Pane head — title + the excerpt legend. */}
         <header className="flex items-center gap-3 border-b border-border bg-muted/40 px-5 py-3.5">
-          <span className="text-sm font-extrabold text-foreground">Original text viewer</span>
+          <span className="text-sm font-extrabold text-foreground">{t("viewerTitle")}</span>
           <span className="ml-auto hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
             <span className="h-3 w-5 rounded-[3px] border border-seal-border bg-highlight" />
-            Excerpt used in the answer
+            {t("excerptLegend")}
           </span>
           <Button
             variant="outline"
@@ -144,12 +146,21 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
         {/* Doc meta — title, type, base-date seal, jurisdiction. */}
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3">
           <span className="text-sm font-bold text-foreground">{source.title}</span>
-          <Badge variant="outline" className="rounded-[5px] border-primary/20 bg-primary/5 text-primary">
+          <Badge
+            variant="outline"
+            className="rounded-[5px] border-primary/20 bg-primary/5 text-primary"
+          >
             {authorityLabel(source.authorityType)}
           </Badge>
-          {baseDate && <Seal>Base date {baseDate}</Seal>}
+          {baseDate && (
+            <Seal>
+              {t("baseDate")} {baseDate}
+            </Seal>
+          )}
           {source.jurisdictionCode && (
-            <span className="font-mono text-xs text-muted-foreground">{source.jurisdictionCode}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {source.jurisdictionCode}
+            </span>
           )}
         </div>
 
@@ -199,9 +210,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             )}
 
             <Notice tone="seal">
-              <span className="font-bold text-seal">Final check</span> — a reference excerpt from the
-              KHBA index, current as of the base date shown. Confirm the wording against the official
-              published text before relying on it.
+              <span className="font-bold text-seal">{t("finalCheck")}</span> — {t("panelNotice")}
             </Notice>
           </div>
         </div>

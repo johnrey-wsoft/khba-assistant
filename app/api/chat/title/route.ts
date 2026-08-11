@@ -1,9 +1,14 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 
+import { requireAuth } from "@/lib/guards/auth.guard";
+
 export const maxDuration = 15;
 
 export async function POST(req: Request) {
+  const { error } = await requireAuth();
+  if (error) return error;
+
   const { prompt }: { prompt: string } = await req.json();
 
   const result = streamText({

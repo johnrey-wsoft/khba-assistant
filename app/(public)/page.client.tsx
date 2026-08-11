@@ -17,7 +17,7 @@ import { Seal } from "@/components/chat/primitives";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { cn } from "@/lib/utils";
-import { PUBLIC_ROUTES } from "@/constants/routes.constant";
+import { PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 type Tone = "primary" | "mint" | "amber" | "violet";
 
@@ -72,7 +72,7 @@ export const PageClient = () => {
                 {t("lede")}
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
-                <Link href={PUBLIC_ROUTES.CHAT}>
+                <Link href={PROTECTED_ROUTES.CHAT}>
                   <Button size="lg" className="gap-2">
                     {t("ctaStart")}
                     <ArrowRight className="size-4" />
@@ -209,7 +209,7 @@ export const PageClient = () => {
             <p className="mx-auto mt-4 max-w-[40ch] text-lg text-primary-foreground/85">
               {t("cta.body")}
             </p>
-            <Link href={PUBLIC_ROUTES.CHAT} className="mt-8 inline-block">
+            <Link href={PROTECTED_ROUTES.CHAT} className="mt-8 inline-block">
               <Button size="lg" variant="secondary" className="gap-2">
                 {t("cta.button")}
                 <ArrowRight className="size-4" />
