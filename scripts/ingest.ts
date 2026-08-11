@@ -71,8 +71,8 @@ async function main() {
   if (docs.some((d) => !isHwp(d.file)) && !process.env.LLAMA_CLOUD_API_KEY) {
     throw new Error("LLAMA_CLOUD_API_KEY is not set");
   }
-  if (docs.some((d) => isHwp(d.file)) && !process.env.UPSTAGE_API_KEY) {
-    throw new Error("UPSTAGE_API_KEY is not set (required for .hwp files)");
+  if (docs.some((d) => isHwp(d.file)) && !process.env.NEXT_PUBLIC_API_URL) {
+    console.warn("NEXT_PUBLIC_API_URL not set, using default http://localhost:8000 for HWP files");
   }
 
   const client = postgres(process.env.DATABASE_URL, {
