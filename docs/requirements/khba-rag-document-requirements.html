@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHBA Assistant — Document Requirements &amp; API Plan</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #d8d4cc;
+    --border-strong: #b8b3a8;
+    --text: #1a1916;
+    --text-muted: #6b6760;
+    --text-subtle: #9b978f;
+    --accent: #1a3a2a;
+    --accent-light: #e8f0ec;
+    --accent-mid: #2d6b4a;
+    --tag-bg: #e8f0ec;
+    --tag-text: #1a3a2a;
+    --code-bg: #f0ede6;
+    --code-text: #2d4a38;
+    --warn-bg: #fdf3e3;
+    --warn-border: #e8c46a;
+    --warn-text: #7a5c1e;
+    --done-bg: #eef6f1;
+    --done-border: #7bbf99;
+    --done-text: #1a5c35;
+    --radius: 6px;
+    --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-kr: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  body.kr { font-family: var(--font-kr); }
+
+  .page-wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .lang-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+  }
+  .lang-bar-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lang-label {
+    font-size: 12px; color: var(--text-subtle);
+    font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .lang-toggle {
+    display: flex; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .lang-btn {
+    padding: 6px 18px; border: none; background: transparent; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    font-family: var(--font-mono); transition: background 0.15s, color 0.15s;
+  }
+  .lang-btn.active { background: var(--accent); color: #fff; }
+  .lang-btn:hover:not(.active) { background: var(--border); color: var(--text); }
+
+  .doc-header { border-bottom: 2px solid var(--accent); padding-bottom: 28px; margin-bottom: 36px; }
+  .doc-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--tag-bg); color: var(--tag-text);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 3px; margin-bottom: 16px; font-family: var(--font-mono);
+  }
+  .doc-title {
+    font-size: 28px; font-weight: 600; line-height: 1.2; color: var(--text);
+    margin-bottom: 18px; letter-spacing: -0.02em; text-wrap: balance;
+  }
+  .doc-meta {
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+    font-size: 13px; color: var(--text-muted); font-family: var(--font-mono);
+  }
+  .doc-meta span { display: flex; align-items: center; gap: 6px; }
+  .status-chip {
+    padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-mono);
+  }
+  .status-active { background: var(--done-bg); color: var(--done-text); border: 1px solid var(--done-border); }
+  .status-tbw { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); }
+
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-subtle); font-family: var(--font-mono); margin-bottom: 14px;
+  }
+  .toc ol { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .toc li { font-size: 13px; display: flex; align-items: baseline; gap: 6px; }
+  .toc-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-subtle); min-width: 20px; }
+  .toc a { color: var(--accent-mid); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  section { margin-bottom: 52px; scroll-margin-top: 56px; }
+  h2 {
+    font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); text-wrap: balance;
+  }
+  h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-muted); margin: 24px 0 10px; font-family: var(--font-mono);
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 20px; }
+  li { margin-bottom: 4px; }
+
+  .schedule-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .schedule-table thead tr { background: var(--surface2); border-bottom: 2px solid var(--border-strong); }
+  .schedule-table th {
+    padding: 10px 14px; text-align: left; font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  .schedule-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  .schedule-table tr:last-child td { border-bottom: none; }
+  .schedule-table tbody tr { background: var(--surface); }
+  .schedule-table tbody tr:hover { background: var(--surface2); }
+  .toc-wrap { overflow-x: auto; }
+  .ticket-chip {
+    display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    background: var(--tag-bg); color: var(--tag-text); padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+  }
+  .ticket-chip.tbd { background: var(--warn-bg); color: var(--warn-text); }
+  .ticket-chip.chosen { background: var(--accent); color: #fff; }
+  .ticket-chip.fallback { background: var(--surface2); color: var(--text-muted); }
+
+  .step-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+  .step-num-badge {
+    flex-shrink: 0; width: 36px; height: 36px; background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600; margin-top: 2px;
+  }
+  .step-title-group { flex: 1; }
+  .step-ticket {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--accent-mid);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px;
+  }
+  .step-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin-bottom: 4px; }
+  .step-meta {
+    font-size: 12px; color: var(--text-subtle); font-family: var(--font-mono);
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+  }
+
+  .flow-block {
+    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent-mid);
+    border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px;
+  }
+  .flow-title {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--accent-mid); margin-bottom: 12px;
+  }
+  .flow-block ul { margin: 0 0 0 14px; }
+  .flow-block li { font-size: 13px; margin-bottom: 5px; line-height: 1.55; }
+  .flow-block li strong { color: var(--text); font-weight: 600; }
+  .flow-block p { font-size: 13px; color: var(--text-muted); margin-bottom: 0; }
+
+  .pipeline {
+    display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 14px; overflow-x: auto;
+  }
+  .pipe-node {
+    flex: 1 1 0; min-width: 120px; background: var(--accent-light); border: 1px solid var(--done-border);
+    border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .pipe-node.plain { background: var(--surface2); border-color: var(--border); }
+  .pipe-node.db { background: var(--tag-bg); border-color: var(--accent-mid); }
+  .pipe-node .pn-title { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--accent); }
+  .pipe-node .pn-sub { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .pipe-arrow { display: flex; align-items: center; color: var(--border-strong); font-size: 18px; font-weight: 700; }
+  @media (max-width: 640px) { .pipe-arrow { transform: rotate(90deg); } }
+
+  .sub-flow-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .sub-flow-grid.two-col { grid-template-columns: 1fr 1fr; }
+  .sub-flow { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .sub-flow-label {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--text-subtle); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .sub-flow ul { margin: 0 0 0 12px; }
+  .sub-flow li { font-size: 12px; margin-bottom: 4px; line-height: 1.5; color: var(--text-muted); }
+  .sub-flow p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+  code {
+    font-family: var(--font-mono); font-size: 12px; background: var(--code-bg);
+    padding: 1px 5px; border-radius: 3px; color: var(--code-text);
+  }
+  pre {
+    background: var(--text); color: #e8e6e0; border-radius: var(--radius);
+    padding: 14px 16px; overflow-x: auto; margin: 4px 0 14px; font-size: 12.5px; line-height: 1.6;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+  .callout, .callout-warn, .callout-done {
+    border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 16px; margin: 14px 0;
+    font-size: 13px; line-height: 1.6;
+  }
+  .callout { background: var(--accent-light); border-left: 3px solid var(--accent-mid); color: var(--accent); }
+  .callout-warn { background: var(--warn-bg); border-left: 3px solid var(--warn-border); color: var(--warn-text); }
+  .callout-done { background: var(--done-bg); border-left: 3px solid var(--done-border); color: var(--done-text); }
+  .callout strong, .callout-warn strong, .callout-done strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+  .dep-map { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow-x: auto; }
+  .dep-row { display: flex; align-items: baseline; gap: 0; margin-bottom: 6px; font-family: var(--font-mono); font-size: 12px; }
+  .dep-indent { display: inline-block; color: var(--border-strong); white-space: pre; }
+  .dep-ticket { font-weight: 600; color: var(--accent-mid); margin-right: 8px; white-space: nowrap; }
+  .dep-label { color: var(--text-muted); }
+
+  .step-divider { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
+
+  @media (max-width: 640px) {
+    .sub-flow-grid { grid-template-columns: 1fr; }
+    .toc ol { grid-template-columns: 1fr; }
+    .pipe-node { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <div class="lang-bar-inner">
+    <span class="lang-label">Language / 언어</span>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-kr" onclick="setLang('kr')">KO</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <div class="doc-header">
+    <div class="doc-badge" data-en="📋 Document Requirements &amp; API Plan" data-kr="📋 문서 요구사항 및 API 계획">📋 Document Requirements &amp; API Plan</div>
+    <h1 class="doc-title" data-en="KHBA Assistant — Document Requirements &amp; API Plan" data-kr="KHBA 어시스턴트 — 문서 요구사항 및 API 계획">KHBA Assistant — Document Requirements &amp; API Plan</h1>
+    <div class="doc-meta">
+      <span><strong data-en="Project:" data-kr="프로젝트:">Project:</strong> KHBA Assistant · W Labs</span>
+      <span><strong data-en="Scope:" data-kr="범위:">Scope:</strong> <span data-en="Ingestion doc requirements (incl. HWP/HWPX) + API list" data-kr="인제스션 문서 요구사항(HWP/HWPX 포함) + API 목록">Ingestion doc requirements (incl. HWP/HWPX) + API list</span></span>
+      <span><strong data-en="Status:" data-kr="상태:">Status:</strong> <span class="status-chip status-active" data-en="Decision made — pyhwp + FastAPI" data-kr="결정 완료 — pyhwp + FastAPI">Decision made — pyhwp + FastAPI</span></span>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title" data-en="Table of Contents" data-kr="목차">Table of Contents</div>
+    <ol>
+      <li><span class="toc-num">01</span><a href="#s-why" data-en="Why this doc exists" data-kr="이 문서가 필요한 이유">Why this doc exists</a></li>
+      <li><span class="toc-num">02</span><a href="#s-req" data-en="Document requirements" data-kr="문서 요구사항">Document requirements</a></li>
+      <li><span class="toc-num">03</span><a href="#s-problem" data-en="The HWP problem" data-kr="HWP 문제">The HWP problem</a></li>
+      <li><span class="toc-num">04</span><a href="#s-solutions" data-en="Proposed solutions" data-kr="제안 솔루션">Proposed solutions</a></li>
+      <li><span class="toc-num">05</span><a href="#s-compare" data-en="Solution comparison" data-kr="솔루션 비교">Solution comparison</a></li>
+      <li><span class="toc-num">06</span><a href="#s-decision" data-en="Recommendation — Decision" data-kr="권장 사항 — 결정">Recommendation — Decision</a></li>
+      <li><span class="toc-num">07</span><a href="#s-api-current" data-en="API surface — current" data-kr="API 목록 — 현재">API surface — current</a></li>
+      <li><span class="toc-num">08</span><a href="#s-api-new" data-en="API surface — needed" data-kr="API 목록 — 필요 항목">API surface — needed</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <section id="s-why">
+    <h2 data-en="1 · Why this doc exists" data-kr="1 · 이 문서가 필요한 이유">1 · Why this doc exists</h2>
+    <p data-en="The current POC ingests PDF source files through LlamaCloud's agentic OCR. In production, a large share of Korean legal/administrative source material — ordinances, internal association guides, member case files — is authored and circulated as HWP (한글, Hancom's proprietary format), not PDF. The ingestion pipeline needs a defined path for that format before real documents can be loaded."
+       data-kr="현재 PoC는 LlamaCloud의 agentic OCR을 통해 PDF 원본 파일을 인제스션합니다. 그러나 실제 서비스 환경에서는 한국의 법령/행정 관련 원본 자료—조례, 내부 협회 지침, 회원 사례 파일—상당수가 PDF가 아니라 HWP(한글, 한컴의 독점 포맷)로 작성·유통됩니다. 실제 문서를 적재하기 전에 이 포맷에 대한 인제스션 경로를 정의해야 합니다.">The current POC ingests PDF source files through LlamaCloud's agentic OCR. In production, a large share of Korean legal/administrative source material — ordinances, internal association guides, member case files — is authored and circulated as HWP (한글, Hancom's proprietary format), not PDF. The ingestion pipeline needs a defined path for that format before real documents can be loaded.</p>
+    <p data-en="This is a separate plan from the POC implementation doc: it covers what document types the system must accept, why HWP is hard, the candidate solutions, and the resulting API list — current + newly required — for budgeting and integration work."
+       data-kr="이 문서는 PoC 구현 문서와는 별도의 계획입니다: 시스템이 수용해야 할 문서 유형, HWP가 어려운 이유, 후보 솔루션, 그리고 예산 책정 및 연동 작업을 위한 (기존 + 신규 필요) API 목록을 다룹니다.">This is a separate plan from the POC implementation doc: it covers what document types the system must accept, why HWP is hard, the candidate solutions, and the resulting API list for budgeting and integration work.</p>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 2 -->
+  <section id="s-req">
+    <h2 data-en="2 · Document requirements" data-kr="2 · 문서 요구사항">2 · Document requirements</h2>
+
+    <h3 data-en="2.1 Formats the pipeline must accept" data-kr="2.1 파이프라인이 수용해야 하는 포맷">2.1 Formats the pipeline must accept</h3>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th data-en="Format" data-kr="포맷">Format</th>
+          <th data-en="Source" data-kr="출처">Source</th>
+          <th data-en="Priority" data-kr="우선순위">Priority</th>
+          <th data-en="Notes" data-kr="비고">Notes</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>PDF</td><td data-en="Laws, ordinances published as PDF, scanned member cases" data-kr="PDF로 발행되는 법률·조례, 스캔된 회원 사례">Laws, ordinances published as PDF, scanned member cases</td><td><span class="ticket-chip chosen" data-en="Must" data-kr="필수">Must</span></td><td data-en="Already supported (LlamaCloud agentic OCR)" data-kr="이미 지원 (LlamaCloud agentic OCR)">Already supported (LlamaCloud agentic OCR)</td></tr>
+          <tr><td>HWP (<code>.hwp</code>)</td><td data-en="Internal association guides, member case files, older government documents" data-kr="내부 협회 지침, 회원 사례 파일, 오래된 정부 문서">Internal association guides, member case files, older government documents</td><td><span class="ticket-chip chosen" data-en="Must" data-kr="필수">Must</span></td><td data-en="Dominant word-processor format in Korean government/legal contexts" data-kr="한국 정부·법률 분야에서 지배적인 워드프로세서 포맷">Dominant word-processor format in Korean government/legal contexts</td></tr>
+          <tr><td>HWPX (<code>.hwpx</code>)</td><td data-en="Newer Hancom documents (XML-based, government-mandated for new public documents)" data-kr="최신 한컴 문서 (XML 기반, 신규 공공 문서에 정부 권장)">Newer Hancom documents (XML-based, government-mandated for new public documents)</td><td><span class="ticket-chip chosen" data-en="Must" data-kr="필수">Must</span></td><td data-en="Structurally simpler than legacy .hwp — see §3" data-kr="구형 .hwp보다 구조적으로 단순함 — §3 참조">Structurally simpler than legacy .hwp — see §3</td></tr>
+          <tr><td>DOCX</td><td data-en="Occasional member submissions" data-kr="간헐적인 회원 제출 문서">Occasional member submissions</td><td><span class="ticket-chip" data-en="Should" data-kr="권장">Should</span></td><td data-en="Already covered incidentally by most parsers" data-kr="대부분의 파서가 부수적으로 이미 지원">Already covered incidentally by most parsers</td></tr>
+          <tr><td data-en="Scanned images (JPG/PNG/TIFF)" data-kr="스캔 이미지 (JPG/PNG/TIFF)">Scanned images (JPG/PNG/TIFF)</td><td data-en="Older archived records" data-kr="오래된 보관 기록">Older archived records</td><td><span class="ticket-chip" data-en="Should" data-kr="권장">Should</span></td><td data-en="Needs OCR, not just format conversion" data-kr="포맷 변환이 아닌 OCR이 필요">Needs OCR, not just format conversion</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 data-en="2.2 Per-document metadata required at intake" data-kr="2.2 인입 시 문서별 필수 메타데이터">2.2 Per-document metadata required at intake</h3>
+    <p data-en="To populate the WS-1267 document / document_version tables, every ingested file — regardless of source format — must arrive with:"
+       data-kr="WS-1267 document / document_version 테이블을 채우려면, 원본 포맷과 무관하게 모든 인제스션 파일은 다음을 함께 가지고 들어와야 합니다:">To populate the WS-1267 document / document_version tables, every ingested file — regardless of source format — must arrive with:</p>
+    <div class="flow-block">
+      <ul>
+        <li><code>documentCode</code>, <code>title</code>, <code>authorityType</code>, <code>jurisdictionCode</code>, <code>securityClass</code>, <code>version</code></li>
+        <li data-en="Original file hash (source_hash) for change detection" data-kr="변경 감지를 위한 원본 파일 해시(source_hash)">Original file hash (<code>source_hash</code>) for change detection</li>
+        <li data-en="effective_from / effective_to where applicable (laws, ordinances)" data-kr="해당 시 effective_from / effective_to (법률, 조례 등)"><code>effective_from</code> / <code>effective_to</code> where applicable (laws, ordinances)</li>
+      </ul>
+    </div>
+
+    <h3 data-en="2.3 Quality bar for parsed output" data-kr="2.3 파싱 결과물의 품질 기준">2.3 Quality bar for parsed output</h3>
+    <p data-en="Regardless of which HWP solution is chosen, the parsed output must satisfy the same bar the LlamaCloud PDF path already meets, since both feed the same semantic chunking stage:"
+       data-kr="어떤 HWP 솔루션을 선택하든, 파싱 결과물은 동일한 시맨틱 청킹 단계로 들어가는 LlamaCloud PDF 경로가 이미 충족하는 기준을 동일하게 만족해야 합니다:">Regardless of which HWP solution is chosen, the parsed output must satisfy the same bar the LlamaCloud PDF path already meets:</p>
+    <div class="flow-block">
+      <ul>
+        <li data-en="Clean Markdown, tables as pipe tables (not embedded images or HTML)" data-kr="깔끔한 Markdown, 표는 파이프 테이블로(이미지나 HTML이 아님)">Clean <strong>Markdown</strong>, tables as pipe tables (not embedded images or HTML)</li>
+        <li data-en="Reading order preserved for multi-column layouts" data-kr="다단 레이아웃에서도 읽기 순서 보존">Reading order preserved for multi-column layouts</li>
+        <li data-en="No loss of Korean text encoding (HWP's native encoding requires explicit handling)" data-kr="한글 텍스트 인코딩 손실 없음(HWP의 네이티브 인코딩은 명시적 처리가 필요)">No loss of Korean text encoding (HWP's native encoding requires explicit handling)</li>
+        <li data-en="Article/clause numbering (제3조, 제1항) preserved as plain text so content_node.node_path extraction still works" data-kr="조/항 번호(제3조, 제1항)를 평문으로 보존하여 content_node.node_path 추출이 계속 동작하도록 함">Article/clause numbering (제3조, 제1항) preserved as plain text so <code>content_node.node_path</code> extraction still works</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 3 -->
+  <section id="s-problem">
+    <h2 data-en="3 · The HWP problem" data-kr="3 · HWP 문제">3 · The HWP problem</h2>
+    <p data-en="HWP is a closed, binary, OLE-compound-document format developed by Hancom — not an open standard like PDF or DOCX. Two practical issues follow:"
+       data-kr="HWP는 한컴이 개발한 폐쇄형 바이너리 OLE 복합 문서 포맷으로, PDF나 DOCX처럼 공개 표준이 아닙니다. 실무적으로 두 가지 문제가 뒤따릅니다:">HWP is a closed, binary, OLE-compound-document format developed by Hancom — not an open standard like PDF or DOCX. Two practical issues follow:</p>
+    <div class="flow-block">
+      <ul>
+        <li data-en="No official cross-platform parser. Hancom's own SDKs and the Windows OLE Automation route assume a Windows host with Hancom Office installed; there's no first-party Linux/serverless parsing path." data-kr="공식 크로스플랫폼 파서 부재. 한컴 자체 SDK와 Windows OLE Automation 경로는 한컴오피스가 설치된 Windows 호스트를 전제로 하며, Linux/서버리스 환경을 위한 퍼스트파티 파싱 경로가 없습니다."><strong>No official cross-platform parser.</strong> Hancom's own SDKs and the Windows OLE Automation route assume a Windows host with Hancom Office installed; there's no first-party Linux/serverless parsing path.</li>
+        <li data-en="Legacy .hwp vs. .hwpx. .hwpx is Hancom's newer, XML-based format (mandated for new Korean government documents going forward) and is comparatively easy to parse with open tools. Legacy .hwp (binary, HWPv5) is the harder case and is what most existing archives still use." data-kr="구형 .hwp vs. .hwpx. .hwpx는 한컴의 신형 XML 기반 포맷으로(향후 신규 한국 정부 문서에 권장), 오픈소스 도구로 비교적 쉽게 파싱할 수 있습니다. 구형 .hwp(바이너리, HWPv5)가 더 어려운 케이스이며, 기존 보관 문서 대부분이 여전히 이 형식을 사용합니다."><strong>Legacy .hwp vs. .hwpx.</strong> .hwpx is Hancom's newer, XML-based format and is comparatively easy to parse with open tools. Legacy .hwp (binary, "HWPv5") is the harder case and is what most existing archives still use.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <strong data-en="Why this matters for solution choice" data-kr="솔루션 선택에서 중요한 이유">Why this matters for solution choice</strong>
+      <span data-en="A tool that only handles .hwpx well is not sufficient if the corpus still contains legacy .hwp files." data-kr="이 구분은 솔루션 선택에 중요합니다: .hwpx만 잘 처리하는 도구는, 말뭉치에 여전히 구형 .hwp 파일이 섞여 있다면 충분하지 않습니다.">A tool that only handles .hwpx well is not sufficient if the corpus still contains legacy .hwp files.</span>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 4 -->
+  <section id="s-solutions">
+    <h2 data-en="4 · Proposed solutions for HWP ingestion" data-kr="4 · HWP 인제스션을 위한 제안 솔루션">4 · Proposed solutions for HWP ingestion</h2>
+
+    <div class="step-header">
+      <div class="step-num-badge">4.1</div>
+      <div class="step-title-group">
+        <div class="step-ticket" data-en="Native SDK" data-kr="네이티브 SDK">Native SDK</div>
+        <div class="step-title" data-en="Hancom SDK / Hancom Developer APIs" data-kr="한컴 SDK / 한컴 디벨로퍼 API">Hancom SDK / Hancom Developer APIs</div>
+      </div>
+    </div>
+    <p data-en="Hancom provides its own developer platform with an Hwp SDK that can open, convert, and manipulate .hwp/.hwpx files programmatically (~1,000 HWP functions) without requiring the desktop app installed, plus a separate document conversion service and OLE Automation guide for driving the Hancom Office client directly."
+       data-kr="한컴은 자체 개발자 플랫폼을 통해 .hwp/.hwpx 파일을 데스크톱 앱 설치 없이 프로그래밍 방식으로 열고 변환·조작할 수 있는 Hwp SDK(약 1,000개의 HWP 함수)를 제공하며, 별도의 문서 변환 서비스와 한컴오피스 클라이언트를 직접 구동하는 OLE Automation 가이드도 함께 제공합니다.">Hancom provides its own developer platform with an Hwp SDK that can open, convert, and manipulate .hwp/.hwpx files programmatically, plus a document conversion service and OLE Automation guide.</p>
+    <div class="sub-flow-grid two-col">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Pros" data-kr="장점">Pros</div>
+        <p data-en="First-party, most faithful rendering of tables/layout since it's the format owner's own engine; covers both legacy .hwp and .hwpx." data-kr="퍼스트파티이므로 표/레이아웃 렌더링 충실도가 가장 높음(포맷 소유사의 자체 엔진); 구형 .hwp와 .hwpx 모두 커버.">First-party, most faithful rendering since it's the format owner's own engine; covers both legacy .hwp and .hwpx.</p>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Cons" data-kr="단점">Cons</div>
+        <p data-en="Commercial licensing; SDK is native/per-OS rather than a simple REST call, needing a wrapper service; adds an infra dependency not needed today." data-kr="상업용 라이선스가 필요하고, SDK가 단순 REST 호출이 아닌 OS별 네이티브 라이브러리라서 래퍼 서비스가 필요; 오늘날 필요 없는 인프라 의존성이 추가됨.">Commercial licensing; native/per-OS SDK needs a wrapper service; adds an infra dependency not needed today.</p>
+      </div>
+    </div>
+
+    <div class="step-header">
+      <div class="step-num-badge">4.2</div>
+      <div class="step-title-group">
+        <div class="step-ticket" data-en="Hosted API" data-kr="호스팅 API">Hosted API</div>
+        <div class="step-title" data-en="Upstage Document Parse" data-kr="Upstage Document Parse">Upstage Document Parse</div>
+      </div>
+    </div>
+    <p data-en="Upstage's document-digitization REST API (model=document-parse) natively accepts .hwp and .hwpx among its supported formats, alongside PDF/DOCX/PPTX/XLSX/images, and returns structured Markdown/HTML output directly — the same shape our pipeline already expects from LlamaCloud."
+       data-kr="Upstage의 document-digitization REST API(model=document-parse)는 PDF/DOCX/PPTX/XLSX/이미지와 함께 .hwp, .hwpx를 네이티브로 지원하며, 우리 파이프라인이 LlamaCloud로부터 이미 기대하는 것과 같은 형태의 구조화된 Markdown/HTML 결과를 직접 반환합니다.">Upstage's document-digitization REST API natively accepts .hwp and .hwpx and returns structured Markdown/HTML — the same shape our pipeline already expects from LlamaCloud.</p>
+    <div class="sub-flow-grid two-col">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Pros" data-kr="장점">Pros</div>
+        <p data-en="Drop-in REST API — same integration shape as the current LlamaCloud step. Billed per page (~$0.01–0.04/page), no infra to run ourselves. Table/layout recognition is a stated strength." data-kr="드롭인 REST API — 현재 LlamaCloud 단계와 동일한 연동 형태. 페이지당 과금(약 $0.01–0.04/페이지), 자체 운영 인프라 불필요. 표/레이아웃 인식이 강점으로 알려짐.">Drop-in REST API — same integration shape as LlamaCloud. Billed per page, no infra to run. Table/layout recognition is a stated strength.</p>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Cons" data-kr="단점">Cons</div>
+        <p data-en="HWP support is a relatively recent addition — worth a small validation batch. Hosted service, so documents leave our infra during parsing (relevant for CONFIDENTIAL sources)." data-kr="HWP 지원이 API에 추가된 지 비교적 최근이라 소규모 검증이 필요함. 호스팅 서비스이므로 파싱 중 문서가 우리 인프라를 벗어남(CONFIDENTIAL 등급 출처와 관련).">HWP support is relatively recent — needs validation. Hosted service, so documents leave our infra (relevant for CONFIDENTIAL sources).</p>
+      </div>
+    </div>
+
+    <div class="step-header">
+      <div class="step-num-badge">4.3</div>
+      <div class="step-title-group">
+        <div class="step-ticket" data-en="Self-hosted · Open source" data-kr="자체 호스팅 · 오픈소스">Self-hosted · Open source</div>
+        <div class="step-title" data-en="pyhwp + a small FastAPI wrapper" data-kr="pyhwp + 경량 FastAPI 래퍼">pyhwp + a small FastAPI wrapper</div>
+        <div class="step-meta"><span class="status-chip status-active" data-en="Chosen solution" data-kr="채택된 솔루션">Chosen solution</span></div>
+      </div>
+    </div>
+    <p data-en="pyhwp is an open-source (AGPLv3) Python library and CLI (hwp5proc, hwp5txt, hwp5html, hwp5odt) that parses the legacy binary .hwp (HWPv5) format directly, with no dependency on Hancom software. It can be wrapped in a small internal FastAPI service and called the same way the pipeline calls LlamaCloud today."
+       data-kr="pyhwp는 한컴 소프트웨어에 의존하지 않고 구형 바이너리 .hwp(HWPv5) 포맷을 직접 파싱하는 오픈소스(AGPLv3) Python 라이브러리·CLI(hwp5proc, hwp5txt, hwp5html, hwp5odt)입니다. 소규모 내부 FastAPI 서비스로 감싸서, 현재 파이프라인이 LlamaCloud를 호출하는 것과 동일한 방식으로 호출할 수 있습니다.">pyhwp is an open-source (AGPLv3) Python library and CLI that parses legacy binary .hwp directly, with no dependency on Hancom software. It can be wrapped in a small internal FastAPI service.</p>
+    <div class="sub-flow-grid two-col">
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Pros" data-kr="장점">Pros</div>
+        <p data-en="Free, open source, no per-page billing, fully self-hosted (keeps CONFIDENTIAL documents in our infra), no vendor lock-in." data-kr="무료, 오픈소스, 페이지당 과금 없음, 완전 자체 호스팅(CONFIDENTIAL 문서를 우리 인프라 안에 유지), 벤더 종속 없음.">Free, open source, no per-page billing, fully self-hosted, no vendor lock-in.</p>
+      </div>
+      <div class="sub-flow">
+        <div class="sub-flow-label" data-en="Cons" data-kr="단점">Cons</div>
+        <p data-en="Marked 'Converters (Experimental)' by its own maintainers with long gaps between releases; weaker table/layout fidelity; does not support .hwpx (legacy .hwp only); we own the wrapper, hosting, and bug-fixing." data-kr="프로젝트 자체가 유지보수자에 의해 'Converters (Experimental)'로 명시되어 있고 릴리스 간격이 긺; 표·복잡 레이아웃 충실도가 낮음; .hwpx는 지원하지 않음(구형 .hwp만); FastAPI 래퍼, 호스팅, 버그 수정을 우리가 직접 관리.">Marked "Experimental" by maintainers; weaker table fidelity; no .hwpx support (legacy .hwp only); we own the wrapper and maintenance.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 5 -->
+  <section id="s-compare">
+    <h2 data-en="5 · Solution comparison" data-kr="5 · 솔루션 비교">5 · Solution comparison</h2>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th></th>
+          <th data-en="Hancom SDK" data-kr="한컴 SDK">Hancom SDK</th>
+          <th data-en="Upstage Document Parse" data-kr="Upstage Document Parse">Upstage Document Parse</th>
+          <th data-en="pyhwp + FastAPI" data-kr="pyhwp + FastAPI">pyhwp + FastAPI</th>
+        </tr></thead>
+        <tbody>
+          <tr><td data-en=".hwp (legacy) support" data-kr=".hwp (구형) 지원">.hwp (legacy) support</td><td data-en="Full (native)" data-kr="완전 지원 (네이티브)">Full (native)</td><td data-en="Yes" data-kr="지원">Yes</td><td data-en="Yes" data-kr="지원">Yes</td></tr>
+          <tr><td data-en=".hwpx support" data-kr=".hwpx 지원">.hwpx support</td><td data-en="Full (native)" data-kr="완전 지원 (네이티브)">Full (native)</td><td data-en="Yes" data-kr="지원">Yes</td><td><strong data-en="No" data-kr="미지원">No</strong></td></tr>
+          <tr><td data-en="Integration shape" data-kr="연동 형태">Integration shape</td><td data-en="Native SDK / OLE — needs a wrapper service" data-kr="네이티브 SDK / OLE — 래퍼 서비스 필요">Native SDK / OLE — needs a wrapper service</td><td data-en="REST API — matches current pipeline shape" data-kr="REST API — 현재 파이프라인 형태와 일치">REST API — matches current pipeline shape</td><td data-en="Self-built REST wrapper" data-kr="자체 구축 REST 래퍼">Self-built REST wrapper</td></tr>
+          <tr><td data-en="Hosting" data-kr="호스팅">Hosting</td><td data-en="Self-hosted or Hancom-hosted, per licensing" data-kr="자체 호스팅 또는 한컴 호스팅(라이선스에 따라)">Self-hosted or Hancom-hosted, per licensing</td><td data-en="Hosted by Upstage" data-kr="Upstage 호스팅">Hosted by Upstage</td><td data-en="Self-hosted" data-kr="자체 호스팅">Self-hosted</td></tr>
+          <tr><td data-en="Table/layout fidelity" data-kr="표/레이아웃 충실도">Table/layout fidelity</td><td data-en="High (format owner)" data-kr="높음 (포맷 소유사)">High (format owner)</td><td data-en="High (stated strength; validate on our docs)" data-kr="높음 (강점으로 알려짐; 검증 필요)">High (stated strength; validate on our docs)</td><td data-en="Moderate — experimental" data-kr="보통 — 실험적">Moderate — experimental</td></tr>
+          <tr><td data-en="Cost model" data-kr="비용 모델">Cost model</td><td data-en="Commercial license" data-kr="상업용 라이선스">Commercial license</td><td data-en="Pay-per-page" data-kr="페이지당 과금">Pay-per-page</td><td data-en="Free / infra cost only" data-kr="무료 / 인프라 비용만">Free / infra cost only</td></tr>
+          <tr><td data-en="Data residency" data-kr="데이터 위치">Data residency</td><td data-en="Depends on deployment" data-kr="배포 방식에 따라 다름">Depends on deployment</td><td data-en="Leaves infra during parsing" data-kr="파싱 중 인프라를 벗어남">Leaves infra during parsing</td><td data-en="Stays in-house" data-kr="사내에 유지">Stays in-house</td></tr>
+          <tr><td data-en="Maintenance burden" data-kr="유지보수 부담">Maintenance burden</td><td data-en="Low (vendor-maintained)" data-kr="낮음 (벤더 유지보수)">Low (vendor-maintained)</td><td data-en="Low (vendor-maintained)" data-kr="낮음 (벤더 유지보수)">Low (vendor-maintained)</td><td><strong data-en="High — we maintain the wrapper" data-kr="높음 — 래퍼를 우리가 유지보수">High — we maintain the wrapper</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 6 -->
+  <section id="s-decision">
+    <h2 data-en="6 · Recommendation — Decision" data-kr="6 · 권장 사항 — 결정">6 · Recommendation — Decision</h2>
+    <div class="callout-done">
+      <strong data-en="Chosen: pyhwp + a self-hosted FastAPI wrapper" data-kr="채택: pyhwp + 자체 호스팅 FastAPI 래퍼">Chosen: pyhwp + a self-hosted FastAPI wrapper</strong>
+      <span data-en="On cost grounds — it's free/open-source with no per-page billing, versus Upstage's pay-per-page pricing or a Hancom commercial SDK license. It also keeps documents in-house (relevant for CONFIDENTIAL-class sources)." data-kr="비용 기준으로 결정. Upstage의 페이지당 과금이나 한컴 상업용 SDK 라이선스 대비 무료/오픈소스이며 페이지당 과금이 없습니다. 또한 문서를 사내에 유지할 수 있습니다(CONFIDENTIAL 등급 출처와 관련).">On cost grounds — free/open-source with no per-page billing, versus Upstage's pay-per-page pricing or a Hancom commercial SDK license. Also keeps documents in-house.</span>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipe-node plain"><span class="pn-title">.hwp</span><span class="pn-sub" data-en="Source file" data-kr="원본 파일">Source file</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="FastAPI service" data-kr="FastAPI 서비스">FastAPI service</span><span class="pn-sub" data-en="wraps pyhwp (hwp5txt / hwp5html)" data-kr="pyhwp 래핑 (hwp5txt / hwp5html)">wraps pyhwp</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node"><span class="pn-title" data-en="Post-process" data-kr="후처리">Post-process</span><span class="pn-sub" data-en="to Markdown + manual table cleanup" data-kr="Markdown으로 + 표 수동 정리">to Markdown + table cleanup</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node db"><span class="pn-title" data-en="semanticChunk" data-kr="semanticChunk">semanticChunk</span><span class="pn-sub" data-en="existing pipeline, unchanged" data-kr="기존 파이프라인, 변경 없음">existing pipeline, unchanged</span></div>
+    </div>
+
+    <div class="callout-warn">
+      <strong data-en="Known limitation to plan around" data-kr="대비해야 할 알려진 제약">Known limitation to plan around</strong>
+      <span data-en="pyhwp only parses legacy binary .hwp (HWPv5) — it does not support .hwpx. Since newer Korean government documents are increasingly issued as .hwpx, this plan needs one of two things before .hwpx sources show up in the manifest: (1) confirm the current/expected corpus is .hwp-only for now and revisit .hwpx as a follow-up, or (2) pair pyhwp with a lightweight .hwpx path up front — .hwpx is XML-based, so it can likely be unzipped and parsed directly (e.g. with lxml) without a heavyweight second dependency."
+            data-kr="pyhwp는 구형 바이너리 .hwp(HWPv5)만 파싱하며 .hwpx는 지원하지 않습니다. 최신 한국 정부 문서가 점점 더 .hwpx로 발행되는 추세이므로, .hwpx 원본이 매니페스트에 등장하기 전에 다음 중 하나를 결정해야 합니다: (1) 현재/예상 말뭉치가 당분간 .hwp뿐임을 확인하고 실제 파일이 들어올 때 후속 작업으로 다루거나, (2) pyhwp와 함께 처음부터 경량 .hwpx 경로를 병행 — .hwpx는 XML 기반이므로 무거운 두 번째 의존성 없이 압축 해제 후 직접 파싱(예: lxml)이 가능할 가능성이 높습니다.">pyhwp only parses legacy binary .hwp — it does not support .hwpx. Plan for either confirming the corpus is .hwp-only for now, or pairing pyhwp with a lightweight .hwpx path (XML-based, parseable with e.g. lxml) up front.</span>
+    </div>
+
+    <div class="flow-block">
+      <div class="flow-title" data-en="Implementation notes" data-kr="구현 참고 사항">Implementation notes</div>
+      <ul>
+        <li data-en="Build a small FastAPI service (e.g. services/hwp-parser/) exposing something like POST /parse that accepts an .hwp file and returns Markdown/plain text, wrapping pyhwp's hwp5txt / hwp5html converters." data-kr="작은 FastAPI 서비스(예: services/hwp-parser/)를 만들어 .hwp 파일을 받아 Markdown/텍스트를 반환하는 POST /parse 같은 엔드포인트를 노출하고, pyhwp의 hwp5txt / hwp5html 변환기를 래핑합니다.">Build a small FastAPI service (e.g. <code>services/hwp-parser/</code>) exposing <code>POST /parse</code>, wrapping pyhwp's <code>hwp5txt</code> / <code>hwp5html</code> converters.</li>
+        <li data-en="Wire it into lib/ingest/parse.ts as a branch keyed on file extension, alongside the existing LlamaCloud PDF path — same contract (file in, Markdown out) so chunking downstream is unaffected." data-kr="lib/ingest/parse.ts에 기존 LlamaCloud PDF 경로와 나란히 파일 확장자 기준 분기로 연결 — 동일한 계약(파일 입력, Markdown 출력)이므로 하위 청킹 단계는 영향받지 않습니다.">Wire it into <code>lib/ingest/parse.ts</code> as a branch keyed on file extension, alongside the LlamaCloud PDF path — same contract, so chunking downstream is unaffected.</li>
+        <li data-en="Table fidelity is the main known weak point (pyhwp's converters are explicitly marked Experimental upstream) — plan for a manual review/cleanup pass on early ingested HWP documents with tables, especially anything feeding chunk_type = TABLE." data-kr="표 충실도가 가장 알려진 약점입니다(pyhwp의 변환기는 상위 프로젝트에서 명시적으로 Experimental로 표시됨) — 특히 chunk_type = TABLE로 들어가는 문서 등 표가 포함된 초기 HWP 문서에 대해 수동 검토/정리 단계를 계획하세요.">Table fidelity is the main known weak point — plan a manual review/cleanup pass on early HWP documents with tables, especially anything feeding <code>chunk_type = TABLE</code>.</li>
+        <li data-en="Because there's no vendor SLA, budget time for maintaining the wrapper and tracking the upstream pyhwp project." data-kr="벤더 SLA가 없으므로 래퍼 유지보수와 상위 pyhwp 프로젝트 추적 시간을 예산에 반영하세요.">Because there's no vendor SLA, budget time for maintaining the wrapper and tracking the upstream pyhwp project.</li>
+        <li data-en="Keep Upstage Document Parse and the Hancom SDK documented above as fallback options if pyhwp's output quality proves insufficient for a given document class." data-kr="위에 문서화한 Upstage Document Parse와 한컴 SDK는, 특정 문서 유형에 대해 pyhwp 결과물 품질이 부족한 것으로 판명될 경우를 위한 대안으로 계속 문서에 남겨두세요.">Keep Upstage Document Parse and the Hancom SDK documented above as fallback options if pyhwp's output quality proves insufficient.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 7 -->
+  <section id="s-api-current">
+    <h2 data-en="7 · API surface — current" data-kr="7 · API 목록 — 현재">7 · API surface — current</h2>
+    <p data-en="Carried over from the implementation doc for reference:" data-kr="참고용으로 구현 문서에서 가져왔습니다:">Carried over from the implementation doc for reference:</p>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th data-en="API / Service" data-kr="API / 서비스">API / Service</th>
+          <th data-en="Used for" data-kr="용도">Used for</th>
+          <th data-en="Auth" data-kr="인증">Auth</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>OpenAI <code>text-embedding-3-small</code></td><td data-en="Embeddings for chunks and queries" data-kr="청크 및 질의 임베딩">Embeddings for chunks and queries</td><td><code>OPENAI_API_KEY</code></td></tr>
+          <tr><td>OpenAI <code>gpt-4o-mini</code></td><td data-en="Chat agent (via Vercel AI SDK)" data-kr="채팅 에이전트 (Vercel AI SDK 경유)">Chat agent (via Vercel AI SDK)</td><td><code>OPENAI_API_KEY</code></td></tr>
+          <tr><td data-en="LlamaCloud Agentic OCR" data-kr="LlamaCloud Agentic OCR">LlamaCloud Agentic OCR</td><td data-en="PDF → Markdown parsing during ingestion" data-kr="인제스션 중 PDF → Markdown 파싱">PDF → Markdown parsing during ingestion</td><td><code>LLAMA_CLOUD_API_KEY</code></td></tr>
+          <tr><td data-en="Supabase Postgres + pgvector" data-kr="Supabase Postgres + pgvector">Supabase Postgres + pgvector</td><td data-en="Storage and vector search" data-kr="저장 및 벡터 검색">Storage and vector search</td><td><code>DATABASE_URL</code> / Supabase</td></tr>
+          <tr><td data-en="Internal app route handlers" data-kr="내부 앱 라우트 핸들러">Internal app route handlers</td><td data-en="/api/chat, /api/chat/title, /api/chat/suggestions, /api/documents/[code], /api/ingest" data-kr="/api/chat, /api/chat/title, /api/chat/suggestions, /api/documents/[code], /api/ingest">/api/chat, /api/chat/title, /api/chat/suggestions, /api/documents/[code], /api/ingest</td><td data-en="Mixed" data-kr="혼합">Mixed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="step-divider">
+
+  <!-- 8 -->
+  <section id="s-api-new">
+    <h2 data-en="8 · API surface — needed for this plan" data-kr="8 · API 목록 — 이 계획에 필요한 API">8 · API surface — needed for this plan</h2>
+    <div class="toc-wrap">
+      <table class="schedule-table">
+        <thead><tr>
+          <th data-en="API / Service" data-kr="API / 서비스">API / Service</th>
+          <th data-en="Purpose" data-kr="목적">Purpose</th>
+          <th data-en="Auth / Access" data-kr="인증/접근">Auth / Access</th>
+          <th data-en="Status" data-kr="상태">Status</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td data-en="Internal HWP parsing service (pyhwp-based, FastAPI)" data-kr="내부 HWP 파싱 서비스 (pyhwp 기반, FastAPI)">Internal HWP parsing service (pyhwp-based, FastAPI)</td>
+            <td data-en="Primary path: parse legacy .hwp into Markdown/plain text for ingestion" data-kr="주 경로: 구형 .hwp를 인제스션용 Markdown/텍스트로 파싱">Primary path: parse legacy .hwp into Markdown/plain text</td>
+            <td data-en="Self-hosted, no external auth" data-kr="자체 호스팅, 외부 인증 없음">Self-hosted, no external auth</td>
+            <td><span class="ticket-chip chosen" data-en="To build — chosen solution" data-kr="구축 예정 — 채택된 솔루션">To build — chosen</span></td>
+          </tr>
+          <tr>
+            <td>Upstage Document Parse</td>
+            <td data-en="Fallback for documents pyhwp parses poorly (esp. complex tables); candidate for .hwpx" data-kr="pyhwp가 잘 처리하지 못하는 문서(특히 복잡한 표)를 위한 대안; .hwpx 후보">Fallback for documents pyhwp parses poorly; candidate for .hwpx</td>
+            <td><code>UPSTAGE_API_KEY</code></td>
+            <td><span class="ticket-chip fallback" data-en="Documented fallback" data-kr="문서화된 대안">Documented fallback</span></td>
+          </tr>
+          <tr>
+            <td data-en="Hancom Hwp SDK / Developer API" data-kr="한컴 Hwp SDK / 디벨로퍼 API">Hancom Hwp SDK / Developer API</td>
+            <td data-en="High-fidelity fallback for documents neither pyhwp nor Upstage parse acceptably" data-kr="pyhwp와 Upstage 모두 만족스럽게 파싱하지 못하는 문서를 위한 고충실도 대안">High-fidelity fallback for documents neither pyhwp nor Upstage parse acceptably</td>
+            <td data-en="Commercial license" data-kr="상업용 라이선스">Commercial license</td>
+            <td><span class="ticket-chip fallback" data-en="Documented fallback" data-kr="문서화된 대안">Documented fallback</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p data-en="No new paid API keys are required for the chosen path. If a fallback is later exercised, add alongside the existing set:" data-kr="채택된 경로에는 신규 유료 API 키가 필요하지 않습니다. 이후 대안이 실제로 사용될 경우, 기존 목록에 다음을 추가합니다:">No new paid API keys are required for the chosen path. If a fallback is later exercised, add alongside the existing set:</p>
+    <pre><code>UPSTAGE_API_KEY=            # only if the Upstage fallback is adopted
+HANCOM_SDK_LICENSE_KEY=     # only if the Hancom SDK fallback is adopted</code></pre>
+  </section>
+
+</div>
+
+<script>
+function setLang(lang) {
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-kr').classList.toggle('active', lang === 'kr');
+  document.documentElement.lang = lang === 'kr' ? 'ko' : 'en';
+  document.body.classList.toggle('kr', lang === 'kr');
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const val = el.getAttribute(lang === 'kr' ? 'data-kr' : 'data-en');
+    if (val !== null) el.innerHTML = val;
+  });
+}
+</script>
+</body>
+</html>
