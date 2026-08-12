@@ -105,19 +105,22 @@ export const uploadRawObject = async (opts: {
   };
 };
 
-// Short-lived presigned GET URL, so the browser can download the original
-// straight from R2 without proxying bytes through the app.
+// Short-lived presigned GET URL, so the browser can fetch the original straight
+// from R2 without proxying bytes through the app. `disposition: "inline"` lets a
+// viewable type (PDF/image) render in an <iframe>/<img>; the default downloads.
 export const getSignedDownloadUrl = async (
   key: string,
-  opts?: { expiresIn?: number; filename?: string }
+  opts?: { expiresIn?: number; filename?: string; disposition?: "inline" | "attachment" }
 ): Promise<string> => {
   const { s3, bucket } = getClient();
+  const disposition = opts?.disposition ?? "attachment";
+  const contentDisposition = opts?.filename
+    ? `${disposition}; filename="${opts.filename}"`
+    : disposition;
   const command = new GetObjectCommand({
     Bucket: bucket,
     Key: key,
-    ...(opts?.filename
-      ? { ResponseContentDisposition: `attachment; filename="${opts.filename}"` }
-      : {}),
+    ResponseContentDisposition: contentDisposition,
   });
   return getSignedUrl(s3, command, { expiresIn: opts?.expiresIn ?? 300 });
 };

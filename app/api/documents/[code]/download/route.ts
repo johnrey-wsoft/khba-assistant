@@ -12,8 +12,9 @@ import { HttpStatus } from "@/constants/http-status.constant";
 // Redirect to a short-lived presigned R2 URL for the raw source file of the
 // latest PUBLIC version of a document. Members only. 404s when the document
 // has no R2 object (e.g. ingested before R2 was configured).
-export async function GET(_req: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
+  const inline = new URL(req.url).searchParams.get("inline") === "1";
 
   try {
     const rateLimited = await rateLimit("api");
@@ -51,6 +52,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ code: s
 
     const url = await getSignedDownloadUrl(row.rawObjectPath, {
       filename: row.originalFilename ?? undefined,
+      disposition: inline ? "inline" : "attachment",
       expiresIn: 300,
     });
 

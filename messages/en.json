@@ -286,6 +286,11 @@
     "emptyLede": "I search approved association materials, notices, and statutes — and answer with the source and its base date alongside.",
     "viewerTitle": "Original text viewer",
     "excerptLegend": "Excerpt used in the answer",
+    "openOriginal": "Open original",
+    "viewText": "Text",
+    "viewDocument": "Document",
+    "cantPreview": "This file can't be previewed here — download it to view.",
+    "download": "Download",
     "panelNotice": "a reference excerpt from the KHBA index, current as of the base date shown. Confirm the wording against the official published text before relying on it.",
     "examples": [
       {
