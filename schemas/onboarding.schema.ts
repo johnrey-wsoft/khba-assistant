@@ -6,6 +6,7 @@ import { ONBOARDING_ROLES, ONBOARDING_TOPICS } from "@/constants/onboarding.cons
 const bizRegNoRegex = /^\d{3}-?\d{2}-?\d{5}$/;
 
 export const onboardingSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name").max(100),
   company: z.string().trim().min(1, "Company name is required").max(200),
   businessRegistrationNumber: z
     .string()

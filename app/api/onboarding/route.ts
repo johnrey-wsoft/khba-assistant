@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     const updated = await db
       .update(profiles)
       .set({
+        name: values.name,
         company: values.company,
         // Store the registration number normalised to 10 digits.
         businessRegistrationNumber: values.businessRegistrationNumber.replace(/-/g, ""),

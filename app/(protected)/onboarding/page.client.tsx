@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Lightbulb, ArrowRight, Check } from "lucide-react";
+import { Lightbulb, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { LocaleSwitcher } from "@/components/marketing/locale-switcher";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import { onboardingSchema, type OnboardingFormValues } from "@/schemas/onboarding.schema";
 import { ONBOARDING_ROLES, ONBOARDING_TOPICS } from "@/constants/onboarding.constant";
 import { API_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
@@ -50,12 +51,14 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 export const PageClient = () => {
   const router = useRouter();
   const t = useTranslations("onboarding");
+  const { profile } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
+      name: "",
       company: "",
       businessRegistrationNumber: "",
       memberNumber: "",
@@ -65,6 +68,15 @@ export const PageClient = () => {
     },
     mode: "onTouched",
   });
+
+  // Prefill the name from the signed-in profile (captured at sign-up), once.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!prefilled.current && profile?.name) {
+      form.setValue("name", profile.name);
+      prefilled.current = true;
+    }
+  }, [profile?.name, form]);
 
   const goChat = () => router.push(PROTECTED_ROUTES.CHAT);
 
@@ -90,6 +102,12 @@ export const PageClient = () => {
     }
   };
 
+  const isCompany = step === 1;
+  const title = isCompany ? t("companyTitle") : t("nameTitle");
+  const subtitle = isCompany ? t("companySubtitle") : t("nameSubtitle");
+  const pickLabel = isCompany ? t("companyPick") : t("namePick");
+  const why = isCompany ? t("whyCompany") : t("whyName");
+
   return (
     <div className="flex min-h-svh flex-col bg-muted/40">
       <header className="flex items-center gap-2.5 px-6 py-4">
@@ -104,9 +122,9 @@ export const PageClient = () => {
 
       <main className="flex flex-1 items-start justify-center px-4 py-8 sm:items-center">
         <div className="w-full max-w-[620px] rounded-3xl border border-border bg-card p-8 shadow-sm sm:p-10">
-          {/* Step header + progress */}
+          {/* Step badge + skip */}
           <div className="flex items-center justify-between gap-3">
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            <span className="rounded-full bg-chart-4/10 px-3 py-1 text-xs font-bold text-chart-4">
               {t("step", { current: step, total: TOTAL_STEPS })}
             </span>
             <button
@@ -118,28 +136,23 @@ export const PageClient = () => {
             </button>
           </div>
 
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground">{title}</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
+
           <div className="mt-5 flex gap-2">
             {Array.from({ length: TOTAL_STEPS }, (_, i) => (
               <span
                 key={i}
-                className={cn(
-                  "h-1.5 flex-1 rounded-full",
-                  i < step ? "bg-primary" : "bg-border"
-                )}
+                className={cn("h-1.5 flex-1 rounded-full", i < step ? "bg-primary" : "bg-border")}
               />
             ))}
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-7">
-            {step === 1 ? (
-              <div className="flex flex-col gap-5">
-                <div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-                    {t("companyTitle")}
-                  </h1>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{t("companySubtitle")}</p>
-                </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6">
+            <div className="mb-3 text-sm font-bold text-foreground">{pickLabel}</div>
 
+            {isCompany ? (
+              <div className="flex flex-col gap-5">
                 <Controller
                   name="company"
                   control={form.control}
@@ -188,9 +201,7 @@ export const PageClient = () => {
                       <label className="flex flex-col gap-2">
                         <FieldLabel>
                           {t("memberNoLabel")}{" "}
-                          <span className="font-medium text-muted-foreground">
-                            {t("optional")}
-                          </span>
+                          <span className="font-medium text-muted-foreground">{t("optional")}</span>
                         </FieldLabel>
                         <Input {...field} placeholder={t("memberNoPlaceholder")} />
                       </label>
@@ -224,19 +235,34 @@ export const PageClient = () => {
                           );
                         })}
                       </div>
-                      <span className="text-[13px] text-muted-foreground">{t("topicsHint")}</span>
                     </div>
                   )}
                 />
+
+                <p className="text-[13px] text-muted-foreground">{t("topicsHint")}</p>
               </div>
             ) : (
               <div className="flex flex-col gap-5">
-                <div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-                    {t("roleTitle")}
-                  </h1>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{t("roleSubtitle")}</p>
-                </div>
+                <Controller
+                  name="name"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <label className="flex flex-col gap-2">
+                      <FieldLabel>{t("nameLabel")}</FieldLabel>
+                      <Input
+                        {...field}
+                        placeholder={t("namePlaceholder")}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      <span className="text-[13px] text-muted-foreground">{t("nameHelper")}</span>
+                      {fieldState.error && (
+                        <span className="text-[13px] text-destructive">
+                          {fieldState.error.message}
+                        </span>
+                      )}
+                    </label>
+                  )}
+                />
 
                 <Controller
                   name="role"
@@ -263,28 +289,6 @@ export const PageClient = () => {
                     </div>
                   )}
                 />
-
-                <Controller
-                  name="marketingOptIn"
-                  control={form.control}
-                  render={({ field }) => (
-                    <button
-                      type="button"
-                      onClick={() => field.onChange(!field.value)}
-                      className="flex items-start gap-2.5 text-left text-sm text-foreground/80"
-                    >
-                      <span
-                        className={cn(
-                          "mt-0.5 grid size-5 flex-none place-items-center rounded-md border",
-                          field.value ? "border-primary bg-primary text-primary-foreground" : "border-border"
-                        )}
-                      >
-                        {field.value && <Check className="size-3.5" strokeWidth={3} />}
-                      </span>
-                      {t("marketing")}
-                    </button>
-                  )}
-                />
               </div>
             )}
 
@@ -293,14 +297,12 @@ export const PageClient = () => {
               <Lightbulb className="mt-0.5 size-4 flex-none text-primary" />
               <div>
                 <div className="text-sm font-bold text-foreground">{t("whyLabel")}</div>
-                <p className="mt-1 text-[13.5px] text-muted-foreground">
-                  {step === 1 ? t("whyCompany") : t("whyRole")}
-                </p>
+                <p className="mt-1 text-[13.5px] text-muted-foreground">{why}</p>
               </div>
             </div>
 
             <div className="mt-6 flex flex-col gap-2.5">
-              {step === 1 ? (
+              {isCompany ? (
                 <Button type="button" size="lg" className="w-full gap-2" onClick={next}>
                   {t("continue")}
                   <ArrowRight className="size-4" />
