@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -19,6 +19,13 @@ import { ONBOARDING_ROLES, ONBOARDING_TOPICS } from "@/constants/onboarding.cons
 import { API_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 const TOTAL_STEPS = 2;
+
+// Which fields belong to each step, so advancing validates only the current
+// step and a failed final submit can jump to the step that owns the error.
+const STEP_FIELDS: Record<number, (keyof OnboardingFormValues)[]> = {
+  1: ["company", "businessRegistrationNumber", "memberNumber", "topics"],
+  2: ["name", "role"],
+};
 
 const Pill = ({
   selected,
@@ -80,9 +87,11 @@ export const PageClient = () => {
 
   const goChat = () => router.push(PROTECTED_ROUTES.CHAT);
 
+  // Validate only the current step's fields before advancing, so step 2's
+  // required fields don't surface errors while the user is still on step 1.
   const next = async () => {
-    const ok = await form.trigger(["company", "businessRegistrationNumber"]);
-    if (ok) setStep(2);
+    const ok = await form.trigger(STEP_FIELDS[step]);
+    if (ok && step < TOTAL_STEPS) setStep((s) => s + 1);
   };
 
   const onSubmit = async (values: OnboardingFormValues) => {
@@ -100,6 +109,27 @@ export const PageClient = () => {
       toast.error(t("errorTitle"), { description: t("errorBody") });
       setSubmitting(false);
     }
+  };
+
+  // On a failed final submit, reveal the earliest step that still has an error
+  // instead of the submit silently doing nothing.
+  const onInvalid = (errors: FieldErrors<OnboardingFormValues>) => {
+    const badStep = Object.keys(STEP_FIELDS)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .find((s) => STEP_FIELDS[s].some((f) => errors[f]));
+    if (badStep) setStep(badStep);
+  };
+
+  // The form submits on Enter and on the primary button. Only actually submit
+  // on the last step; earlier steps advance instead.
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step < TOTAL_STEPS) {
+      void next();
+      return;
+    }
+    void form.handleSubmit(onSubmit, onInvalid)(e);
   };
 
   const isCompany = step === 1;
@@ -148,11 +178,15 @@ export const PageClient = () => {
             ))}
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6">
+          <form onSubmit={handleFormSubmit} className="mt-6">
             <div className="mb-3 text-sm font-bold text-foreground">{pickLabel}</div>
 
             {isCompany ? (
-              <div className="flex flex-col gap-5">
+              // Distinct key per step so React doesn't reconcile step 1's and
+              // step 2's same-position fields into one instance — otherwise the
+              // first Controller's name morphs company⇄name and RHF drops the
+              // company value when you go Back.
+              <div key="step-company" className="flex flex-col gap-5">
                 <Controller
                   name="company"
                   control={form.control}
@@ -242,7 +276,7 @@ export const PageClient = () => {
                 <p className="text-[13px] text-muted-foreground">{t("topicsHint")}</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-5">
+              <div key="step-name" className="flex flex-col gap-5">
                 <Controller
                   name="name"
                   control={form.control}
@@ -303,7 +337,7 @@ export const PageClient = () => {
 
             <div className="mt-6 flex flex-col gap-2.5">
               {isCompany ? (
-                <Button type="button" size="lg" className="w-full gap-2" onClick={next}>
+                <Button type="submit" size="lg" className="w-full gap-2">
                   {t("continue")}
                   <ArrowRight className="size-4" />
                 </Button>
@@ -317,7 +351,7 @@ export const PageClient = () => {
                     size="lg"
                     variant="secondary"
                     className="w-full"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep((s) => Math.max(1, s - 1))}
                   >
                     {t("back")}
                   </Button>
