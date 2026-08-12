@@ -17,7 +17,17 @@ export type PreparedDocument = {
   version: {
     versionNo: number;
     effectiveFrom: string | null;
+    // R2 object key when uploaded, else the local manifest path.
     rawObjectPath: string;
+    // SHA-256 of the raw file bytes; falls back to a path-derived hash.
+    sourceHash?: string;
+    // R2 object metadata (set when the raw file is uploaded to R2).
+    storageBucket?: string | null;
+    contentType?: string | null;
+    sizeBytes?: number | null;
+    originalFilename?: string | null;
+    etag?: string | null;
+    uploadedAt?: Date | null;
   };
   chunks: PreparedChunk[];
 };
@@ -68,9 +78,9 @@ export const upsertDocuments = async (
       })
       .returning({ id: document.documentId });
 
-    const sourceHash = createHash("sha256")
-      .update(`${doc.documentCode}:${doc.version.rawObjectPath}`)
-      .digest("hex");
+    const sourceHash =
+      doc.version.sourceHash ??
+      createHash("sha256").update(`${doc.documentCode}:${doc.version.rawObjectPath}`).digest("hex");
 
     const [verRow] = await db
       .insert(documentVersion)
@@ -80,6 +90,12 @@ export const upsertDocuments = async (
         effectiveFrom: doc.version.effectiveFrom,
         sourceHash,
         rawObjectPath: doc.version.rawObjectPath,
+        storageBucket: doc.version.storageBucket ?? null,
+        contentType: doc.version.contentType ?? null,
+        sizeBytes: doc.version.sizeBytes ?? null,
+        originalFilename: doc.version.originalFilename ?? null,
+        etag: doc.version.etag ?? null,
+        uploadedAt: doc.version.uploadedAt ?? null,
         approvalStatus: "PUBLISHED",
       })
       .returning({ id: documentVersion.versionId });

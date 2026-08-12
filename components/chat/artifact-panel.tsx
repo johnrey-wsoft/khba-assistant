@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X, ExternalLink, Download, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,9 @@ type FullDocument = {
   jurisdictionCode: string | null;
   securityClass: string;
   effectiveFrom: string | null;
+  hasOriginal: boolean;
+  contentType: string | null;
+  originalFilename: string | null;
   passages: DocumentPassage[];
 };
 
@@ -68,8 +71,15 @@ type ArtifactPanelProps = {
 export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelProps) => {
   const t = useTranslations("chat");
   const [active, setActive] = useState(initialIndex);
+  const [view, setView] = useState<"text" | "document">("text");
   const source = sources[active] ?? sources[0];
   const citedRef = useRef<HTMLParagraphElement>(null);
+
+  // Switching source tabs resets back to the searchable text view.
+  const selectTab = (i: number) => {
+    setActive(i);
+    setView("text");
+  };
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["document", source.documentCode],
@@ -83,13 +93,20 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
   });
 
   const baseDate = data?.effectiveFrom;
+  const hasOriginal = Boolean(data?.hasOriginal);
+  const contentType = data?.contentType ?? "";
+  const isPdf = contentType.includes("pdf");
+  const isImage = contentType.startsWith("image/");
+  const canPreview = isPdf || isImage;
+  const downloadUrl = `/api/documents/${encodeURIComponent(source.documentCode)}/download`;
 
-  // Bring the cited passage into view once the (active) document resolves.
+  // Bring the cited passage into view once the (active) document resolves — but
+  // only in the text view (the document view has no passages to scroll to).
   useEffect(() => {
-    if (data && citedRef.current) {
+    if (view === "text" && data && citedRef.current) {
       citedRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [data]);
+  }, [data, view]);
 
   return (
     <>
@@ -103,10 +120,12 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
         {/* Pane head — title + the excerpt legend. */}
         <header className="flex items-center gap-3 border-b border-border bg-muted/40 px-5 py-3.5">
           <span className="text-sm font-extrabold text-foreground">{t("viewerTitle")}</span>
-          <span className="ml-auto hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
-            <span className="h-3 w-5 rounded-[3px] border border-seal-border bg-highlight" />
-            {t("excerptLegend")}
-          </span>
+          {view === "text" && (
+            <span className="ml-auto hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
+              <span className="h-3 w-5 rounded-[3px] border border-seal-border bg-highlight" />
+              {t("excerptLegend")}
+            </span>
+          )}
           <Button
             variant="outline"
             size="icon"
@@ -126,7 +145,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
               <button
                 key={s.documentCode}
                 type="button"
-                onClick={() => setActive(i)}
+                onClick={() => selectTab(i)}
                 className={cn(
                   "flex items-center gap-2 border-b-2 px-3 py-3 text-[12.5px] font-semibold whitespace-nowrap transition-colors",
                   i === active
@@ -162,14 +181,78 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
               {source.jurisdictionCode}
             </span>
           )}
+
+          {hasOriginal && (
+            <>
+              <span className="flex-1" />
+              {canPreview && (
+                <div className="inline-flex rounded-full border border-border bg-card p-0.5">
+                  {(["text", "document"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setView(mode)}
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
+                        view === mode
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {mode === "text" ? t("viewText") : t("viewDocument")}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+              >
+                {t("openOriginal")}
+                <ExternalLink className="size-3.5" />
+              </a>
+            </>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-5 p-6">
             {isLoading && <BodySkeleton />}
 
+            {/* Original document — embedded (PDF/image) or a download prompt. */}
+            {view === "document" &&
+              (canPreview ? (
+                isPdf ? (
+                  <iframe
+                    src={`${downloadUrl}?inline=1`}
+                    title={source.title}
+                    className="h-[70vh] w-full rounded-xl border border-border bg-background"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`${downloadUrl}?inline=1`}
+                    alt={source.title}
+                    className="w-full rounded-xl border border-border"
+                  />
+                )
+              ) : (
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-8 text-center">
+                  <FileText className="size-6 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">{t("cantPreview")}</p>
+                  <Button asChild size="sm">
+                    <a href={downloadUrl} target="_blank" rel="noreferrer">
+                      <Download className="size-4" />
+                      {t("download")}
+                    </a>
+                  </Button>
+                </div>
+              ))}
+
             {/* Paper "document page" — faint ruling behind the article text. */}
-            {(isError || (data && data.passages.length > 0)) && (
+            {view === "text" && (isError || (data && data.passages.length > 0)) && (
               <div
                 className="rounded-xl border border-border bg-background px-5 py-4"
                 style={{

@@ -286,6 +286,11 @@
     "emptyLede": "협회 승인자료·공고·법령을 검색해, 출처와 기준일을 함께 답해 드립니다.",
     "viewerTitle": "원문 뷰어",
     "excerptLegend": "답변에 사용된 발췌",
+    "openOriginal": "원문 열기",
+    "viewText": "텍스트",
+    "viewDocument": "원문",
+    "cantPreview": "이 파일은 여기서 미리볼 수 없습니다. 다운로드하여 확인하세요.",
+    "download": "다운로드",
     "panelNotice": "KHBA 색인의 참고 발췌이며, 표시된 기준일 기준입니다. 근거로 삼기 전 공식 공개 원문에서 문구를 확인하세요.",
     "examples": [
       {

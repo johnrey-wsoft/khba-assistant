@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
+import { createHash } from "node:crypto";
 
 // Load .env (LLAMA_CLOUD_API_KEY, OPENAI_API_KEY, DATABASE_URL) before use.
 (function loadEnv() {
@@ -24,6 +25,12 @@ import { upsertDocuments } from "../lib/ingest/upsert";
 import { semanticChunk } from "../lib/ai/chunking";
 import { embedTexts } from "../lib/ai/embeddings";
 import { logIngest, since } from "../lib/ingest/log";
+import {
+  isR2Configured,
+  buildRawObjectKey,
+  contentTypeFor,
+  uploadRawObject,
+} from "../lib/storage/r2";
 
 type ManifestEntry = {
   file: string; // relative to data/ingest
@@ -99,6 +106,22 @@ async function main() {
       const docStart = Date.now();
       try {
         const filePath = resolve(DATA_DIR, entry.file);
+        const versionNo = entry.version?.versionNo ?? 1;
+
+        // Raw bytes: SHA-256 for integrity, plus upload to R2 when configured.
+        const fileBytes = readFileSync(filePath);
+        const sourceHash = createHash("sha256").update(fileBytes).digest("hex");
+        const contentType = contentTypeFor(entry.file);
+        let stored: Awaited<ReturnType<typeof uploadRawObject>> | null = null;
+        if (isR2Configured()) {
+          const key = buildRawObjectKey(entry.documentCode, versionNo, entry.file);
+          stored = await uploadRawObject({ key, body: fileBytes, contentType });
+          logIngest("cli", `uploaded ${tag}`, {
+            doc: entry.documentCode,
+            key: stored.key,
+            bytes: stored.sizeBytes,
+          });
+        }
 
         const tParse = Date.now();
         logIngest("cli", `parse start ${tag}`, { doc: entry.documentCode, file: entry.file });
@@ -133,9 +156,17 @@ async function main() {
             jurisdictionCode: entry.jurisdictionCode ?? null,
             securityClass: entry.securityClass ?? "PUBLIC",
             version: {
-              versionNo: entry.version?.versionNo ?? 1,
+              versionNo,
               effectiveFrom: entry.version?.effectiveFrom ?? null,
-              rawObjectPath: entry.file,
+              // R2 key when uploaded, else the local manifest path.
+              rawObjectPath: stored?.key ?? entry.file,
+              sourceHash,
+              storageBucket: stored?.bucket ?? null,
+              contentType: stored?.contentType ?? contentType,
+              sizeBytes: stored?.sizeBytes ?? fileBytes.byteLength,
+              originalFilename: basename(entry.file),
+              etag: stored?.etag ?? null,
+              uploadedAt: stored ? new Date() : null,
             },
             chunks: chunks.map((text, idx) => ({ text, embedding: embeddings[idx] })),
           },

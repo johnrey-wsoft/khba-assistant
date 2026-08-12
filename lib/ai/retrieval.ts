@@ -64,6 +64,11 @@ export type FullDocument = {
   jurisdictionCode: string | null;
   securityClass: string;
   effectiveFrom: string | null;
+  // Raw source file in R2 (see lib/storage/r2.ts). hasOriginal is false when the
+  // version was ingested before R2 was configured.
+  hasOriginal: boolean;
+  contentType: string | null;
+  originalFilename: string | null;
   passages: DocumentPassage[];
 };
 
@@ -74,6 +79,9 @@ type DocRow = {
   jurisdictionCode: string | null;
   securityClass: string;
   effectiveFrom: string | null;
+  hasOriginal: boolean;
+  contentType: string | null;
+  originalFilename: string | null;
   nodePath: string;
   text: string;
 };
@@ -88,6 +96,9 @@ export const getDocumentByCode = async (code: string): Promise<FullDocument | nu
            d.jurisdiction_code AS "jurisdictionCode",
            d.security_class    AS "securityClass",
            dv.effective_from   AS "effectiveFrom",
+           (dv.storage_bucket IS NOT NULL) AS "hasOriginal",
+           dv.content_type     AS "contentType",
+           dv.original_filename AS "originalFilename",
            cn.node_path        AS "nodePath",
            se.original_text    AS "text",
            (se.locator_json->>'chunkIndex')::int AS "chunkIndex"
@@ -114,6 +125,9 @@ export const getDocumentByCode = async (code: string): Promise<FullDocument | nu
     jurisdictionCode: first.jurisdictionCode,
     securityClass: first.securityClass,
     effectiveFrom: first.effectiveFrom,
+    hasOriginal: Boolean(first.hasOriginal),
+    contentType: first.contentType,
+    originalFilename: first.originalFilename,
     passages: rows.map((r) => ({ nodePath: r.nodePath, text: r.text })),
   };
 };

@@ -2,9 +2,11 @@ import {
   pgTable,
   uuid,
   integer,
+  bigint,
   date,
   char,
   varchar,
+  timestamp,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -28,11 +30,18 @@ export const documentVersion = pgTable(
     effectiveTo: date("effective_to"),
     // §6 `version_hash` (SHA-256)
     sourceHash: char("source_hash", { length: 64 }).notNull(),
-    // §4-5 — actual storage for the §19 raw-object path convention.
+    // §4-5 — Cloudflare R2 object key for the raw file (the §19 raw-object path
+    // convention, e.g. "raw/LAW-2026-000123/v1.hwp").
     rawObjectPath: varchar("raw_object_path", { length: 500 }).notNull(),
-    approvalStatus: approvalStatusEnum("approval_status")
-      .notNull()
-      .default("DRAFT"),
+    // R2 object metadata — nullable so existing rows and the trigger-created
+    // path are unaffected; populated when the raw file is uploaded to R2.
+    storageBucket: varchar("storage_bucket", { length: 100 }),
+    contentType: varchar("content_type", { length: 100 }),
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
+    originalFilename: varchar("original_filename", { length: 255 }),
+    etag: varchar("etag", { length: 255 }),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }),
+    approvalStatus: approvalStatusEnum("approval_status").notNull().default("DRAFT"),
     ...auditColumns,
   },
   (t) => [
@@ -40,5 +49,5 @@ export const documentVersion = pgTable(
     index("document_version_effective_from_idx").on(t.effectiveFrom),
     index("document_version_effective_to_idx").on(t.effectiveTo),
     index("document_version_approval_status_idx").on(t.approvalStatus),
-  ],
+  ]
 );

@@ -15,5 +15,12 @@ namespace NodeJS {
 
     UPSTASH_REDIS_REST_URL: string;
     UPSTASH_REDIS_REST_TOKEN: string;
+
+    // Cloudflare R2 (S3-compatible) — raw source-document storage.
+    R2_ACCOUNT_ID?: string;
+    R2_ACCESS_KEY_ID?: string;
+    R2_SECRET_ACCESS_KEY?: string;
+    R2_BUCKET?: string;
+    R2_ENDPOINT?: string;
   }
 }
