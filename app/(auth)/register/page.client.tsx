@@ -18,7 +18,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 
 import { registerSchema, type RegisterFormValues } from "@/schemas/auth.schema";
 
-import { AUTH_ROUTES } from "@/constants/routes.constant";
+import { AUTH_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 export const PageClient = () => {
   const router = useRouter();
@@ -39,7 +39,7 @@ export const PageClient = () => {
   const onFormSubmit = (values: RegisterFormValues) => {
     startTransition(async () => {
       try {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
           options: {
@@ -61,7 +61,9 @@ export const PageClient = () => {
         });
 
         form.reset();
-        router.push(AUTH_ROUTES.LOGIN);
+        // If sign-up returns a session (email confirmation off), go straight to
+        // onboarding; otherwise the user confirms by email, then logs in.
+        router.push(data.session ? PROTECTED_ROUTES.ONBOARDING : AUTH_ROUTES.LOGIN);
       } catch (error) {
         console.error(error);
         toast.error(t("toastErrorTitle"), {

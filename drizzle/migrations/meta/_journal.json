@@ -15,6 +15,13 @@
       "when": 1785732144548,
       "tag": "0001_DocumentEvidenceSchema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786455875642,
+      "tag": "0002_member_onboarding",
+      "breakpoints": true
     }
   ]
 }
