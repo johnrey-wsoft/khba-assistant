@@ -3,6 +3,13 @@ import * as schema from "@/drizzle/schemas";
 export type SelectProfile = typeof schema.profiles.$inferSelect;
 export type InsertProfile = typeof schema.profiles.$inferInsert;
 
+// Chat & message persistence
+export type SelectChat = typeof schema.chats.$inferSelect;
+export type InsertChat = typeof schema.chats.$inferInsert;
+
+export type SelectMessage = typeof schema.messages.$inferSelect;
+export type InsertMessage = typeof schema.messages.$inferInsert;
+
 // WS-1267 — Document & Evidence Data Standard Schema
 export type SelectDocument = typeof schema.document.$inferSelect;
 export type InsertDocument = typeof schema.document.$inferInsert;
