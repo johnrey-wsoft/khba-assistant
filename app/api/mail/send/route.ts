@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 import { apiResponse } from "@/lib/response";
 import { rateLimit } from "@/lib/ratelimit";
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireAdmin } from "@/lib/guards/role.guard";
 
 import { HttpStatus } from "@/constants/http-status.constant";
 
@@ -23,7 +23,9 @@ export async function POST(req: Request) {
     const rateLimited = await rateLimit("email");
     if (rateLimited) return rateLimited;
 
-    const { error } = await requireAuth();
+    // Raw "send email to any address" endpoint with no member-facing caller —
+    // admin-only to avoid an abuse/spam vector.
+    const { error } = await requireAdmin();
     if (error) return error;
 
     const body = await req.json();
