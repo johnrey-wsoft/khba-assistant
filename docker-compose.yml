@@ -24,3 +24,11 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+
+  markitdown-api:
+    build:
+      context: ./python-markitdown
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    restart: unless-stopped

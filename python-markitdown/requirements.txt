@@ -1,0 +1,9 @@
+# Web framework — pinned to match the sibling pyhwp service.
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# MarkItDown + the document extras we ingest (PDF, Word, PowerPoint, Excel).
+# Images/HTML/CSV/JSON are handled by the base package. Left unpinned to a
+# minor floor so security patches flow in; bump the floor to pin a release.
+markitdown[pdf,docx,pptx,xlsx,xls]>=0.1.1
