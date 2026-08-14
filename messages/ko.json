@@ -352,8 +352,8 @@
     "whyLabel": "왜 물어보나요",
     "whyCompany": "답변은 회사와 지역에 맞춰 제공되므로, 이 정보가 맞춤화에 도움이 됩니다.",
     "whyRole": "계정 관련 회신 시 데스크가 누구와 소통하는지 알 수 있도록 합니다.",
-    "toastTitle": "설정이 완료되었습니다",
-    "toastBody": "정보가 저장되었습니다.",
+    "toastTitle": "검토 요청이 제출되었습니다",
+    "toastBody": "협회 사무국에서 계정을 확인합니다. 보통 영업일 기준 하루 이내입니다.",
     "errorTitle": "저장하지 못했습니다",
     "errorBody": "입력 내용을 확인한 뒤 다시 시도해 주세요.",
     "topics": {
@@ -373,6 +373,36 @@
       "sales": "분양",
       "finance": "재무"
     }
+  },
+  "pending": {
+    "badgePending": "검토 중",
+    "badgeRejected": "확인 필요",
+    "titlePending": "협회 사무국에서 계정을 확인하고 있습니다",
+    "subPending": "{email}(으)로 제출하신 정보를 사무국에 전달했습니다. 확인은 보통 영업일 기준 하루 이내에 완료되며, 완료되는 즉시 이메일로 알려드립니다.",
+    "titleRejected": "요청을 다시 확인해야 합니다",
+    "subRejected": "{email} 계정의 정보를 확인하지 못했습니다. 회사 정보를 수정해 다시 제출하시거나 사무국 이메일에 회신해 주세요.",
+    "reviewingTitle": "사무국이 확인하는 정보",
+    "companyLabel": "회사명",
+    "bizNoLabel": "사업자등록번호",
+    "contactLabel": "연락처",
+    "steps": {
+      "submitted": {
+        "title": "요청 제출됨",
+        "body": "계정 정보가 사무국에 접수되었습니다."
+      },
+      "review": {
+        "title": "사무국이 회원 정보를 확인 중",
+        "body": "보통 영업일 기준 하루 이내에 완료됩니다."
+      },
+      "activated": {
+        "title": "계정 활성화",
+        "body": "이메일을 받으신 뒤 서비스가 열립니다."
+      }
+    },
+    "noticePending": "회사 정보가 협회 기록과 다를 경우 사무국에서 먼저 이메일을 보낼 수 있습니다. 정정한 사업자등록번호를 회신해 주시면 됩니다.",
+    "noticeRejected": "회사명과 사업자등록번호를 협회 기록과 대조해 확인한 뒤 다시 제출해 주세요.",
+    "updateDetails": "정보 수정하기",
+    "backHome": "홈으로"
   },
   "locale": {
     "switchLabel": "언어",

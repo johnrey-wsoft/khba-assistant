@@ -352,8 +352,8 @@
     "whyLabel": "Why we ask",
     "whyCompany": "Answers are scoped to your company and its region, so these details help us tailor them.",
     "whyRole": "So the desk knows who it's helping when it follows up about your account.",
-    "toastTitle": "You're all set",
-    "toastBody": "Your details are saved.",
+    "toastTitle": "Submitted for review",
+    "toastBody": "The association desk will verify your account, usually within one business day.",
     "errorTitle": "Couldn't save",
     "errorBody": "Please check the form and try again.",
     "topics": {
@@ -373,6 +373,36 @@
       "sales": "Sales",
       "finance": "Finance"
     }
+  },
+  "pending": {
+    "badgePending": "Under review",
+    "badgeRejected": "Needs attention",
+    "titlePending": "Your account is with the association desk",
+    "subPending": "We sent your details to the secretariat for {email}. Verification usually finishes within one business day, and you'll get an email the moment it does.",
+    "titleRejected": "Your request needs another look",
+    "subRejected": "The desk couldn't verify the details for {email}. Update your company information and resubmit, or reply to the desk email.",
+    "reviewingTitle": "What the desk is reviewing",
+    "companyLabel": "Company",
+    "bizNoLabel": "Business reg. no.",
+    "contactLabel": "Contact",
+    "steps": {
+      "submitted": {
+        "title": "Request submitted",
+        "body": "Your account details reached the secretariat."
+      },
+      "review": {
+        "title": "Desk is checking the member record",
+        "body": "Usually finishes within one business day."
+      },
+      "activated": {
+        "title": "Account activated",
+        "body": "You'll get an email, then the desk opens."
+      }
+    },
+    "noticePending": "If your company details differ from the association records, the desk may email you first. Replying with the corrected business registration number is enough.",
+    "noticeRejected": "Check your company name and business registration number against the association records, then resubmit.",
+    "updateDetails": "Update your details",
+    "backHome": "Back to home"
   },
   "locale": {
     "switchLabel": "Language",

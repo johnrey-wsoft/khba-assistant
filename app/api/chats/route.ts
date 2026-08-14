@@ -1,6 +1,6 @@
 import { apiResponse } from "@/lib/response";
 import { rateLimit } from "@/lib/ratelimit";
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireApproved } from "@/lib/guards/member.guard";
 import { listChatsByUser } from "@/lib/chat/store";
 
 import { HttpStatus } from "@/constants/http-status.constant";
@@ -11,7 +11,7 @@ export async function GET() {
     const rateLimited = await rateLimit("api");
     if (rateLimited) return rateLimited;
 
-    const { user, error } = await requireAuth();
+    const { user, error } = await requireApproved();
     if (error) return error;
 
     const data = await listChatsByUser(user!.id);

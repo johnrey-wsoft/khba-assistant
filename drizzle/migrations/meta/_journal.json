@@ -43,6 +43,13 @@
       "when": 1786693342476,
       "tag": "0005_profiles_access_role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786695724472,
+      "tag": "0006_profiles_verification_status",
+      "breakpoints": true
     }
   ]
 }

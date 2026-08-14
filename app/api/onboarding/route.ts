@@ -40,6 +40,10 @@ export async function POST(req: Request) {
       termsAcceptedAt: new Date(),
       termsVersion: CURRENT_TERMS_VERSION,
       onboardingCompleted: true,
+      // Submitting onboarding files the account for association-desk review.
+      // Setting it here (not just the column default) also re-opens review if a
+      // previously rejected member resubmits.
+      verificationStatus: "pending" as const,
     };
 
     // Upsert keyed on the auth user id. Normally the Supabase handle_new_user

@@ -1,6 +1,6 @@
 import { apiResponse } from "@/lib/response";
 import { rateLimit } from "@/lib/ratelimit";
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireApproved } from "@/lib/guards/member.guard";
 import { getChatWithMessages, setChatTitle, softDeleteChat } from "@/lib/chat/store";
 
 import { HttpStatus } from "@/constants/http-status.constant";
@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
     const rateLimited = await rateLimit("api");
     if (rateLimited) return rateLimited;
 
-    const { user, error } = await requireAuth();
+    const { user, error } = await requireApproved();
     if (error) return error;
 
     const { id } = await params;
@@ -36,7 +36,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     const rateLimited = await rateLimit("api");
     if (rateLimited) return rateLimited;
 
-    const { user, error } = await requireAuth();
+    const { user, error } = await requireApproved();
     if (error) return error;
 
     const { id } = await params;
@@ -66,7 +66,7 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     const rateLimited = await rateLimit("api");
     if (rateLimited) return rateLimited;
 
-    const { user, error } = await requireAuth();
+    const { user, error } = await requireApproved();
     if (error) return error;
 
     const { id } = await params;

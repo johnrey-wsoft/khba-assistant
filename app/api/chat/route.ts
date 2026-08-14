@@ -1,14 +1,14 @@
 import { convertToModelMessages, createIdGenerator, type UIMessage } from "ai";
 
 import { khbaAgent } from "@/lib/ai/khba-agent";
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireApproved } from "@/lib/guards/member.guard";
 import { ensureChatForUser, isPersistableChatId, saveMessages } from "@/lib/chat/store";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { user, error } = await requireAuth();
+  const { user, error } = await requireApproved();
   if (error) return error;
 
   // The AI SDK default transport sends the chat `id` alongside the messages.
