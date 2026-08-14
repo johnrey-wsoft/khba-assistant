@@ -2,7 +2,7 @@ import { pgTable, varchar, boolean, jsonb, timestamp } from "drizzle-orm/pg-core
 
 // Base columns
 import { baseColumns } from "../base";
-import { accessRoleEnum } from "./enums";
+import { accessRoleEnum, verificationStatusEnum } from "./enums";
 
 export const profiles = pgTable("profiles", {
   ...baseColumns,
@@ -16,6 +16,11 @@ export const profiles = pgTable("profiles", {
   // the Supabase table editor). The DB default covers rows created by the
   // Supabase handle_new_user trigger, which sets only id/email/name.
   accessRole: accessRoleEnum("access_role").notNull().default("member"),
+
+  // Association-desk verification. Members are `pending` after onboarding until
+  // the desk approves them; the app gates access on `approved`. New rows
+  // (including the Supabase handle_new_user trigger) default to pending.
+  verificationStatus: verificationStatusEnum("verification_status").notNull().default("pending"),
 
   // --- Member onboarding ---------------------------------------------------
   // Collected after sign-up on /onboarding. All optional / defaulted so the

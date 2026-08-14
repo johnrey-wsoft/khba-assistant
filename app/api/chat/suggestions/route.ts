@@ -2,12 +2,12 @@ import { openai } from "@ai-sdk/openai";
 import { streamObject } from "ai";
 
 import { suggestionsSchema } from "@/lib/chat/suggestions.schema";
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireApproved } from "@/lib/guards/member.guard";
 
 export const maxDuration = 15;
 
 export async function POST(req: Request) {
-  const { error } = await requireAuth();
+  const { error } = await requireApproved();
   if (error) return error;
 
   const { context }: { context: string } = await req.json();

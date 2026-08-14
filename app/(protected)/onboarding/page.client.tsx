@@ -85,8 +85,6 @@ export const PageClient = () => {
     }
   }, [profile?.name, form]);
 
-  const goChat = () => router.push(PROTECTED_ROUTES.CHAT);
-
   // Validate only the current step's fields before advancing, so step 2's
   // required fields don't surface errors while the user is still on step 1.
   const next = async () => {
@@ -104,7 +102,9 @@ export const PageClient = () => {
       });
       if (!res.ok) throw new Error("save failed");
       toast.success(t("toastTitle"), { description: t("toastBody") });
-      router.push(PROTECTED_ROUTES.CHAT);
+      // Onboarding files the account for association-desk review — go to the
+      // pending screen, not chat (the desk approves before access opens).
+      router.push(PROTECTED_ROUTES.PENDING);
     } catch {
       toast.error(t("errorTitle"), { description: t("errorBody") });
       setSubmitting(false);
@@ -152,18 +152,11 @@ export const PageClient = () => {
 
       <main className="flex flex-1 items-start justify-center px-4 py-8 sm:items-center">
         <div className="w-full max-w-[620px] rounded-3xl border border-border bg-card p-8 shadow-sm sm:p-10">
-          {/* Step badge + skip */}
+          {/* Step badge */}
           <div className="flex items-center justify-between gap-3">
             <span className="rounded-full bg-chart-4/10 px-3 py-1 text-xs font-bold text-chart-4">
               {t("step", { current: step, total: TOTAL_STEPS })}
             </span>
-            <button
-              type="button"
-              onClick={goChat}
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
-            >
-              {t("skip")}
-            </button>
           </div>
 
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground">{title}</h1>
