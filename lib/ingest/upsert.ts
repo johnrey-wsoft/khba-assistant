@@ -55,8 +55,10 @@ const CHUNK_TYPE: Record<string, string> = {
 // document -> document_version -> content_node -> source_evidence, with the
 // halfvec embedding + index_status INDEXED. Deletes prior versions of the same
 // documentCode first (cascades). Returns the number of evidence rows written.
-export const upsertDocuments = async (
-  db: PostgresJsDatabase,
+export const upsertDocuments = async <TSchema extends Record<string, unknown>>(
+  // Generic over the schema so it accepts both the app's schema-typed `db`
+  // (lib/drizzle/db.ts) and the ingest CLI's schema-less client.
+  db: PostgresJsDatabase<TSchema>,
   docs: PreparedDocument[]
 ): Promise<number> => {
   const codes = docs.map((d) => d.documentCode);
