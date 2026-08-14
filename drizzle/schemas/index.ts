@@ -1,3 +1,4 @@
+export * from "./profiles/enums";
 export { profiles } from "./profiles/profiles.schema";
 
 // Chat & message persistence (AI SDK v5 UIMessage)

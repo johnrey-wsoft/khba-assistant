@@ -7,6 +7,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 import { getUserQueryOptions } from "@/queries/user.query";
+import { isAdminRole, type AccessRole } from "@/constants/access-role.constant";
 
 export const useAuth = () => {
   const supabase = getSupabaseClient();
@@ -38,10 +39,16 @@ export const useAuth = () => {
     return () => subscription?.unsubscribe();
   }, [supabase]);
 
+  const currentProfile = user ? (profile ?? null) : null;
+  const role: AccessRole | null = currentProfile?.accessRole ?? null;
+
   return {
     session,
     user,
-    profile: user ? (profile ?? null) : null,
+    profile: currentProfile,
+    // RBAC: null until the profile loads; isAdmin is a convenience for gating UI.
+    role,
+    isAdmin: isAdminRole(role),
     isLoading: isAuthLoading || (!!user && isProfileLoading),
   };
 };
