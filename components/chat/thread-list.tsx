@@ -1,19 +1,36 @@
 "use client";
 
-import { Search, Plus, LogOut } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Search, Plus, LogOut, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
-import { useTransition } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useChatStore } from "@/components/chat/chat-store";
 import { getChatsQueryOptions } from "@/queries/chat.query";
+import { chatsService } from "@/services/chats.service";
+import { getQueryKey } from "@/lib/query/get-query-keys";
 import { formatWhen } from "@/lib/chat/session";
 import { type ThreadStatus } from "@/constants/chat.constant";
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
@@ -39,6 +56,8 @@ type ThreadItem = {
   preview: string;
   when: string;
   status: ThreadStatus;
+  // Persisted chats can be renamed/deleted; session-only ones can't yet.
+  canManage: boolean;
 };
 
 type ThreadListProps = {
@@ -50,8 +69,9 @@ type ThreadListProps = {
 };
 
 export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: ThreadListProps) => {
-  const { conversations } = useChatStore();
+  const { conversations, setConversationTitle, removeConversation } = useChatStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, profile } = useAuth();
   const [signingOut, startSignOut] = useTransition();
   const t = useTranslations("common");
@@ -61,6 +81,43 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
   const { data: persistedChats = [] } = useQuery({
     ...getChatsQueryOptions(),
     enabled: !!user,
+  });
+
+  // Rename / delete dialog targets (null = closed).
+  const [renameTarget, setRenameTarget] = useState<ThreadItem | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ThreadItem | null>(null);
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getQueryKey.chats.all });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      const ok = await chatsService.rename(id, title);
+      if (!ok) throw new Error("rename failed");
+    },
+    onSuccess: (_data, { id, title }) => {
+      setConversationTitle(id, title);
+      invalidate();
+      setRenameTarget(null);
+      toast.success(tc("renamed"));
+    },
+    onError: () => toast.error(tc("actionError")),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const ok = await chatsService.remove(id);
+      if (!ok) throw new Error("delete failed");
+    },
+    onSuccess: (_data, id) => {
+      removeConversation(id);
+      invalidate();
+      setDeleteTarget(null);
+      toast.success(tc("deleted"));
+      // Leaving the open chat that was just deleted -> back to a fresh chat.
+      if (activeId === id) router.push(PROTECTED_ROUTES.CHAT);
+    },
+    onError: () => toast.error(tc("actionError")),
   });
 
   const signOut = () =>
@@ -80,6 +137,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
     preview: c.preview,
     when: formatWhen(c.updatedAt),
     status: "sourced" as ThreadStatus,
+    canManage: true,
   }));
 
   const persistedIds = new Set(persistedItems.map((i) => i.id));
@@ -92,6 +150,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
       preview: c.preview,
       when: c.when,
       status: "sourced" as ThreadStatus,
+      canManage: false,
     }));
 
   const items: ThreadItem[] = [...persistedItems, ...sessionItems];
@@ -100,6 +159,18 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
   const threads = q
     ? items.filter((t) => t.title.toLowerCase().includes(q) || t.preview.toLowerCase().includes(q))
     : items;
+
+  const openRename = (item: ThreadItem) => {
+    setRenameValue(item.title);
+    setRenameTarget(item);
+  };
+
+  const submitRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    const title = renameValue.trim();
+    if (!renameTarget || !title || renameMutation.isPending) return;
+    renameMutation.mutate({ id: renameTarget.id, title });
+  };
 
   return (
     <section className="flex h-full min-w-0 flex-col overflow-hidden border-r border-border bg-card">
@@ -144,30 +215,62 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-0.5 p-2.5">
-          {threads.map((t) => (
-            <Link
-              key={t.id}
-              href={`/chat/${t.id}`}
-              onClick={onNavigate}
-              className={cn(
-                "flex w-full min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-3 text-left transition-colors",
-                activeId === t.id ? "bg-accent" : "hover:bg-muted"
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <span className={cn("size-2 flex-none rounded-full", STATUS_DOT[t.status])} />
-                <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground">
-                  {t.title}
+          {threads.map((thread) => (
+            <div key={thread.id} className="group relative">
+              <Link
+                href={`/chat/${thread.id}`}
+                onClick={onNavigate}
+                className={cn(
+                  "flex w-full min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-3 text-left transition-colors",
+                  activeId === thread.id ? "bg-accent" : "hover:bg-muted"
+                )}
+              >
+                <span className="flex items-center gap-2 pr-7">
+                  <span
+                    className={cn("size-2 flex-none rounded-full", STATUS_DOT[thread.status])}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground">
+                    {thread.title}
+                  </span>
                 </span>
-              </span>
-              <span className="truncate text-sm text-muted-foreground">{t.preview}</span>
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">{t.when}</span>
-            </Link>
+                <span className="truncate text-sm text-muted-foreground">{thread.preview}</span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {thread.when}
+                </span>
+              </Link>
+
+              {thread.canManage && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={tc("threadActions")}
+                      className="absolute top-2.5 right-2.5 grid size-7 place-items-center rounded-lg text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => openRename(thread)}>
+                      <Pencil />
+                      {tc("rename")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setDeleteTarget(thread)}
+                    >
+                      <Trash2 />
+                      {tc("delete")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           ))}
 
           {threads.length === 0 && (
             <p className="px-3.5 py-6 text-center text-sm text-muted-foreground">
-              {tc("noThreads", { filter })}
+              {items.length === 0 ? tc("emptyThreads") : tc("noThreads", { filter })}
             </p>
           )}
         </div>
@@ -194,6 +297,61 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
           </Button>
         </div>
       </div>
+
+      {/* Rename dialog */}
+      <Dialog open={!!renameTarget} onOpenChange={(open) => !open && setRenameTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tc("renameTitle")}</DialogTitle>
+            <DialogDescription>{tc("renameDescription")}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitRename} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-bold text-foreground">{tc("renameLabel")}</span>
+              <Input
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                placeholder={tc("renamePlaceholder")}
+                autoFocus
+                maxLength={255}
+              />
+            </label>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setRenameTarget(null)}>
+                {tc("cancel")}
+              </Button>
+              <Button type="submit" disabled={!renameValue.trim() || renameMutation.isPending}>
+                {tc("save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{tc("deleteTitle")}</DialogTitle>
+            <DialogDescription>
+              {tc("deleteDescription", { title: deleteTarget?.title ?? "" })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)}>
+              {tc("cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+            >
+              {tc("delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

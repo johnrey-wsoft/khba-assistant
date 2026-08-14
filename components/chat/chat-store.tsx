@@ -17,12 +17,14 @@ type ChatStoreValue = {
   conversations: LiveConversation[];
   upsertConversation: (conversation: LiveConversation) => void;
   setConversationTitle: (id: string, title: string) => void;
+  removeConversation: (id: string) => void;
 };
 
 const ChatStoreContext = React.createContext<ChatStoreValue>({
   conversations: [],
   upsertConversation: () => {},
   setConversationTitle: () => {},
+  removeConversation: () => {},
 });
 
 export const ChatStoreProvider = ({ children }: React.PropsWithChildren) => {
@@ -41,9 +43,13 @@ export const ChatStoreProvider = ({ children }: React.PropsWithChildren) => {
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
   }, []);
 
+  const removeConversation = React.useCallback((id: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
   const value = React.useMemo(
-    () => ({ conversations, upsertConversation, setConversationTitle }),
-    [conversations, upsertConversation, setConversationTitle]
+    () => ({ conversations, upsertConversation, setConversationTitle, removeConversation }),
+    [conversations, upsertConversation, setConversationTitle, removeConversation]
   );
 
   return <ChatStoreContext.Provider value={value}>{children}</ChatStoreContext.Provider>;
