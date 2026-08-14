@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useChatStore } from "@/components/chat/chat-store";
 import { getChatsQueryOptions } from "@/queries/chat.query";
 import { formatWhen } from "@/lib/chat/session";
-import { CHAT_THREADS, type ThreadStatus } from "@/constants/chat.constant";
+import { type ThreadStatus } from "@/constants/chat.constant";
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 const initials = (name: string) =>
@@ -72,8 +72,8 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
   const displayName = profile?.name ?? user?.email ?? t("member");
 
-  // Persisted chats first, then session-only conversations not yet persisted,
-  // then the sample threads (kept as a fallback). Deduped by id.
+  // Persisted chats first, then session-only conversations not yet persisted.
+  // Deduped by id.
   const persistedItems: ThreadItem[] = persistedChats.map((c) => ({
     id: c.id,
     title: c.title ?? tc("newConsultation"),
@@ -94,7 +94,7 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
       status: "sourced" as ThreadStatus,
     }));
 
-  const items: ThreadItem[] = [...persistedItems, ...sessionItems, ...CHAT_THREADS];
+  const items: ThreadItem[] = [...persistedItems, ...sessionItems];
 
   const q = filter.trim().toLowerCase();
   const threads = q
