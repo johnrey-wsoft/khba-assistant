@@ -36,6 +36,13 @@
       "when": 1786689557238,
       "tag": "0004_chats_and_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786693342476,
+      "tag": "0005_profiles_access_role",
+      "breakpoints": true
     }
   ]
 }

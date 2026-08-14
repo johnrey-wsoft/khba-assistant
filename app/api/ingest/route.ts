@@ -1,6 +1,6 @@
 import { start } from "workflow/api";
 
-import { requireAuth } from "@/lib/guards/auth.guard";
+import { requireAdmin } from "@/lib/guards/role.guard";
 import { apiResponse } from "@/lib/response";
 import { HttpStatus } from "@/constants/http-status.constant";
 import { loadManifest } from "@/lib/ingest/manifest";
@@ -15,9 +15,9 @@ export const maxDuration = 60;
 // dashboard (`npx workflow web` locally).
 export async function POST(req: Request) {
   // Triggering ingestion spends LlamaCloud/OpenAI credits and writes to the DB,
-  // so it must never be public.
-  const { error } = await requireAuth();
-  if (error) return apiResponse({ status: HttpStatus.UNAUTHORIZED });
+  // so it is admin-only (401 when unauthenticated, 403 for non-admins).
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   // Optional body { "codes": ["ORD-..."] } to ingest a subset; omit for all.
   let codes: string[] | undefined;
