@@ -1,17 +1,17 @@
 import { axiosInstance } from "@/config/axios.config";
-import type { SelectChat, SelectMessage } from "@/types/drizzle.types";
+import type { ChatListItem, ChatWithMessages } from "@/lib/chat/types";
 
 import { API_ROUTES } from "@/constants/routes.constant";
 
-export type ChatWithMessages = { chat: SelectChat; messages: SelectMessage[] };
+export type { ChatListItem, ChatWithMessages };
 
 // Client access to the chat REST endpoints. Mirrors services/users.service.ts:
 // unwrap the { data } envelope, and fail soft (null / []) on error so callers
 // can render an empty state instead of throwing.
 export const chatsService = {
-  list: async (): Promise<SelectChat[]> => {
+  list: async (): Promise<ChatListItem[]> => {
     try {
-      const response = await axiosInstance.get<{ data: SelectChat[] }>(API_ROUTES.CHATS.ROOT);
+      const response = await axiosInstance.get<{ data: ChatListItem[] }>(API_ROUTES.CHATS.ROOT);
       return response.data.data ?? [];
     } catch (error) {
       console.error("Failed to list chats:", error);

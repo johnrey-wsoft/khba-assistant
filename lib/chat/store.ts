@@ -1,12 +1,14 @@
 import "server-only";
 
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { UIMessage } from "ai";
 
 import { db } from "@/lib/drizzle/db";
 import { chats, messages } from "@/drizzle/schemas";
 import type { SelectChat, SelectMessage } from "@/types/drizzle.types";
 import type { ChatMessageMetadata, ChatMessagePart } from "@/drizzle/schemas/chats/message.schema";
+import type { ChatListItem } from "@/lib/chat/types";
+import { previewFromParts } from "@/lib/chat/serialize";
 
 // Server-side persistence for chats + messages. Kept out of the API routes so
 // the same helpers back the streaming chat route and the REST endpoints.
@@ -83,13 +85,34 @@ export const setChatTitle = async (
   return updated.length > 0;
 };
 
-// A user's chats, newest first, excluding soft-deleted rows.
-export const listChatsByUser = (userId: string): Promise<SelectChat[]> =>
-  db
+// A user's chats, newest first, excluding soft-deleted rows. Each row carries a
+// preview (the text of its earliest message) for the sidebar.
+export const listChatsByUser = async (userId: string): Promise<ChatListItem[]> => {
+  const rows = await db
     .select()
     .from(chats)
     .where(and(eq(chats.userId, userId), isNull(chats.deletedAt)))
     .orderBy(desc(chats.updatedAt));
+
+  if (rows.length === 0) return [];
+
+  // Earliest message per chat (DISTINCT ON requires the distinct column to lead
+  // the ORDER BY), used to derive the preview line.
+  const firstMessages = await db
+    .selectDistinctOn([messages.chatId], { chatId: messages.chatId, parts: messages.parts })
+    .from(messages)
+    .where(
+      inArray(
+        messages.chatId,
+        rows.map((r) => r.id)
+      )
+    )
+    .orderBy(messages.chatId, asc(messages.createdAt));
+
+  const previewByChat = new Map(firstMessages.map((m) => [m.chatId, previewFromParts(m.parts)]));
+
+  return rows.map((row) => ({ ...row, preview: previewByChat.get(row.id) ?? "" }));
+};
 
 // A single owned chat with its messages in send order, or null if it doesn't
 // exist / isn't owned by this user.
