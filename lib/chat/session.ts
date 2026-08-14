@@ -3,12 +3,17 @@
 
 export const generateChatId = (): string => crypto.randomUUID();
 
-// "YYYY-MM-DD HH:mm" to match the mock thread `when` format.
-export const formatNow = (): string => {
-  const d = new Date();
+// "YYYY-MM-DD HH:mm" to match the mock thread `when` format. Accepts a Date, an
+// ISO string (as timestamps arrive over JSON), or null.
+export const formatWhen = (value: string | Date | null | undefined): string => {
+  if (!value) return "";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "";
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
+
+export const formatNow = (): string => formatWhen(new Date());
 
 // The first message is typed on /chat but must be sent on /chat/[id].
 // Stash it here (module scope survives client-side navigation) and let the

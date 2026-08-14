@@ -4,6 +4,7 @@ import { Search, Plus, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useChatStore } from "@/components/chat/chat-store";
-import { CHAT_THREADS, type ThreadStatus } from "@/constants/chat.constant";
+import { getChatsQueryOptions } from "@/queries/chat.query";
+import { formatWhen } from "@/lib/chat/session";
+import { type ThreadStatus } from "@/constants/chat.constant";
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 const initials = (name: string) =>
@@ -54,6 +57,12 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
   const t = useTranslations("common");
   const tc = useTranslations("chat");
 
+  // Persisted chats for the signed-in user (source of truth for the sidebar).
+  const { data: persistedChats = [] } = useQuery({
+    ...getChatsQueryOptions(),
+    enabled: !!user,
+  });
+
   const signOut = () =>
     startSignOut(async () => {
       await getSupabaseClient().auth.signOut();
@@ -63,17 +72,29 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
   const displayName = profile?.name ?? user?.email ?? t("member");
 
-  // Live conversations started this session, then the sample threads.
-  const items: ThreadItem[] = [
-    ...conversations.map((c) => ({
+  // Persisted chats first, then session-only conversations not yet persisted.
+  // Deduped by id.
+  const persistedItems: ThreadItem[] = persistedChats.map((c) => ({
+    id: c.id,
+    title: c.title ?? tc("newConsultation"),
+    preview: c.preview,
+    when: formatWhen(c.updatedAt),
+    status: "sourced" as ThreadStatus,
+  }));
+
+  const persistedIds = new Set(persistedItems.map((i) => i.id));
+
+  const sessionItems: ThreadItem[] = conversations
+    .filter((c) => !persistedIds.has(c.id))
+    .map((c) => ({
       id: c.id,
       title: c.title,
       preview: c.preview,
       when: c.when,
       status: "sourced" as ThreadStatus,
-    })),
-    ...CHAT_THREADS,
-  ];
+    }));
+
+  const items: ThreadItem[] = [...persistedItems, ...sessionItems];
 
   const q = filter.trim().toLowerCase();
   const threads = q

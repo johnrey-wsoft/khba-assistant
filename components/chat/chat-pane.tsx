@@ -1,7 +1,9 @@
 "use client";
 
 import { useChat, useCompletion, useObject } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "nextjs-toploader/app";
 import { useTranslations } from "next-intl";
 
@@ -13,7 +15,6 @@ import { ArtifactProvider } from "@/components/chat/artifact-context";
 import { useChatShell } from "@/components/chat/chat-shell-context";
 import { useChatStore } from "@/components/chat/chat-store";
 import type { ChatSource } from "@/components/chat/primitives";
-import { toUIMessages } from "@/lib/chat/seed-messages";
 import { messageText } from "@/lib/chat/message-text";
 import { suggestionsSchema } from "@/lib/chat/suggestions.schema";
 import {
@@ -22,24 +23,31 @@ import {
   stashPendingMessage,
   takePendingMessage,
 } from "@/lib/chat/session";
-import { CHAT_SUGGESTIONS, type ChatExample, type ChatThread } from "@/constants/chat.constant";
+import { getQueryKey } from "@/lib/query/get-query-keys";
+import { CHAT_SUGGESTIONS, type ChatExample } from "@/constants/chat.constant";
 
 type ChatPaneProps = {
   chatId?: string;
-  thread?: ChatThread;
+  // Persisted history + title for an existing chat (server-loaded on /chat/[id]).
+  initialMessages?: UIMessage[];
+  initialTitle?: string;
 };
 
-export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
+export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProps) => {
   const router = useRouter();
   const t = useTranslations("chat");
   const examples = t.raw("examples") as ChatExample[];
   const { toggleThreadList } = useChatShell();
   const { conversations, upsertConversation, setConversationTitle } = useChatStore();
+  const queryClient = useQueryClient();
+
+  // Refresh the sidebar's persisted chat list (new chat, new title, new order).
+  const refreshChatList = () => queryClient.invalidateQueries({ queryKey: getQueryKey.chats.all });
 
   // No chatId => we're on /chat (a fresh "new consultation").
   const isNew = !chatId;
 
-  const seed = useMemo(() => (thread ? toUIMessages(thread.messages) : []), [thread]);
+  const seed = useMemo(() => initialMessages ?? [], [initialMessages]);
 
   const [input, setInput] = useState("");
   const [artifact, setArtifact] = useState<{ sources: ChatSource[]; index: number } | null>(null);
@@ -55,6 +63,9 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const { messages, sendMessage, status, stop } = useChat({
     id: chatId,
     messages: seed,
+    // Assistant reply finished streaming and was persisted server-side; reflect
+    // the new/updated chat in the sidebar.
+    onFinish: refreshChatList,
   });
 
   const isBusy = status === "submitted" || status === "streaming";
@@ -63,6 +74,8 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   const { completion: titleStream, complete: generateTitle } = useCompletion({
     api: "/api/chat/title",
     streamProtocol: "text",
+    // Title generated and persisted (when an id is passed); refresh the sidebar.
+    onFinish: refreshChatList,
   });
 
   useEffect(() => {
@@ -74,14 +87,15 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   // --- On a fresh /chat/[id], send the handed-off first message ------------
   const consumedRef = useRef(false);
   useEffect(() => {
-    if (isNew || thread || consumedRef.current) return;
+    if (isNew || consumedRef.current) return;
     const pending = takePendingMessage(chatId);
     if (pending) {
       consumedRef.current = true;
       sendMessage({ text: pending });
-      generateTitle(pending);
+      // Pass the chat id so the generated title is persisted to that chat.
+      generateTitle(pending, { body: { id: chatId } });
     }
-  }, [isNew, thread, chatId, sendMessage, generateTitle]);
+  }, [isNew, chatId, sendMessage, generateTitle]);
 
   // --- Dynamic follow-up suggestions (useObject) --------------------------
   const {
@@ -141,22 +155,21 @@ export const ChatPane = ({ chatId, thread }: ChatPaneProps) => {
   };
 
   const conversation = conversations.find((c) => c.id === chatId);
-  const headerTitle = thread?.title ?? conversation?.title;
+  // Live session title (updates as it streams) wins; else the server-loaded
+  // title for a reopened chat.
+  const headerTitle = conversation?.title ?? initialTitle;
 
   return (
     <ArtifactProvider openSource={openSource}>
       <div className="flex min-w-0 flex-1 flex-col">
         <ChatHeader
           title={headerTitle}
-          subtitle={thread?.subtitle}
-          baseDate={thread?.baseDate}
           messageCount={messages.length}
           onToggleThreadList={toggleThreadList}
         />
         <ChatMessages
           messages={messages}
           isThinking={status === "submitted"}
-          dateLabel={thread?.when?.split(" ")[0]}
           examples={examples}
           onExample={submit}
           suggestions={suggestions}

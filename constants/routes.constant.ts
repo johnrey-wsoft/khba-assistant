@@ -24,6 +24,10 @@ export const API_ROUTES = {
     SEND: "/api/mail/send",
   },
   CHAT: "/api/chat",
+  CHATS: {
+    ROOT: "/api/chats",
+    BY_ID: (id: string) => `/api/chats/${id}`,
+  },
   HEALTHCHECK: "/api/healthcheck",
   ONBOARDING: "/api/onboarding",
 } as const;
