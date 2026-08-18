@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Notice, Seal } from "@/components/chat/primitives";
 import type { ChatSource } from "@/components/chat/primitives";
+import { DocumentMarkdown } from "@/components/chat/document-markdown";
 import { authorityLabel } from "@/lib/chat/authority";
 
 type DocumentPassage = { nodePath: string; text: string };
@@ -39,23 +40,6 @@ const BodySkeleton = () => (
   </div>
 );
 
-// Wrap the exact snippet the answer cited in a gold <mark>, matching the
-// prototype's "excerpt used in the answer" highlight.
-const HighlightedText = ({ text, snippet }: { text: string; snippet?: string }) => {
-  if (!snippet) return <>{text}</>;
-  const idx = text.indexOf(snippet);
-  if (idx === -1) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="evidence-flash rounded-[3px] bg-highlight px-1 py-0.5 font-medium text-highlight-foreground">
-        {snippet}
-      </mark>
-      {text.slice(idx + snippet.length)}
-    </>
-  );
-};
-
 // A short article label from the node path (e.g. "…/제12조" -> "제12조").
 const articleLabel = (nodePath: string): string | null => {
   const tail = nodePath.split(/[/>]/).pop()?.trim();
@@ -73,7 +57,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
   const [active, setActive] = useState(initialIndex);
   const [view, setView] = useState<"text" | "document">("text");
   const source = sources[active] ?? sources[0];
-  const citedRef = useRef<HTMLParagraphElement>(null);
+  const citedRef = useRef<HTMLDivElement>(null);
 
   // Switching source tabs resets back to the searchable text view.
   const selectTab = (i: number) => {
@@ -275,18 +259,18 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                     (passage.text === source.snippet || passage.text.includes(source.snippet));
                   const label = articleLabel(passage.nodePath);
                   return (
-                    <p
+                    <div
                       key={passage.nodePath}
                       ref={isCited ? citedRef : undefined}
-                      className="scroll-mt-6 text-[15px] leading-8 whitespace-pre-wrap text-foreground/90"
+                      className="scroll-mt-6"
                     >
-                      {label && <span className="mr-1.5 font-bold text-foreground">{label}</span>}
-                      {isCited ? (
-                        <HighlightedText text={passage.text} snippet={source.snippet} />
-                      ) : (
-                        passage.text
+                      {label && (
+                        <div className="mb-1 text-sm font-bold text-foreground">{label}</div>
                       )}
-                    </p>
+                      <DocumentMarkdown highlight={isCited ? source.snippet : undefined}>
+                        {passage.text}
+                      </DocumentMarkdown>
+                    </div>
                   );
                 })}
               </div>
