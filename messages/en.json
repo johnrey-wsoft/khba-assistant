@@ -388,7 +388,9 @@
       "construction": "Construction",
       "sales": "Sales",
       "finance": "Finance"
-    }
+    },
+    "setupTitle": "Set up your account",
+    "setupSubtitle": "Just your name and company to get started."
   },
   "pending": {
     "badgePending": "Under review",

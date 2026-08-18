@@ -36,18 +36,11 @@ const ACCESS_BADGE: Record<"admin" | "member", string> = {
   member: "bg-muted text-muted-foreground",
 };
 
-const formatBizNo = (value: string | null): string => {
-  if (!value) return "—";
-  const d = value.replace(/\D/g, "");
-  return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}` : value;
-};
-
 type PageClientProps = { currentUserId: string };
 
 export const PageClient = ({ currentUserId }: PageClientProps) => {
   const queryClient = useQueryClient();
   const t = useTranslations("admin");
-  const tr = useTranslations("onboarding");
   const [query, setQuery] = useState("");
 
   const { data: members = [], isLoading } = useQuery(getAdminUsersQueryOptions());
@@ -120,7 +113,6 @@ export const PageClient = ({ currentUserId }: PageClientProps) => {
               <tr>
                 <th className="px-4 py-3">{t("colMember")}</th>
                 <th className="px-4 py-3">{t("colCompany")}</th>
-                <th className="px-4 py-3">{t("colRole")}</th>
                 <th className="px-4 py-3">{t("colAccess")}</th>
                 <th className="px-4 py-3">{t("colApproval")}</th>
                 <th className="px-4 py-3">{t("colJoined")}</th>
@@ -137,10 +129,6 @@ export const PageClient = ({ currentUserId }: PageClientProps) => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                      <div className="mt-1.5 h-3 w-24 animate-pulse rounded bg-muted" />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="h-4 w-16 animate-pulse rounded bg-muted" />
                     </td>
                     <td className="px-4 py-3">
                       <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
@@ -176,17 +164,7 @@ export const PageClient = ({ currentUserId }: PageClientProps) => {
                       </td>
 
                       {/* Company */}
-                      <td className="px-4 py-3">
-                        <div className="truncate text-foreground">{m.company || "—"}</div>
-                        <div className="font-mono text-xs tabular-nums text-muted-foreground">
-                          {formatBizNo(m.businessRegistrationNumber)}
-                        </div>
-                      </td>
-
-                      {/* Professional role */}
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {m.role ? tr(`roles.${m.role}`) : "—"}
-                      </td>
+                      <td className="px-4 py-3 text-foreground">{m.company || "—"}</td>
 
                       {/* Access role (read-only badge; change it in Actions) */}
                       <td className="px-4 py-3">

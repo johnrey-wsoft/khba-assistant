@@ -17,7 +17,6 @@ type PageClientProps = {
   status: VerificationStatus;
   email: string;
   company: string | null;
-  businessRegistrationNumber: string | null;
 };
 
 // name@company.co.kr -> na••••••@company.co.kr
@@ -27,19 +26,7 @@ const maskEmail = (email: string): string => {
   return email.slice(0, 2) + "•".repeat(Math.max(2, at - 2)) + email.slice(at);
 };
 
-// Stored normalised to 10 digits -> 000-00-00000 for display.
-const formatBizNo = (value: string | null): string => {
-  if (!value) return "—";
-  const d = value.replace(/\D/g, "");
-  return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}` : value;
-};
-
-export const PageClient = ({
-  status,
-  email,
-  company,
-  businessRegistrationNumber,
-}: PageClientProps) => {
+export const PageClient = ({ status, email, company }: PageClientProps) => {
   const router = useRouter();
   const t = useTranslations("pending");
   const tc = useTranslations("common");
@@ -158,12 +145,6 @@ export const PageClient = ({
               <div className="flex gap-3">
                 <dt className="w-36 flex-none font-bold text-foreground">{t("companyLabel")}</dt>
                 <dd className="text-muted-foreground">{company || "—"}</dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="w-36 flex-none font-bold text-foreground">{t("bizNoLabel")}</dt>
-                <dd className="tabular-nums text-muted-foreground">
-                  {formatBizNo(businessRegistrationNumber)}
-                </dd>
               </div>
               <div className="flex gap-3">
                 <dt className="w-36 flex-none font-bold text-foreground">{t("contactLabel")}</dt>

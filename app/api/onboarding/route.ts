@@ -31,12 +31,6 @@ export async function POST(req: Request) {
     const onboardingFields = {
       name: values.name,
       company: values.company,
-      // Store the registration number normalised to 10 digits.
-      businessRegistrationNumber: values.businessRegistrationNumber.replace(/-/g, ""),
-      memberNumber: values.memberNumber?.trim() || null,
-      role: values.role,
-      topics: values.topics,
-      marketingOptIn: values.marketingOptIn,
       termsAcceptedAt: new Date(),
       termsVersion: CURRENT_TERMS_VERSION,
       onboardingCompleted: true,
