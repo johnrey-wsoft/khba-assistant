@@ -452,7 +452,9 @@
     "colApproval": "Approval",
     "colActions": "Actions",
     "makeAdmin": "Make admin",
-    "makeMember": "Make member"
+    "makeMember": "Make member",
+    "consoleTitle": "Admin console",
+    "navMembers": "Members"
   },
   "locale": {
     "switchLabel": "Language",
