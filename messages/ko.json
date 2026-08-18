@@ -332,7 +332,8 @@
         "label": "수원 vs 용인",
         "prompt": "수원시와 용인시의 주차 조례는 어떻게 다른가요?"
       }
-    ]
+    ],
+    "admin": "관리자"
   },
   "onboarding": {
     "step": "{total}단계 중 {current}단계",
@@ -418,6 +419,40 @@
     "noticeRejected": "회사명과 사업자등록번호를 협회 기록과 대조해 확인한 뒤 다시 제출해 주세요.",
     "updateDetails": "정보 수정하기",
     "backHome": "홈으로"
+  },
+  "admin": {
+    "title": "회원 관리",
+    "subtitle": "회원을 승인하고 접근 권한을 관리합니다.",
+    "backToChat": "채팅으로 돌아가기",
+    "search": "이름, 이메일 또는 회사로 검색",
+    "members": "명",
+    "pendingCount": "대기 {count}건",
+    "colMember": "회원",
+    "colCompany": "회사",
+    "colRole": "직무",
+    "colAccess": "권한",
+    "colStatus": "상태",
+    "colJoined": "가입일",
+    "you": "본인",
+    "selfRoleHint": "본인의 접근 권한은 변경할 수 없습니다.",
+    "access": {
+      "admin": "관리자",
+      "member": "회원"
+    },
+    "status": {
+      "pending": "대기 중",
+      "approved": "승인됨",
+      "rejected": "거절됨"
+    },
+    "updated": "회원 정보를 변경했습니다",
+    "updateError": "변경하지 못했습니다. 다시 시도해 주세요.",
+    "empty": "아직 회원이 없습니다.",
+    "noMatch": "“{query}”와(과) 일치하는 회원이 없습니다.",
+    "loading": "회원을 불러오는 중…",
+    "colApproval": "승인",
+    "colActions": "작업",
+    "makeAdmin": "관리자로 지정",
+    "makeMember": "회원으로 지정"
   },
   "locale": {
     "switchLabel": "언어",

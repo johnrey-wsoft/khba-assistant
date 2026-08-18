@@ -332,7 +332,8 @@
         "label": "Suwon vs. Yongin",
         "prompt": "How does Suwon's parking ordinance compare with Yongin's?"
       }
-    ]
+    ],
+    "admin": "Admin"
   },
   "onboarding": {
     "step": "Step {current} of {total}",
@@ -418,6 +419,40 @@
     "noticeRejected": "Check your company name and business registration number against the association records, then resubmit.",
     "updateDetails": "Update your details",
     "backHome": "Back to home"
+  },
+  "admin": {
+    "title": "User management",
+    "subtitle": "Approve members and manage access.",
+    "backToChat": "Back to chat",
+    "search": "Search by name, email or company",
+    "members": "members",
+    "pendingCount": "{count} pending",
+    "colMember": "Member",
+    "colCompany": "Company",
+    "colRole": "Role",
+    "colAccess": "Access",
+    "colStatus": "Status",
+    "colJoined": "Joined",
+    "you": "You",
+    "selfRoleHint": "You can't change your own access role.",
+    "access": {
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "updated": "Member updated",
+    "updateError": "Couldn't update the member. Please try again.",
+    "empty": "No members yet.",
+    "noMatch": "No members match “{query}”.",
+    "loading": "Loading members…",
+    "colApproval": "Approval",
+    "colActions": "Actions",
+    "makeAdmin": "Make admin",
+    "makeMember": "Make member"
   },
   "locale": {
     "switchLabel": "Language",
