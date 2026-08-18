@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -72,16 +73,20 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
   const { conversations, setConversationTitle, removeConversation } = useChatStore();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, isLoading: authLoading } = useAuth();
   const [signingOut, startSignOut] = useTransition();
   const t = useTranslations("common");
   const tc = useTranslations("chat");
 
   // Persisted chats for the signed-in user (source of truth for the sidebar).
-  const { data: persistedChats = [] } = useQuery({
+  const { data: persistedChats = [], isLoading: chatsLoading } = useQuery({
     ...getChatsQueryOptions(),
     enabled: !!user,
   });
+
+  // Show skeletons while auth resolves or the first chats fetch is in flight,
+  // so an empty state isn't flashed before the list arrives.
+  const loadingThreads = authLoading || chatsLoading;
 
   // Rename / delete dialog targets (null = closed).
   const [renameTarget, setRenameTarget] = useState<ThreadItem | null>(null);
@@ -215,60 +220,72 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-0.5 p-2.5">
-          {threads.map((thread) => (
-            <div key={thread.id} className="group relative">
-              <Link
-                href={`/chat/${thread.id}`}
-                onClick={onNavigate}
-                className={cn(
-                  "flex w-full min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-3 text-left transition-colors",
-                  activeId === thread.id ? "bg-accent" : "hover:bg-muted"
-                )}
+          {loadingThreads &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={`thread-skeleton-${i}`}
+                className="flex flex-col gap-2 rounded-2xl px-3.5 py-3"
               >
-                <span className="flex items-center gap-2 pr-7">
-                  <span
-                    className={cn("size-2 flex-none rounded-full", STATUS_DOT[thread.status])}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground">
-                    {thread.title}
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3 w-14" />
+              </div>
+            ))}
+          {!loadingThreads &&
+            threads.map((thread) => (
+              <div key={thread.id} className="group relative">
+                <Link
+                  href={`/chat/${thread.id}`}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex w-full min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-3 text-left transition-colors",
+                    activeId === thread.id ? "bg-accent" : "hover:bg-muted"
+                  )}
+                >
+                  <span className="flex items-center gap-2 pr-7">
+                    <span
+                      className={cn("size-2 flex-none rounded-full", STATUS_DOT[thread.status])}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground">
+                      {thread.title}
+                    </span>
                   </span>
-                </span>
-                <span className="truncate text-sm text-muted-foreground">{thread.preview}</span>
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {thread.when}
-                </span>
-              </Link>
+                  <span className="truncate text-sm text-muted-foreground">{thread.preview}</span>
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {thread.when}
+                  </span>
+                </Link>
 
-              {thread.canManage && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={tc("threadActions")}
-                      className="absolute top-2.5 right-2.5 grid size-7 place-items-center rounded-lg text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => openRename(thread)}>
-                      <Pencil />
-                      {tc("rename")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setDeleteTarget(thread)}
-                    >
-                      <Trash2 />
-                      {tc("delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          ))}
+                {thread.canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={tc("threadActions")}
+                        className="absolute top-2.5 right-2.5 grid size-7 place-items-center rounded-lg text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => openRename(thread)}>
+                        <Pencil />
+                        {tc("rename")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={() => setDeleteTarget(thread)}
+                      >
+                        <Trash2 />
+                        {tc("delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            ))}
 
-          {threads.length === 0 && (
+          {!loadingThreads && threads.length === 0 && (
             <p className="px-3.5 py-6 text-center text-sm text-muted-foreground">
               {items.length === 0 ? tc("emptyThreads") : tc("noThreads", { filter })}
             </p>

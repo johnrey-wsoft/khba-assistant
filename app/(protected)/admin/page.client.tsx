@@ -90,11 +90,6 @@ export const PageClient = ({ currentUserId }: PageClientProps) => {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-5">
-        <h1 className="text-xl font-extrabold tracking-tight text-foreground">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-      </div>
-
       {/* Toolbar */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="relative flex min-w-[240px] flex-1 items-center">

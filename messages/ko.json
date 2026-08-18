@@ -454,7 +454,8 @@
     "makeAdmin": "관리자로 지정",
     "makeMember": "회원으로 지정",
     "consoleTitle": "관리자 콘솔",
-    "navMembers": "회원"
+    "navMembers": "회원",
+    "toggleSidebar": "사이드바 토글"
   },
   "locale": {
     "switchLabel": "언어",
