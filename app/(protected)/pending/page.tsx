@@ -17,7 +17,6 @@ export default async function PendingPage() {
       status={profile.verificationStatus}
       email={profile.email}
       company={profile.company}
-      businessRegistrationNumber={profile.businessRegistrationNumber}
     />
   );
 }

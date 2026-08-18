@@ -388,7 +388,9 @@
       "construction": "시공",
       "sales": "분양",
       "finance": "재무"
-    }
+    },
+    "setupTitle": "계정 설정",
+    "setupSubtitle": "이름과 회사만 입력하면 시작할 수 있습니다."
   },
   "pending": {
     "badgePending": "검토 중",

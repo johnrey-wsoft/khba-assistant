@@ -5,16 +5,7 @@ import type { VerificationStatus } from "@/constants/verification-status.constan
 // The member fields the admin user-management table shows.
 export type AdminMember = Pick<
   SelectProfile,
-  | "id"
-  | "name"
-  | "email"
-  | "company"
-  | "businessRegistrationNumber"
-  | "memberNumber"
-  | "role"
-  | "accessRole"
-  | "verificationStatus"
-  | "createdAt"
+  "id" | "name" | "email" | "company" | "accessRole" | "verificationStatus" | "createdAt"
 >;
 
 // What an admin may change on a member.

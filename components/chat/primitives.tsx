@@ -3,6 +3,7 @@ import { ArrowUpRight, Info, Stamp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { InlineMarkdown } from "@/components/chat/document-markdown";
 import { authorityLabel } from "@/lib/chat/authority";
 
 // --- Tone badge -----------------------------------------------------------
@@ -188,7 +189,7 @@ export const SourceCard = ({
 
         {source.snippet && (
           <span className="mt-1 line-clamp-2 border-l-2 border-border pl-2.5 text-[12.5px] leading-snug text-muted-foreground">
-            {source.snippet}
+            <InlineMarkdown>{source.snippet}</InlineMarkdown>
           </span>
         )}
       </button>
