@@ -120,6 +120,10 @@ export const getChatWithMessages = async (
   chatId: string,
   userId: string
 ): Promise<{ chat: SelectChat; messages: SelectMessage[] } | null> => {
+  // The id is a uuid column; a non-uuid route param (e.g. /chat/favicon.ico)
+  // would make Postgres throw, so treat it as "no such chat".
+  if (!isPersistableChatId(chatId)) return null;
+
   const chat = (
     await db
       .select()

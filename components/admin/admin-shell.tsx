@@ -13,6 +13,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { LocaleSwitcher } from "@/components/marketing/locale-switcher";
 import { cn } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
 const initials = (value: string) =>
@@ -32,15 +33,32 @@ export const AdminShell = ({ name, email, children }: AdminShellProps) => {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const [signingOut, startSignOut] = useTransition();
+  const isMobile = useIsMobile();
+  // Desktop keeps the sidebar open by default; the mobile drawer starts closed.
+  const [desktopOpen, setDesktopOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // One navbar trigger, routed by viewport: drawer on mobile, collapsible
+  // column on desktop.
+  const toggleSidebar = () => {
+    if (isMobile) setMobileOpen((v) => !v);
+    else setDesktopOpen((v) => !v);
+  };
+
   // Nav items — extend this as admin routes are added.
-  const nav: { href: string; label: string; icon: LucideIcon }[] = [
-    { href: PROTECTED_ROUTES.ADMIN, label: t("navMembers"), icon: Users },
+  const nav: { href: string; label: string; description: string; icon: LucideIcon }[] = [
+    {
+      href: PROTECTED_ROUTES.ADMIN,
+      label: t("navMembers"),
+      description: t("subtitle"),
+      icon: Users,
+    },
   ];
 
-  // The current section, shown as the top navbar title.
-  const activeLabel = nav.find((item) => item.href === pathname)?.label ?? t("consoleTitle");
+  // The current section, shown as the top navbar title + description.
+  const active = nav.find((item) => item.href === pathname);
+  const activeLabel = active?.label ?? t("consoleTitle");
+  const activeDescription = active?.description ?? "";
 
   const signOut = () =>
     startSignOut(async () => {
@@ -128,8 +146,10 @@ export const AdminShell = ({ name, email, children }: AdminShellProps) => {
 
   return (
     <div className="flex h-svh min-w-0 overflow-hidden bg-muted/40">
-      {/* Desktop: persistent sidebar */}
-      <div className="hidden w-64 flex-none md:block">{sidebar}</div>
+      {/* Desktop: collapsible sidebar column */}
+      <div className={cn("hidden w-64 flex-none md:block", !desktopOpen && "md:hidden")}>
+        {sidebar}
+      </div>
 
       {/* Mobile: slide-in drawer */}
       {mobileOpen && (
@@ -152,16 +172,20 @@ export const AdminShell = ({ name, email, children }: AdminShellProps) => {
           <Button
             variant="outline"
             size="icon"
-            className="md:hidden"
-            onClick={() => setMobileOpen(true)}
-            title={t("consoleTitle")}
-            aria-label={t("consoleTitle")}
+            onClick={toggleSidebar}
+            title={t("toggleSidebar")}
+            aria-label={t("toggleSidebar")}
           >
             <PanelLeft />
           </Button>
-          <span className="truncate text-base font-extrabold tracking-tight text-foreground">
-            {activeLabel}
-          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-base font-extrabold tracking-tight text-foreground">
+              {activeLabel}
+            </span>
+            {activeDescription && (
+              <span className="truncate text-xs text-muted-foreground">{activeDescription}</span>
+            )}
+          </div>
           <span className="flex-1" />
           <LocaleSwitcher />
           <ModeToggle />

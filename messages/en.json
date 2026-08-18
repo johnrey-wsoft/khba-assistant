@@ -454,7 +454,8 @@
     "makeAdmin": "Make admin",
     "makeMember": "Make member",
     "consoleTitle": "Admin console",
-    "navMembers": "Members"
+    "navMembers": "Members",
+    "toggleSidebar": "Toggle sidebar"
   },
   "locale": {
     "switchLabel": "Language",
