@@ -8,12 +8,35 @@ from markitdown import MarkItDown
 
 app = FastAPI(title="MarkItDown Converter API", version="1.0.0")
 
-# A single reusable converter. MarkItDown picks the right backend from the
-# file extension (PDF, DOCX, PPTX, XLSX, HTML, images, CSV, JSON, ...), so one
-# generic endpoint covers every format LlamaParse used to handle — for free.
-# enable_plugins=False keeps behavior deterministic and avoids loading any
-# third-party plugin converters that happen to be installed.
-_md = MarkItDown(enable_plugins=False)
+
+def _build_converter() -> MarkItDown:
+    """
+    A single reusable converter. MarkItDown picks the right backend from the
+    file extension (PDF, DOCX, PPTX, XLSX, HTML, images, CSV, JSON, ...), so one
+    generic endpoint covers every format LlamaParse used to handle.
+
+    When OPENAI_API_KEY is set, an OpenAI vision client is wired in so image
+    files (.png/.jpg) are transcribed/described (MarkItDown returns only EXIF
+    metadata for images without an LLM client). This replaces LlamaParse's OCR.
+    """
+    kwargs = {"enable_plugins": False}
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if api_key:
+        from openai import OpenAI
+
+        kwargs["llm_client"] = OpenAI(api_key=api_key)
+        kwargs["llm_model"] = os.environ.get("MARKITDOWN_LLM_MODEL", "gpt-4o")
+        kwargs["llm_prompt"] = (
+            "Transcribe all text in this image into Markdown. Preserve tables, "
+            "headings and layout. If there is no text, briefly describe the image."
+        )
+
+    return MarkItDown(**kwargs)
+
+
+_md = _build_converter()
+_llm_enabled = bool(os.environ.get("OPENAI_API_KEY"))
 
 
 @app.get("/")
@@ -23,7 +46,8 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    # image_llm reflects whether image transcription/description is enabled.
+    return {"status": "healthy", "image_llm": _llm_enabled}
 
 
 @app.post("/convert/to-markdown")

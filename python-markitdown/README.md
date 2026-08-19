@@ -8,6 +8,13 @@ PPTX, XLSX, HTML, images, CSV, JSON, and more).
 HWP files stay on the sibling `python/` (pyhwp) service — MarkItDown does not
 handle the HWP binary container.
 
+## Image support (OCR)
+
+Image files (`.png`/`.jpg`) return only EXIF metadata unless an LLM vision
+client is configured. Set `OPENAI_API_KEY` (optionally `MARKITDOWN_LLM_MODEL`,
+default `gpt-4o`) and the service transcribes/describes images into Markdown —
+replacing LlamaParse's OCR. `GET /health` reports `image_llm: true` when active.
+
 ## Setup
 
 ### Build and Run with Docker

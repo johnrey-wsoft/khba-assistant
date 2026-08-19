@@ -31,4 +31,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8001:8001"
+    environment:
+      # Optional — enables image (.png/.jpg) transcription via OpenAI vision.
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      MARKITDOWN_LLM_MODEL: ${MARKITDOWN_LLM_MODEL:-gpt-4o}
     restart: unless-stopped
