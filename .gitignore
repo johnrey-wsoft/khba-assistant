@@ -55,3 +55,7 @@ docs/.vitepress/dist
 
 # Document ingestion (raw source files + real manifest are local)
 /.swc
+
+# Python bytecode caches
+__pycache__/
+*.pyc

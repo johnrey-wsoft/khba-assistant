@@ -7,3 +7,7 @@ python-multipart==0.0.6
 # Images/HTML/CSV/JSON are handled by the base package. Left unpinned to a
 # minor floor so security patches flow in; bump the floor to pin a release.
 markitdown[pdf,docx,pptx,xlsx,xls]>=0.1.1
+
+# Vision client for image transcription/description (used only when
+# OPENAI_API_KEY is set).
+openai>=1.0.0

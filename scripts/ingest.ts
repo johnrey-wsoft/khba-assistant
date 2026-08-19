@@ -75,8 +75,10 @@ async function main() {
 
   const isHwp = (file: string) => file.toLowerCase().endsWith(".hwp");
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  if (docs.some((d) => !isHwp(d.file)) && !process.env.LLAMA_CLOUD_API_KEY) {
-    throw new Error("LLAMA_CLOUD_API_KEY is not set");
+  if (docs.some((d) => !isHwp(d.file)) && !process.env.MARKITDOWN_API_URL) {
+    console.warn(
+      "MARKITDOWN_API_URL not set, using default http://localhost:8001 for non-HWP files"
+    );
   }
   if (docs.some((d) => isHwp(d.file)) && !process.env.NEXT_PUBLIC_API_URL) {
     console.warn("NEXT_PUBLIC_API_URL not set, using default http://localhost:8000 for HWP files");
