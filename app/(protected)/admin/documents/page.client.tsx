@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { UploadCloud, RefreshCw, CalendarDays } from "lucide-react";
+import { UploadCloud, RefreshCw, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,8 @@ const AUTHORITY_TYPES = [
   "MEMBER_CASE",
 ];
 const SECURITY_CLASSES = ["PUBLIC", "INTERNAL", "CONFIDENTIAL"];
+
+const PAGE_SIZE = 8;
 
 const STATUS_DOT: Record<DocumentStatus, string> = {
   completed: "bg-chart-2",
@@ -263,6 +265,7 @@ export const PageClient = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("adminDocs");
   const [filter, setFilter] = useState<"all" | DocumentStatus>("all");
+  const [page, setPage] = useState(1);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
   const { data: documents = [], isLoading } = useQuery(getAdminDocumentsQueryOptions());
@@ -300,6 +303,7 @@ export const PageClient = () => {
 
     const items = list.map((file) => ({ id: crypto.randomUUID(), name: file.name, file }));
     setUploading((prev) => [...prev, ...items.map(({ id, name }) => ({ id, name }))]);
+    setPage(1); // surface the in-flight rows on the first page
 
     // Upload one at a time; each doc drops its "processing" row and refreshes
     // the list (so it reappears as a real, completed row) as it finishes.
@@ -329,6 +333,12 @@ export const PageClient = () => {
   }, [documents]);
 
   const filtered = filter === "all" ? documents : documents.filter((d) => d.status === filter);
+
+  // Client-side pagination of the pipeline list. Stats above stay accurate
+  // because they're derived from the full `documents` set, not the page.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount); // clamp without an effect
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const statTiles: { key: string; value: number; accent?: string }[] = [
     { key: "total", value: stats.total },
@@ -419,7 +429,10 @@ export const PageClient = () => {
                   <button
                     key={f}
                     type="button"
-                    onClick={() => setFilter(f)}
+                    onClick={() => {
+                      setFilter(f);
+                      setPage(1);
+                    }}
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-[11.5px] font-bold transition-colors",
                       filter === f
@@ -460,7 +473,7 @@ export const PageClient = () => {
                 ))}
 
               {!isLoading &&
-                filtered.map((d) => (
+                paged.map((d) => (
                   <button
                     key={d.documentCode}
                     type="button"
@@ -521,6 +534,37 @@ export const PageClient = () => {
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {!isLoading && filtered.length > 0 && (
+              <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
+                <span className="text-[11.5px] text-muted-foreground">
+                  {t("pageOf", { page: safePage, total: pageCount })}
+                </span>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft className="size-3.5" />
+                    {t("prev")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    disabled={safePage >= pageCount}
+                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  >
+                    {t("next")}
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
