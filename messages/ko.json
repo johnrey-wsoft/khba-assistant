@@ -457,11 +457,77 @@
     "makeMember": "회원으로 지정",
     "consoleTitle": "관리자 콘솔",
     "navMembers": "회원",
-    "toggleSidebar": "사이드바 토글"
+    "toggleSidebar": "사이드바 토글",
+    "navDocuments": "문서",
+    "docsSubtitle": "업로드·상태·게시 통제"
   },
   "locale": {
     "switchLabel": "언어",
     "en": "English",
     "ko": "한국어"
+  },
+  "adminDocs": {
+    "stats": {
+      "total": "등록 문서",
+      "indexed": "색인 완료",
+      "pending": "대기·처리중",
+      "failed": "실패",
+      "evidence": "근거 단위"
+    },
+    "dropzoneTitle": "문서를 끌어다 놓거나 클릭해 업로드",
+    "dropzoneSub": "PDF · DOCX · HWP/HWPX · XLSX · PPTX · 이미지",
+    "dropzoneSoon": "준비 중",
+    "pipelineTitle": "처리 상태 파이프라인",
+    "filter": {
+      "all": "전체",
+      "completed": "완료",
+      "waiting": "대기",
+      "failed": "실패"
+    },
+    "status": {
+      "completed": "완료",
+      "waiting": "대기",
+      "failed": "실패",
+      "processing": "처리중"
+    },
+    "inactive": "비활성",
+    "baseDate": "기준일",
+    "empty": "문서가 없습니다.",
+    "pageOf": "{total} 페이지 중 {page}",
+    "prev": "이전",
+    "next": "다음",
+    "metaTitle": "메타데이터",
+    "metaEmpty": "문서를 선택하면 메타데이터를 편집할 수 있습니다.",
+    "fieldName": "문서명",
+    "fieldType": "자료유형",
+    "fieldVisibility": "공개범위",
+    "fieldBaseDate": "기준일",
+    "security": {
+      "PUBLIC": "공개",
+      "INTERNAL": "내부",
+      "CONFIDENTIAL": "기밀"
+    },
+    "activeLabel": "게시 활성화",
+    "activeHint": "비활성 시 신규 검색·답변에서 제외",
+    "reindex": "재색인 실행",
+    "reindexing": "재색인 중…",
+    "reindexStarted": "재색인을 시작했습니다",
+    "save": "변경사항 저장",
+    "saving": "저장 중…",
+    "saved": "저장됨",
+    "revert": "되돌리기",
+    "delete": "삭제",
+    "deleting": "삭제 중…",
+    "deleted": "문서를 삭제했습니다",
+    "deleteTitle": "문서를 삭제할까요?",
+    "deleteConfirm": "\"{title}\" 문서와 모든 버전·근거·저장된 파일이 영구적으로 삭제됩니다. 되돌릴 수 없습니다.",
+    "cancel": "취소",
+    "actionError": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "pickDate": "날짜 선택",
+    "uploading": "업로드 중…",
+    "uploaded": "{count}건 업로드됨",
+    "uploadError": "{name} 업로드에 실패했습니다. 다시 시도해 주세요.",
+    "preview": "파싱 미리보기",
+    "previewEmpty": "파싱된 내용이 없습니다."
   }
 }

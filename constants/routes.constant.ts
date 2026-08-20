@@ -35,7 +35,13 @@ export const API_ROUTES = {
       ROOT: "/api/admin/users",
       BY_ID: (id: string) => `/api/admin/users/${id}`,
     },
+    DOCUMENTS: {
+      ROOT: "/api/admin/documents",
+      BY_CODE: (code: string) => `/api/admin/documents/${code}`,
+      UPLOAD: "/api/admin/documents/upload",
+    },
   },
+  INGEST: "/api/ingest",
   HEALTHCHECK: "/api/healthcheck",
   ONBOARDING: "/api/onboarding",
 } as const;
