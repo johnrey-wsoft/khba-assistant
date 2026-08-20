@@ -8,6 +8,10 @@ export const getQueryKey = {
     list: () => [...getQueryKey.chats.all, "list"] as const,
     detail: (id: string) => [...getQueryKey.chats.all, "detail", id] as const,
   },
+  documents: {
+    all: ["documents"] as const,
+    search: () => [...getQueryKey.documents.all, "search"] as const,
+  },
   admin: {
     all: ["admin"] as const,
     users: () => [...getQueryKey.admin.all, "users"] as const,

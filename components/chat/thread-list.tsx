@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Search, Plus, LogOut, MoreHorizontal, Pencil, Trash2, ShieldCheck } from "lucide-react";
+import {
+  Search,
+  Plus,
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  ShieldCheck,
+  Library,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -293,8 +302,14 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
         </div>
       </div>
 
-      {/* Account controls — admin link, theme, language, and sign out. */}
+      {/* Account controls — search + admin links, theme, language, sign out. */}
       <div className="flex flex-col gap-2.5 border-t border-border p-3">
+        <Button asChild variant="outline" size="sm" className="w-full justify-start gap-2">
+          <Link href={PROTECTED_ROUTES.SEARCH} onClick={onNavigate}>
+            <Library className="size-4" />
+            {tc("search")}
+          </Link>
+        </Button>
         {isAdmin && (
           <Button asChild variant="outline" size="sm" className="w-full justify-start gap-2">
             <Link href={PROTECTED_ROUTES.ADMIN} onClick={onNavigate}>

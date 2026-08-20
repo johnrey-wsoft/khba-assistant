@@ -13,6 +13,7 @@ export const AUTH_ROUTES = {
 
 export const PROTECTED_ROUTES = {
   CHAT: "/chat",
+  SEARCH: "/search",
   ONBOARDING: "/onboarding",
   PENDING: "/pending",
   ADMIN: "/admin",
@@ -29,6 +30,11 @@ export const API_ROUTES = {
   CHATS: {
     ROOT: "/api/chats",
     BY_ID: (id: string) => `/api/chats/${id}`,
+  },
+  DOCUMENTS: {
+    ROOT: "/api/documents",
+    BY_CODE: (code: string) => `/api/documents/${code}`,
+    DOWNLOAD: (code: string) => `/api/documents/${code}/download`,
   },
   ADMIN: {
     USERS: {
