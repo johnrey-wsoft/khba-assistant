@@ -27,4 +27,16 @@ export const adminDocumentsService = {
   reindex: async (code: string): Promise<void> => {
     await axiosInstance.post(API_ROUTES.INGEST, { codes: [code] });
   },
+
+  // Upload + ingest a file. Uses fetch (not axios) to send multipart without a
+  // forced JSON content-type. Throws on failure.
+  upload: async (file: File): Promise<void> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(API_ROUTES.ADMIN.DOCUMENTS.UPLOAD, { method: "POST", body: form });
+    if (!res.ok) {
+      const detail = await res.json().catch(() => null);
+      throw new Error(detail?.error || detail?.message || "Upload failed");
+    }
+  },
 };

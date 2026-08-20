@@ -38,6 +38,7 @@ export const API_ROUTES = {
     DOCUMENTS: {
       ROOT: "/api/admin/documents",
       BY_CODE: (code: string) => `/api/admin/documents/${code}`,
+      UPLOAD: "/api/admin/documents/upload",
     },
   },
   INGEST: "/api/ingest",

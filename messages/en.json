@@ -487,7 +487,8 @@
     "status": {
       "completed": "Indexed",
       "waiting": "Pending",
-      "failed": "Failed"
+      "failed": "Failed",
+      "processing": "Processing"
     },
     "inactive": "Inactive",
     "baseDate": "Base date",
@@ -513,6 +514,11 @@
     "saved": "Saved",
     "revert": "Revert",
     "actionError": "Something went wrong. Please try again.",
-    "pickDate": "Pick a date"
+    "pickDate": "Pick a date",
+    "uploading": "Uploading…",
+    "uploaded": "{count} uploaded",
+    "uploadError": "Couldn't upload {name}. Please try again.",
+    "preview": "Parsed preview",
+    "previewEmpty": "No parsed content yet."
   }
 }

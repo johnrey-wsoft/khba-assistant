@@ -487,7 +487,8 @@
     "status": {
       "completed": "완료",
       "waiting": "대기",
-      "failed": "실패"
+      "failed": "실패",
+      "processing": "처리중"
     },
     "inactive": "비활성",
     "baseDate": "기준일",
@@ -513,6 +514,11 @@
     "saved": "저장됨",
     "revert": "되돌리기",
     "actionError": "문제가 발생했습니다. 다시 시도해 주세요.",
-    "pickDate": "날짜 선택"
+    "pickDate": "날짜 선택",
+    "uploading": "업로드 중…",
+    "uploaded": "{count}건 업로드됨",
+    "uploadError": "{name} 업로드에 실패했습니다. 다시 시도해 주세요.",
+    "preview": "파싱 미리보기",
+    "previewEmpty": "파싱된 내용이 없습니다."
   }
 }

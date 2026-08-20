@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DocumentMarkdown } from "@/components/chat/document-markdown";
 import { cn } from "@/lib/utils";
 import { getAdminDocumentsQueryOptions } from "@/queries/admin-documents.query";
 import { adminDocumentsService } from "@/services/admin-documents.service";
@@ -88,9 +90,42 @@ const MetadataPanel = ({
   const t = useTranslations("adminDocs");
   const [form, setForm] = useState<FormState>(() => toForm(doc));
 
+  // Parsed content of this document (what the RAG ingested), for a preview.
+  const { data: content, isLoading: contentLoading } = useQuery({
+    queryKey: ["admin-document-content", doc.documentCode],
+    queryFn: async (): Promise<{ passages: { nodePath: string; text: string }[] }> => {
+      const res = await fetch(`/api/documents/${encodeURIComponent(doc.documentCode)}`);
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error("Failed to load document");
+      return json.data;
+    },
+    staleTime: 60_000,
+  });
+
   return (
     <>
       <div className="flex flex-col gap-4 p-5">
+        {/* Parsed-content preview */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-bold text-foreground">{t("preview")}</span>
+          <div className="max-h-64 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4">
+            {contentLoading ? (
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-3.5 w-3/4" />
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-5/6" />
+                <Skeleton className="h-3.5 w-2/3" />
+              </div>
+            ) : content && content.passages.length > 0 ? (
+              <DocumentMarkdown>
+                {content.passages.map((p) => p.text).join("\n\n")}
+              </DocumentMarkdown>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("previewEmpty")}</p>
+            )}
+          </div>
+        </div>
+
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-bold text-foreground">{t("fieldName")}</span>
           <Input
@@ -252,6 +287,37 @@ export const PageClient = () => {
     onError: () => toast.error(t("actionError")),
   });
 
+  // --- Upload ------------------------------------------------------------
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  // In-flight uploads shown as optimistic "processing" rows in the pipeline.
+  const [uploading, setUploading] = useState<{ id: string; name: string }[]>([]);
+  const isUploading = uploading.length > 0;
+
+  const onFiles = (files: FileList | null) => {
+    const list = files ? Array.from(files) : [];
+    if (list.length === 0) return;
+
+    const items = list.map((file) => ({ id: crypto.randomUUID(), name: file.name, file }));
+    setUploading((prev) => [...prev, ...items.map(({ id, name }) => ({ id, name }))]);
+
+    // Upload one at a time; each doc drops its "processing" row and refreshes
+    // the list (so it reappears as a real, completed row) as it finishes.
+    void (async () => {
+      for (const { id, name, file } of items) {
+        try {
+          await adminDocumentsService.upload(file);
+          invalidate();
+          toast.success(t("uploaded", { count: 1 }));
+        } catch {
+          toast.error(t("uploadError", { name }));
+        } finally {
+          setUploading((prev) => prev.filter((u) => u.id !== id));
+        }
+      }
+    })();
+  };
+
   const statusLabel = (s: DocumentStatus) => t(`status.${s}`);
 
   const stats = useMemo(() => {
@@ -267,7 +333,7 @@ export const PageClient = () => {
   const statTiles: { key: string; value: number; accent?: string }[] = [
     { key: "total", value: stats.total },
     { key: "indexed", value: stats.completed, accent: "text-chart-2" },
-    { key: "pending", value: stats.waiting, accent: "text-chart-3" },
+    { key: "pending", value: stats.waiting + uploading.length, accent: "text-chart-3" },
     { key: "failed", value: stats.failed, accent: "text-destructive" },
     { key: "evidence", value: stats.evidence },
   ];
@@ -293,14 +359,53 @@ export const PageClient = () => {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
         {/* Left: dropzone + pipeline */}
         <div className="flex min-w-0 flex-col gap-4">
-          {/* Dropzone — placeholder for now (upload wiring is a follow-up) */}
-          <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-border bg-muted/40 px-5 py-6 text-center">
-            <UploadCloud className="size-6 text-muted-foreground" />
-            <div className="text-sm font-bold text-foreground">{t("dropzoneTitle")}</div>
-            <div className="text-xs text-muted-foreground">{t("dropzoneSub")}</div>
-            <div className="mt-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
-              {t("dropzoneSoon")}
+          {/* Dropzone — upload + ingest */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-disabled={isUploading}
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if ((e.key === "Enter" || e.key === " ") && !isUploading) {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              if (!isUploading) onFiles(e.dataTransfer.files);
+            }}
+            className={cn(
+              "flex cursor-pointer flex-col items-center gap-1 rounded-2xl border-2 border-dashed px-5 py-6 text-center transition-colors",
+              dragging ? "border-primary bg-primary/5" : "border-border bg-muted/40",
+              isUploading && "pointer-events-none opacity-70"
+            )}
+          >
+            {isUploading ? (
+              <RefreshCw className="size-6 animate-spin text-primary" />
+            ) : (
+              <UploadCloud className="size-6 text-muted-foreground" />
+            )}
+            <div className="text-sm font-bold text-foreground">
+              {isUploading ? t("uploading") : t("dropzoneTitle")}
             </div>
+            <div className="text-xs text-muted-foreground">{t("dropzoneSub")}</div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={(e) => {
+                onFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
           </div>
 
           {/* Pipeline */}
@@ -329,6 +434,31 @@ export const PageClient = () => {
             </div>
 
             <div className="divide-y divide-border">
+              {/* Optimistic rows for files currently being ingested. Shown while
+                  the synchronous upload runs, then replaced by the real row on
+                  invalidate. Only under the "all"/"waiting" filters. */}
+              {(filter === "all" || filter === "waiting") &&
+                uploading.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                    aria-busy
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="truncate text-sm font-bold text-foreground">{u.name}</span>
+                      </div>
+                      <div className="mt-1.5 h-1 w-full max-w-40 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full w-2/5 animate-pulse rounded-full bg-chart-3" />
+                      </div>
+                    </div>
+                    <span className="inline-flex flex-none items-center gap-1.5 text-xs font-bold text-chart-3">
+                      <span className="size-2 animate-pulse rounded-full bg-chart-3" />
+                      {t("status.processing")}
+                    </span>
+                  </div>
+                ))}
+
               {!isLoading &&
                 filtered.map((d) => (
                   <button
@@ -380,7 +510,7 @@ export const PageClient = () => {
                   </button>
                 ))}
 
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && filtered.length === 0 && uploading.length === 0 && (
                 <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t("empty")}</p>
               )}
               {isLoading && (
