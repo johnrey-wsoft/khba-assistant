@@ -15,23 +15,9 @@ import { SourceCard } from "@/components/chat/primitives";
 import { cn } from "@/lib/utils";
 import { authorityLabel } from "@/lib/chat/authority";
 import { getSearchDocumentsQueryOptions } from "@/queries/documents.query";
-import type { SearchDocument } from "@/lib/documents/types";
+import { NATIONWIDE, type DocPeriod, type DocSort, type FacetCount } from "@/lib/documents/types";
 
 import { PROTECTED_ROUTES, API_ROUTES } from "@/constants/routes.constant";
-
-type Period = "all" | "2026" | "recent";
-type Sort = "date" | "relevance";
-
-// Today is fixed at request time on the server; for the client-side "recent 3
-// months" window we compute against the real clock, which is fine for a filter.
-const RECENT_CUTOFF = () => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 3);
-  return d.toISOString().slice(0, 10);
-};
-
-// Null jurisdiction = nationwide. A sentinel keeps it selectable as a facet.
-const NATIONWIDE = "__nationwide__";
 
 const PAGE_SIZE = 8;
 
@@ -40,85 +26,46 @@ type FacetItem = { value: string; label: string; count: number };
 export const PageClient = () => {
   const t = useTranslations("search");
 
-  const { data: documents = [], isLoading } = useQuery(getSearchDocumentsQueryOptions());
-
-  // `draft` is what's in the box; `q` is the applied query (committed on Enter /
-  // Search). Facets still filter live; only the text query waits for submit.
+  // `draft` is what's in the box; `appliedQ` is the committed query (Enter /
+  // Search button, or reset when the box is cleared).
   const [draft, setDraft] = useState("");
-  const [q, setQ] = useState("");
+  const [appliedQ, setAppliedQ] = useState("");
   const [types, setTypes] = useState<Set<string>>(new Set());
   const [regions, setRegions] = useState<Set<string>>(new Set());
-  const [period, setPeriod] = useState<Period>("all");
-  const [sort, setSort] = useState<Sort>("date");
+  const [period, setPeriod] = useState<DocPeriod>("all");
+  const [sort, setSort] = useState<DocSort>("date");
   const [page, setPage] = useState(1);
   const [facetsOpen, setFacetsOpen] = useState(false);
 
-  const regionLabel = (code: string | null) =>
-    code == null || code === NATIONWIDE ? t("nationwide") : code;
+  const params = useMemo(
+    () => ({
+      q: appliedQ,
+      types: [...types],
+      regions: [...regions],
+      period,
+      sort,
+      page,
+      pageSize: PAGE_SIZE,
+    }),
+    [appliedQ, types, regions, period, sort, page]
+  );
 
-  // Facet options with counts, derived from the full corpus.
-  const typeFacets = useMemo<FacetItem[]>(() => {
-    const counts = new Map<string, number>();
-    for (const d of documents) counts.set(d.authorityType, (counts.get(d.authorityType) ?? 0) + 1);
-    return [...counts.entries()]
-      .map(([value, count]) => ({ value, label: authorityLabel(value), count }))
-      .sort((a, b) => b.count - a.count);
-  }, [documents]);
+  const { data, isLoading } = useQuery(getSearchDocumentsQueryOptions(params));
 
-  const regionFacets = useMemo<FacetItem[]>(() => {
-    const counts = new Map<string, number>();
-    for (const d of documents) {
-      const key = d.jurisdictionCode ?? NATIONWIDE;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .map(([value, count]) => ({ value, label: regionLabel(value), count }))
-      .sort((a, b) => b.count - a.count);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents]);
+  const regionLabel = (code: string) => (code === NATIONWIDE ? t("nationwide") : code);
 
-  const inPeriod = (d: SearchDocument) => {
-    if (period === "all") return true;
-    if (!d.effectiveFrom) return false;
-    if (period === "2026") return d.effectiveFrom >= "2026-01-01";
-    return d.effectiveFrom >= RECENT_CUTOFF();
-  };
+  const toFacetItems = (facets: FacetCount[] | undefined, label: (v: string) => string): FacetItem[] =>
+    (facets ?? []).map((f) => ({ value: f.value, label: label(f.value), count: f.count }));
 
-  const relScore = (d: SearchDocument) => {
-    if (!q) return 0;
-    const hay = `${d.title} ${d.snippet ?? ""} ${d.jurisdictionCode ?? ""}`.toLowerCase();
-    return q
-      .toLowerCase()
-      .split(/\s+/)
-      .reduce((s, term) => s + (term && hay.includes(term) ? 1 : 0), 0);
-  };
+  const typeFacets = toFacetItems(data?.facets.types, authorityLabel);
+  const regionFacets = toFacetItems(data?.facets.regions, regionLabel);
 
-  const results = useMemo(() => {
-    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
-    const list = documents.filter((d) => {
-      if (types.size && !types.has(d.authorityType)) return false;
-      if (regions.size && !regions.has(d.jurisdictionCode ?? NATIONWIDE)) return false;
-      if (!inPeriod(d)) return false;
-      if (terms.length) {
-        const hay = `${d.title} ${d.snippet ?? ""} ${d.jurisdictionCode ?? ""}`.toLowerCase();
-        if (!terms.every((term) => hay.includes(term))) return false;
-      }
-      return true;
-    });
-    const byDate = (a: SearchDocument, b: SearchDocument) =>
-      (b.effectiveFrom ?? "").localeCompare(a.effectiveFrom ?? "");
-    list.sort((a, b) =>
-      sort === "relevance" ? relScore(b) - relScore(a) || byDate(a, b) : byDate(a, b)
-    );
-    return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents, q, types, regions, period, sort]);
+  const results = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const pageCount = data?.pageCount ?? 1;
+  const safePage = Math.min(page, pageCount);
 
-  // Any filter/sort/query change returns to the first page.
-  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount); // clamp without an effect
-  const paged = results.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-
+  // Toggle a facet value and return to page 1.
   const toggle = (set: Set<string>, setter: (s: Set<string>) => void, value: string) => {
     const next = new Set(set);
     if (next.has(value)) next.delete(value);
@@ -128,20 +75,27 @@ export const PageClient = () => {
   };
 
   const runSearch = () => {
-    setQ(draft.trim());
+    setAppliedQ(draft.trim());
     setPage(1);
   };
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     runSearch();
   };
+  // Clearing the box (the native "×" or deleting to empty) resets results.
+  const onDraftChange = (value: string) => {
+    setDraft(value);
+    if (value === "") {
+      setAppliedQ("");
+      setPage(1);
+    }
+  };
 
-  const changePeriod = (p: Period) => {
+  const changePeriod = (p: DocPeriod) => {
     setPeriod(p);
     setPage(1);
   };
-
-  const changeSort = (s: Sort) => {
+  const changeSort = (s: DocSort) => {
     setSort(s);
     setPage(1);
   };
@@ -149,17 +103,9 @@ export const PageClient = () => {
   const activePills = useMemo(() => {
     const pills: { key: string; label: string; clear: () => void }[] = [];
     for (const v of types)
-      pills.push({
-        key: `type:${v}`,
-        label: authorityLabel(v),
-        clear: () => toggle(types, setTypes, v),
-      });
+      pills.push({ key: `type:${v}`, label: authorityLabel(v), clear: () => toggle(types, setTypes, v) });
     for (const v of regions)
-      pills.push({
-        key: `region:${v}`,
-        label: regionLabel(v),
-        clear: () => toggle(regions, setRegions, v),
-      });
+      pills.push({ key: `region:${v}`, label: regionLabel(v), clear: () => toggle(regions, setRegions, v) });
     if (period !== "all")
       pills.push({
         key: "period",
@@ -170,13 +116,13 @@ export const PageClient = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [types, regions, period]);
 
-  const hasFilters = activePills.length > 0 || q.length > 0;
+  const hasFilters = activePills.length > 0 || appliedQ.length > 0 || draft.length > 0;
   const clearAll = () => {
     setTypes(new Set());
     setRegions(new Set());
     setPeriod("all");
     setDraft("");
-    setQ("");
+    setAppliedQ("");
     setPage(1);
   };
 
@@ -225,7 +171,7 @@ export const PageClient = () => {
               <Search className="pointer-events-none absolute left-3.5 size-[18px] text-muted-foreground" />
               <Input
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => onDraftChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -316,8 +262,8 @@ export const PageClient = () => {
                 <Skeleton className="inline-block h-4 w-32 align-middle" />
               ) : (
                 t.rich("resultCount", {
-                  count: results.length,
-                  q: q ? `“${q}”` : t("allDocuments"),
+                  count: total,
+                  q: appliedQ ? `“${appliedQ}”` : t("allDocuments"),
                   b: (chunks) => <b className="font-bold text-foreground">{chunks}</b>,
                 })
               )}
@@ -382,7 +328,7 @@ export const PageClient = () => {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                {paged.map((d) => (
+                {results.map((d) => (
                   <SourceCard
                     key={d.documentCode}
                     source={{
