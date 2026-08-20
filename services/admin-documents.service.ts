@@ -28,6 +28,11 @@ export const adminDocumentsService = {
     await axiosInstance.post(API_ROUTES.INGEST, { codes: [code] });
   },
 
+  // Permanently delete a document and all its data. Throws on failure.
+  remove: async (code: string): Promise<void> => {
+    await axiosInstance.delete(API_ROUTES.ADMIN.DOCUMENTS.BY_CODE(code));
+  },
+
   // Upload + ingest a file. Uses fetch (not axios) to send multipart without a
   // forced JSON content-type. Throws on failure.
   upload: async (file: File): Promise<void> => {

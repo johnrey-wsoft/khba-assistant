@@ -1,7 +1,7 @@
 import { apiResponse } from "@/lib/response";
 import { rateLimit } from "@/lib/ratelimit";
 import { requireAdmin } from "@/lib/guards/role.guard";
-import { updateDocument } from "@/lib/admin/documents";
+import { updateDocument, deleteDocument } from "@/lib/admin/documents";
 import type { AdminDocumentPatch } from "@/lib/admin/types";
 
 import { HttpStatus } from "@/constants/http-status.constant";
@@ -66,6 +66,30 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     return apiResponse({
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       message: "Failed to update document",
+    });
+  }
+}
+
+// DELETE /api/admin/documents/[code] — permanently delete a document and all
+// its versions, content, evidence, and stored files. Admin only.
+export async function DELETE(_req: Request, { params }: RouteContext) {
+  try {
+    const rateLimited = await rateLimit("api");
+    if (rateLimited) return rateLimited;
+
+    const { error } = await requireAdmin();
+    if (error) return error;
+
+    const { code } = await params;
+    const ok = await deleteDocument(code);
+    if (!ok) return apiResponse({ status: HttpStatus.NOT_FOUND });
+
+    return apiResponse({ data: { code }, status: HttpStatus.OK });
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    return apiResponse({
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to delete document",
     });
   }
 }

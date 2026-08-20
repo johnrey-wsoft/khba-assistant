@@ -4,9 +4,27 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { UploadCloud, RefreshCw, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  UploadCloud,
+  RefreshCw,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -80,14 +98,18 @@ const MetadataPanel = ({
   doc,
   onSave,
   onReindex,
+  onDelete,
   saving,
   reindexing,
+  deleting,
 }: {
   doc: AdminDocument;
   onSave: (patch: AdminDocumentPatch) => void;
   onReindex: () => void;
+  onDelete: () => void;
   saving: boolean;
   reindexing: boolean;
+  deleting: boolean;
 }) => {
   const t = useTranslations("adminDocs");
   const [form, setForm] = useState<FormState>(() => toForm(doc));
@@ -256,6 +278,33 @@ const MetadataPanel = ({
         <Button variant="secondary" onClick={() => setForm(toForm(doc))}>
           {t("revert")}
         </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto text-destructive"
+              title={t("delete")}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("deleteConfirm", { title: doc.title })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={onDelete} disabled={deleting}>
+                {deleting ? t("deleting") : t("delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </>
   );
@@ -287,6 +336,16 @@ export const PageClient = () => {
   const reindexMutation = useMutation({
     mutationFn: (code: string) => adminDocumentsService.reindex(code),
     onSuccess: () => toast.success(t("reindexStarted")),
+    onError: () => toast.error(t("actionError")),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (code: string) => adminDocumentsService.remove(code),
+    onSuccess: () => {
+      setSelectedCode(null);
+      invalidate();
+      toast.success(t("deleted"));
+    },
     onError: () => toast.error(t("actionError")),
   });
 
@@ -585,8 +644,10 @@ export const PageClient = () => {
               doc={selected}
               saving={saveMutation.isPending}
               reindexing={reindexMutation.isPending}
+              deleting={deleteMutation.isPending}
               onSave={(patch) => saveMutation.mutate({ code: selected.documentCode, patch })}
               onReindex={() => reindexMutation.mutate(selected.documentCode)}
+              onDelete={() => deleteMutation.mutate(selected.documentCode)}
             />
           ) : (
             <p className="px-5 py-12 text-center text-sm text-muted-foreground">{t("metaEmpty")}</p>

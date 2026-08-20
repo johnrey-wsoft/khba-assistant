@@ -4,6 +4,7 @@ import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/drizzle/db";
 import { document, documentVersion } from "@/drizzle/schemas";
+import { isR2Configured, deleteObject } from "@/lib/storage/r2";
 import type { AdminDocument, AdminDocumentPatch, DocumentStatus } from "@/lib/admin/types";
 
 type DocRow = {
@@ -116,5 +117,31 @@ export const updateDocument = async (code: string, patch: AdminDocumentPatch): P
     }
   }
 
+  return true;
+};
+
+// Permanently delete a document and everything under it. The document_version,
+// content_node, source_evidence (with embeddings), and document_topic_tag rows
+// are removed by ON DELETE CASCADE. Stored raw files are best-effort deleted
+// from R2 first. Returns false if the code doesn't exist.
+export const deleteDocument = async (code: string): Promise<boolean> => {
+  const [doc] = await db
+    .select({ id: document.documentId })
+    .from(document)
+    .where(eq(document.documentCode, code))
+    .limit(1);
+  if (!doc) return false;
+
+  if (isR2Configured()) {
+    const versions = await db
+      .select({ path: documentVersion.rawObjectPath })
+      .from(documentVersion)
+      .where(eq(documentVersion.documentId, doc.id));
+    await Promise.all(
+      versions.map((v) => (v.path ? deleteObject(v.path).catch(() => {}) : Promise.resolve()))
+    );
+  }
+
+  await db.delete(document).where(eq(document.documentId, doc.id));
   return true;
 };
