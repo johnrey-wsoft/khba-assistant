@@ -12,6 +12,7 @@ import {
   Library,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -86,6 +87,8 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
   const [signingOut, startSignOut] = useTransition();
   const t = useTranslations("common");
   const tc = useTranslations("chat");
+  const pathname = usePathname();
+  const onSearch = pathname?.startsWith(PROTECTED_ROUTES.SEARCH) ?? false;
 
   // Persisted chats for the signed-in user (source of truth for the sidebar).
   const { data: persistedChats = [], isLoading: chatsLoading } = useQuery({
@@ -304,7 +307,12 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
 
       {/* Account controls — search + admin links, theme, language, sign out. */}
       <div className="flex flex-col gap-2.5 border-t border-border p-3">
-        <Button asChild variant="outline" size="sm" className="w-full justify-start gap-2">
+        <Button
+          asChild
+          variant={onSearch ? "secondary" : "outline"}
+          size="sm"
+          className={cn("w-full justify-start gap-2", onSearch && "border-primary/40 text-primary")}
+        >
           <Link href={PROTECTED_ROUTES.SEARCH} onClick={onNavigate}>
             <Library className="size-4" />
             {tc("search")}

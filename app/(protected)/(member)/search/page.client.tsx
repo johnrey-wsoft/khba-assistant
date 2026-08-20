@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Search, ArrowLeft, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, PanelLeft, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { LocaleSwitcher } from "@/components/marketing/locale-switcher";
 import { SourceCard } from "@/components/chat/primitives";
+import { useChatShell } from "@/components/chat/chat-shell-context";
 import { cn } from "@/lib/utils";
 import { authorityLabel } from "@/lib/chat/authority";
 import { getSearchDocumentsQueryOptions } from "@/queries/documents.query";
 import { NATIONWIDE, type DocPeriod, type DocSort, type FacetCount } from "@/lib/documents/types";
 
-import { PROTECTED_ROUTES, API_ROUTES } from "@/constants/routes.constant";
+import { API_ROUTES } from "@/constants/routes.constant";
 
 const PAGE_SIZE = 8;
 
@@ -25,6 +25,7 @@ type FacetItem = { value: string; label: string; count: number };
 
 export const PageClient = () => {
   const t = useTranslations("search");
+  const { toggleThreadList } = useChatShell();
 
   // `draft` is what's in the box; `appliedQ` is the committed query (Enter /
   // Search button, or reset when the box is cleared).
@@ -130,36 +131,30 @@ export const PageClient = () => {
     window.open(API_ROUTES.DOCUMENTS.DOWNLOAD(code), "_blank", "noopener");
 
   return (
-    <div className="min-h-dvh bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <Link
-            href="/"
-            className="grid size-8 flex-none place-items-center rounded-lg bg-primary text-sm font-extrabold text-primary-foreground shadow-sm"
-          >
-            K
-          </Link>
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-bold text-foreground">{t("brand")}</span>
-            <span className="truncate text-xs text-muted-foreground">{t("brandSub")}</span>
-          </span>
-          <span className="ml-auto" />
-          <Button asChild variant="outline" size="sm" className="gap-2">
-            <Link href={PROTECTED_ROUTES.CHAT}>
-              <ArrowLeft className="size-4" />
-              <span className="hidden sm:inline">{t("backToChat")}</span>
-            </Link>
-          </Button>
-          <span className="mx-1 hidden h-6 w-px bg-border sm:block" />
-          <LocaleSwitcher />
-          <ModeToggle />
-        </div>
+    <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-background">
+      {/* App chrome — sidebar toggle + view title + locale/theme. The brand and
+          navigation live in the shared sidebar. */}
+      <header className="flex flex-none items-center gap-3 border-b border-border bg-card/85 px-4 py-3 backdrop-blur sm:px-6">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleThreadList}
+          title={t("toggleSidebar")}
+          aria-label={t("toggleSidebar")}
+        >
+          <PanelLeft />
+        </Button>
+        <span className="min-w-0 flex-1 truncate text-base font-extrabold tracking-tight text-foreground">
+          {t("brandSub")}
+        </span>
+        <LocaleSwitcher />
+        <ModeToggle />
       </header>
 
-      {/* Search head */}
-      <div className="border-b border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* Search head */}
+        <div className="border-b border-border bg-card">
+          <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
           <span className="text-[11.5px] font-extrabold tracking-[0.08em] text-muted-foreground uppercase">
             {t("eyebrow")}
           </span>
@@ -376,6 +371,7 @@ export const PageClient = () => {
             </>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

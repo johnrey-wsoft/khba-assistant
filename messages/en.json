@@ -475,6 +475,7 @@
     "headline": "Everything in one place — no more site-hopping",
     "placeholder": "Search guides, notices, laws, ordinances — e.g. parking, purchase-lease, filing forms",
     "searchAria": "Search documents",
+    "toggleSidebar": "Toggle sidebar",
     "searchButton": "Search",
     "pageOf": "Page {page} of {total}",
     "prev": "Prev",
