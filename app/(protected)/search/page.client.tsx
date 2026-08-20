@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Search, ArrowLeft, SlidersHorizontal, X } from "lucide-react";
+import { Search, ArrowLeft, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,8 @@ const RECENT_CUTOFF = () => {
 // Null jurisdiction = nationwide. A sentinel keeps it selectable as a facet.
 const NATIONWIDE = "__nationwide__";
 
+const PAGE_SIZE = 8;
+
 type FacetItem = { value: string; label: string; count: number };
 
 export const PageClient = () => {
@@ -40,11 +42,15 @@ export const PageClient = () => {
 
   const { data: documents = [], isLoading } = useQuery(getSearchDocumentsQueryOptions());
 
+  // `draft` is what's in the box; `q` is the applied query (committed on Enter /
+  // Search). Facets still filter live; only the text query waits for submit.
+  const [draft, setDraft] = useState("");
   const [q, setQ] = useState("");
   const [types, setTypes] = useState<Set<string>>(new Set());
   const [regions, setRegions] = useState<Set<string>>(new Set());
   const [period, setPeriod] = useState<Period>("all");
   const [sort, setSort] = useState<Sort>("date");
+  const [page, setPage] = useState(1);
   const [facetsOpen, setFacetsOpen] = useState(false);
 
   const regionLabel = (code: string | null) =>
@@ -108,11 +114,36 @@ export const PageClient = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documents, q, types, regions, period, sort]);
 
+  // Any filter/sort/query change returns to the first page.
+  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount); // clamp without an effect
+  const paged = results.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const toggle = (set: Set<string>, setter: (s: Set<string>) => void, value: string) => {
     const next = new Set(set);
     if (next.has(value)) next.delete(value);
     else next.add(value);
     setter(next);
+    setPage(1);
+  };
+
+  const runSearch = () => {
+    setQ(draft.trim());
+    setPage(1);
+  };
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch();
+  };
+
+  const changePeriod = (p: Period) => {
+    setPeriod(p);
+    setPage(1);
+  };
+
+  const changeSort = (s: Sort) => {
+    setSort(s);
+    setPage(1);
   };
 
   const activePills = useMemo(() => {
@@ -133,7 +164,7 @@ export const PageClient = () => {
       pills.push({
         key: "period",
         label: period === "2026" ? t("period2026") : t("periodRecent"),
-        clear: () => setPeriod("all"),
+        clear: () => changePeriod("all"),
       });
     return pills;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,7 +175,9 @@ export const PageClient = () => {
     setTypes(new Set());
     setRegions(new Set());
     setPeriod("all");
+    setDraft("");
     setQ("");
+    setPage(1);
   };
 
   const openSource = (code: string) =>
@@ -187,17 +220,28 @@ export const PageClient = () => {
           <h1 className="mt-2 mb-4 text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
             {t("headline")}
           </h1>
-          <div className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-3.5 size-[18px] text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              type="search"
-              placeholder={t("placeholder")}
-              className="h-12 pl-11 text-base"
-              aria-label={t("searchAria")}
-            />
-          </div>
+          <form onSubmit={submitSearch} className="flex items-center gap-2">
+            <div className="relative flex flex-1 items-center">
+              <Search className="pointer-events-none absolute left-3.5 size-[18px] text-muted-foreground" />
+              <Input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    runSearch();
+                  }
+                }}
+                type="search"
+                placeholder={t("placeholder")}
+                className="h-12 pl-11 text-base"
+                aria-label={t("searchAria")}
+              />
+            </div>
+            <Button type="submit" className="h-12 px-5 text-sm">
+              {t("searchButton")}
+            </Button>
+          </form>
         </div>
       </div>
 
@@ -244,7 +288,7 @@ export const PageClient = () => {
                     type="radio"
                     name="period"
                     checked={period === p}
-                    onChange={() => setPeriod(p)}
+                    onChange={() => changePeriod(p)}
                     className="size-4 accent-primary"
                   />
                   {t(`period${p === "all" ? "All" : p === "2026" ? "2026" : "Recent"}`)}
@@ -287,7 +331,7 @@ export const PageClient = () => {
                 <button
                   key={s}
                   type="button"
-                  onClick={() => setSort(s)}
+                  onClick={() => changeSort(s)}
                   className={cn(
                     "border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors first:border-l-0",
                     sort === s
@@ -336,22 +380,54 @@ export const PageClient = () => {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {results.map((d) => (
-                <SourceCard
-                  key={d.documentCode}
-                  source={{
-                    documentCode: d.documentCode,
-                    title: d.title,
-                    authorityType: d.authorityType,
-                    jurisdictionCode: d.jurisdictionCode,
-                    snippet: d.snippet ?? undefined,
-                  }}
-                  onOpen={() => openSource(d.documentCode)}
-                  viewSourceLabel={t("viewSource")}
-                />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col gap-3">
+                {paged.map((d) => (
+                  <SourceCard
+                    key={d.documentCode}
+                    source={{
+                      documentCode: d.documentCode,
+                      title: d.title,
+                      authorityType: d.authorityType,
+                      jurisdictionCode: d.jurisdictionCode,
+                      snippet: d.snippet ?? undefined,
+                    }}
+                    onOpen={() => openSource(d.documentCode)}
+                    viewSourceLabel={t("viewSource")}
+                  />
+                ))}
+              </div>
+
+              {pageCount > 1 && (
+                <div className="mt-4 flex items-center justify-between gap-2">
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {t("pageOf", { page: safePage, total: pageCount })}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 px-2.5 text-xs"
+                      disabled={safePage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft className="size-3.5" />
+                      {t("prev")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 px-2.5 text-xs"
+                      disabled={safePage >= pageCount}
+                      onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                    >
+                      {t("next")}
+                      <ChevronRight className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
