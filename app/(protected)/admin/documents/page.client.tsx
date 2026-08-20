@@ -1,0 +1,424 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { UploadCloud, RefreshCw, CalendarDays } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { getAdminDocumentsQueryOptions } from "@/queries/admin-documents.query";
+import { adminDocumentsService } from "@/services/admin-documents.service";
+import type { AdminDocument, AdminDocumentPatch, DocumentStatus } from "@/lib/admin/types";
+import { getQueryKey } from "@/lib/query/get-query-keys";
+import { authorityLabel } from "@/lib/chat/authority";
+
+const AUTHORITY_TYPES = [
+  "LAW",
+  "ORDINANCE",
+  "ADMIN_RULE",
+  "INTERPRETATION",
+  "ASSOCIATION_GUIDE",
+  "MEMBER_CASE",
+];
+const SECURITY_CLASSES = ["PUBLIC", "INTERNAL", "CONFIDENTIAL"];
+
+const STATUS_DOT: Record<DocumentStatus, string> = {
+  completed: "bg-chart-2",
+  waiting: "bg-chart-3",
+  failed: "bg-destructive",
+};
+const STATUS_TEXT: Record<DocumentStatus, string> = {
+  completed: "text-chart-2",
+  waiting: "text-chart-3",
+  failed: "text-destructive",
+};
+
+type FormState = {
+  title: string;
+  authorityType: string;
+  securityClass: string;
+  effectiveFrom: string;
+  active: boolean;
+};
+
+// "yyyy-MM-dd" <-> local Date, avoiding the UTC shift new Date("yyyy-MM-dd") causes.
+const parseDate = (s: string): Date | undefined => {
+  if (!s) return undefined;
+  const [y, m, d] = s.split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : undefined;
+};
+const fmtDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const toForm = (d: AdminDocument): FormState => ({
+  title: d.title,
+  authorityType: d.authorityType,
+  securityClass: d.securityClass,
+  effectiveFrom: d.effectiveFrom ?? "",
+  active: d.active,
+});
+
+// Metadata editor — mounted with a `key` of the document code, so its form
+// state initializes fresh from props (no sync effect needed).
+const MetadataPanel = ({
+  doc,
+  onSave,
+  onReindex,
+  saving,
+  reindexing,
+}: {
+  doc: AdminDocument;
+  onSave: (patch: AdminDocumentPatch) => void;
+  onReindex: () => void;
+  saving: boolean;
+  reindexing: boolean;
+}) => {
+  const t = useTranslations("adminDocs");
+  const [form, setForm] = useState<FormState>(() => toForm(doc));
+
+  return (
+    <>
+      <div className="flex flex-col gap-4 p-5">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-bold text-foreground">{t("fieldName")}</span>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            aria-invalid={!form.title.trim()}
+          />
+        </label>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-bold text-foreground">{t("fieldType")}</span>
+            <Select
+              value={form.authorityType}
+              onValueChange={(v) => setForm({ ...form, authorityType: v })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AUTHORITY_TYPES.map((a) => (
+                  <SelectItem key={a} value={a}>
+                    {authorityLabel(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-bold text-foreground">{t("fieldVisibility")}</span>
+            <Select
+              value={form.securityClass}
+              onValueChange={(v) => setForm({ ...form, securityClass: v })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SECURITY_CLASSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {t(`security.${s}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-bold text-foreground">{t("fieldBaseDate")}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full justify-start gap-2 font-normal">
+                <CalendarDays className="size-4 text-muted-foreground" />
+                {form.effectiveFrom ? (
+                  <span className="font-mono">{form.effectiveFrom}</span>
+                ) : (
+                  <span className="text-muted-foreground">{t("pickDate")}</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                captionLayout="dropdown"
+                selected={parseDate(form.effectiveFrom)}
+                onSelect={(d) => setForm({ ...form, effectiveFrom: d ? fmtDate(d) : "" })}
+                autoFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
+          <span className="text-sm font-semibold text-foreground">
+            {t("activeLabel")}
+            <span className="block text-xs font-normal text-muted-foreground">
+              {t("activeHint")}
+            </span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={form.active}
+            onClick={() => setForm({ ...form, active: !form.active })}
+            className={cn(
+              "relative h-6 w-11 flex-none rounded-full transition-colors",
+              form.active ? "bg-primary" : "bg-input"
+            )}
+          >
+            <span
+              className={cn(
+                "absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform",
+                form.active && "translate-x-5"
+              )}
+            />
+          </button>
+        </div>
+
+        <Button
+          variant="outline"
+          className="w-full gap-2"
+          disabled={reindexing}
+          onClick={onReindex}
+        >
+          <RefreshCw className={cn("size-4", reindexing && "animate-spin")} />
+          {reindexing ? t("reindexing") : t("reindex")}
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-border bg-muted/40 px-4 py-3">
+        <Button
+          disabled={!form.title.trim() || saving}
+          onClick={() =>
+            onSave({
+              title: form.title.trim(),
+              authorityType: form.authorityType,
+              securityClass: form.securityClass,
+              effectiveFrom: form.effectiveFrom || null,
+              active: form.active,
+            })
+          }
+        >
+          {saving ? t("saving") : t("save")}
+        </Button>
+        <Button variant="secondary" onClick={() => setForm(toForm(doc))}>
+          {t("revert")}
+        </Button>
+      </div>
+    </>
+  );
+};
+
+export const PageClient = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("adminDocs");
+  const [filter, setFilter] = useState<"all" | DocumentStatus>("all");
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+
+  const { data: documents = [], isLoading } = useQuery(getAdminDocumentsQueryOptions());
+  const selected = documents.find((d) => d.documentCode === selectedCode) ?? null;
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: getQueryKey.admin.documents() });
+
+  const saveMutation = useMutation({
+    mutationFn: ({ code, patch }: { code: string; patch: AdminDocumentPatch }) =>
+      adminDocumentsService.update(code, patch),
+    onSuccess: () => {
+      invalidate();
+      toast.success(t("saved"));
+    },
+    onError: () => toast.error(t("actionError")),
+  });
+
+  const reindexMutation = useMutation({
+    mutationFn: (code: string) => adminDocumentsService.reindex(code),
+    onSuccess: () => toast.success(t("reindexStarted")),
+    onError: () => toast.error(t("actionError")),
+  });
+
+  const statusLabel = (s: DocumentStatus) => t(`status.${s}`);
+
+  const stats = useMemo(() => {
+    const completed = documents.filter((d) => d.status === "completed").length;
+    const waiting = documents.filter((d) => d.status === "waiting").length;
+    const failed = documents.filter((d) => d.status === "failed").length;
+    const evidence = documents.reduce((n, d) => n + d.indexedCount, 0);
+    return { total: documents.length, completed, waiting, failed, evidence };
+  }, [documents]);
+
+  const filtered = filter === "all" ? documents : documents.filter((d) => d.status === filter);
+
+  const statTiles: { key: string; value: number; accent?: string }[] = [
+    { key: "total", value: stats.total },
+    { key: "indexed", value: stats.completed, accent: "text-chart-2" },
+    { key: "pending", value: stats.waiting, accent: "text-chart-3" },
+    { key: "failed", value: stats.failed, accent: "text-destructive" },
+    { key: "evidence", value: stats.evidence },
+  ];
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      {/* Stats */}
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {statTiles.map((s) => (
+          <div key={s.key} className="rounded-2xl border border-border bg-card px-4 py-3.5">
+            <div className={cn("font-mono text-2xl font-extrabold tracking-tight", s.accent)}>
+              {isLoading ? (
+                <span className="inline-block h-6 w-8 animate-pulse rounded bg-muted align-middle" />
+              ) : (
+                s.value
+              )}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">{t(`stats.${s.key}`)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
+        {/* Left: dropzone + pipeline */}
+        <div className="flex min-w-0 flex-col gap-4">
+          {/* Dropzone — placeholder for now (upload wiring is a follow-up) */}
+          <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-border bg-muted/40 px-5 py-6 text-center">
+            <UploadCloud className="size-6 text-muted-foreground" />
+            <div className="text-sm font-bold text-foreground">{t("dropzoneTitle")}</div>
+            <div className="text-xs text-muted-foreground">{t("dropzoneSub")}</div>
+            <div className="mt-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
+              {t("dropzoneSoon")}
+            </div>
+          </div>
+
+          {/* Pipeline */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+              <h2 className="text-sm font-extrabold tracking-tight text-foreground">
+                {t("pipelineTitle")}
+              </h2>
+              <div className="ml-auto flex gap-1">
+                {(["all", "completed", "waiting", "failed"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[11.5px] font-bold transition-colors",
+                      filter === f
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {t(`filter.${f}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="divide-y divide-border">
+              {!isLoading &&
+                filtered.map((d) => (
+                  <button
+                    key={d.documentCode}
+                    type="button"
+                    onClick={() => setSelectedCode(d.documentCode)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+                      selectedCode === d.documentCode
+                        ? "bg-accent shadow-[inset_3px_0_0] shadow-primary"
+                        : "hover:bg-muted/60"
+                    )}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="truncate text-sm font-bold text-foreground">
+                          {d.title}
+                        </span>
+                        <span className="rounded-[5px] border border-primary/20 bg-primary/5 px-1.5 py-0 text-[11px] font-bold text-primary">
+                          {authorityLabel(d.authorityType)}
+                        </span>
+                        {!d.active && (
+                          <span className="rounded-[5px] bg-muted px-1.5 py-0 text-[11px] font-bold text-muted-foreground">
+                            {t("inactive")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
+                        {d.jurisdictionCode && (
+                          <span className="font-mono">{d.jurisdictionCode}</span>
+                        )}
+                        {d.effectiveFrom && (
+                          <span>
+                            {t("baseDate")} {d.effectiveFrom}
+                          </span>
+                        )}
+                        <span className="font-mono">{d.documentCode}</span>
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex flex-none items-center gap-1.5 text-xs font-bold",
+                        STATUS_TEXT[d.status]
+                      )}
+                    >
+                      <span className={cn("size-2 rounded-full", STATUS_DOT[d.status])} />
+                      {statusLabel(d.status)}
+                    </span>
+                  </button>
+                ))}
+
+              {!isLoading && filtered.length === 0 && (
+                <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t("empty")}</p>
+              )}
+              {isLoading && (
+                <div className="flex flex-col gap-0.5 p-2.5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-12 animate-pulse rounded-xl bg-muted" />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: metadata */}
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card lg:sticky lg:top-4">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <h2 className="text-sm font-extrabold tracking-tight text-foreground">
+              {t("metaTitle")}
+            </h2>
+            <span className="ml-auto font-mono text-xs text-muted-foreground">
+              {selected?.documentCode ?? "—"}
+            </span>
+          </div>
+
+          {selected ? (
+            <MetadataPanel
+              key={selected.documentCode}
+              doc={selected}
+              saving={saveMutation.isPending}
+              reindexing={reindexMutation.isPending}
+              onSave={(patch) => saveMutation.mutate({ code: selected.documentCode, patch })}
+              onReindex={() => reindexMutation.mutate(selected.documentCode)}
+            />
+          ) : (
+            <p className="px-5 py-12 text-center text-sm text-muted-foreground">{t("metaEmpty")}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

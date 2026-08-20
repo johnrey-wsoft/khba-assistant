@@ -457,11 +457,62 @@
     "makeMember": "Make member",
     "consoleTitle": "Admin console",
     "navMembers": "Members",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Toggle sidebar",
+    "navDocuments": "Documents",
+    "docsSubtitle": "Upload, status and publishing controls."
   },
   "locale": {
     "switchLabel": "Language",
     "en": "English",
     "ko": "한국어"
+  },
+  "adminDocs": {
+    "stats": {
+      "total": "Documents",
+      "indexed": "Indexed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "evidence": "Evidence units"
+    },
+    "dropzoneTitle": "Drag & drop or click to upload",
+    "dropzoneSub": "PDF · DOCX · HWP/HWPX · XLSX · PPTX · images",
+    "dropzoneSoon": "Coming soon",
+    "pipelineTitle": "Processing pipeline",
+    "filter": {
+      "all": "All",
+      "completed": "Indexed",
+      "waiting": "Pending",
+      "failed": "Failed"
+    },
+    "status": {
+      "completed": "Indexed",
+      "waiting": "Pending",
+      "failed": "Failed"
+    },
+    "inactive": "Inactive",
+    "baseDate": "Base date",
+    "empty": "No documents.",
+    "metaTitle": "Metadata",
+    "metaEmpty": "Select a document to edit its metadata.",
+    "fieldName": "Title",
+    "fieldType": "Type",
+    "fieldVisibility": "Visibility",
+    "fieldBaseDate": "Base date",
+    "security": {
+      "PUBLIC": "Public",
+      "INTERNAL": "Internal",
+      "CONFIDENTIAL": "Confidential"
+    },
+    "activeLabel": "Published",
+    "activeHint": "When off, excluded from new search & answers.",
+    "reindex": "Re-index",
+    "reindexing": "Re-indexing…",
+    "reindexStarted": "Re-index started",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "revert": "Revert",
+    "actionError": "Something went wrong. Please try again.",
+    "pickDate": "Pick a date"
   }
 }

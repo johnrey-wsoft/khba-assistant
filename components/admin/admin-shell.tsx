@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Users, ArrowLeft, LogOut, PanelLeft, type LucideIcon } from "lucide-react";
+import { Users, FileText, ArrowLeft, LogOut, PanelLeft, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -52,6 +52,12 @@ export const AdminShell = ({ name, email, children }: AdminShellProps) => {
       label: t("navMembers"),
       description: t("subtitle"),
       icon: Users,
+    },
+    {
+      href: `${PROTECTED_ROUTES.ADMIN}/documents`,
+      label: t("navDocuments"),
+      description: t("docsSubtitle"),
+      icon: FileText,
     },
   ];
 
