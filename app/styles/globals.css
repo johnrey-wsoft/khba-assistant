@@ -146,6 +146,25 @@
   /* Highlight — the excerpt actually used in the answer (<mark>). */
   --highlight: #fbeaa0; /* --seal-hi */
   --highlight-foreground: #4a3608; /* --seal-ink */
+
+  /* Large dark blocks (hero / CTA band) — the design's navy ink ramp with an
+     accent bloom, plus the survey-grid overlay. Theme-independent: these blocks
+     are dark in both light and dark mode, so the tokens live only here. */
+  --ink: #0d1b30;
+  --navy: #16294a;
+  --navy-2: #1c3358;
+  --accent-rgb: 30, 79, 216;
+  --on-dark-2: #c3d0e6; /* muted text on dark grounds */
+  --seal-on-dark: #f0d79c; /* eyebrow / seal text on the dark hero */
+  --hero-bg:
+    radial-gradient(1100px 500px at 78% -10%, rgba(var(--accent-rgb), 0.16), transparent 60%),
+    linear-gradient(160deg, var(--ink) 0%, var(--navy) 55%, var(--navy-2) 100%);
+  --band-bg:
+    radial-gradient(700px 300px at 80% -20%, rgba(var(--accent-rgb), 0.28), transparent 60%),
+    linear-gradient(160deg, var(--ink), var(--navy) 55%, var(--navy-2));
+  --grid-minor: rgba(255, 255, 255, 0.05);
+  --grid-major: rgba(255, 255, 255, 0.09);
+  --grid-mask: radial-gradient(120% 100% at 30% 0%, #000 40%, transparent 88%);
 }
 
 .dark {
@@ -219,6 +238,49 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+}
+
+/* Survey grid — the single decorative pattern in the system, and only on a dark
+   ground (hero + CTA band). 24px minor / 120px major white rules, radially
+   masked away from the bottom-right. Put `kh-grid` on a section with `--hero-bg`
+   or `--band-bg`; content sits above the overlay via z-index. */
+.kh-grid {
+  position: relative;
+  isolation: isolate;
+}
+.kh-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+  background-size:
+    24px 24px,
+    24px 24px,
+    120px 120px,
+    120px 120px;
+  -webkit-mask-image: var(--grid-mask);
+  mask-image: var(--grid-mask);
+}
+.kh-grid > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Seal underline — the gold provenance rule under a hero/heading highlight.
+   Seal gold is provenance, never decoration; use it to mark the trust phrase.
+   Sized in em so it tracks the (clamped) heading size. */
+.seal-underline {
+  background-image: linear-gradient(var(--seal-border), var(--seal-border));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.14em;
+  padding-bottom: 0.06em;
 }
 
 /* Evidence viewer: flash the cited excerpt when its document opens. */
