@@ -155,6 +155,7 @@
   --navy-2: #1c3358;
   --accent-rgb: 30, 79, 216;
   --on-dark-2: #c3d0e6; /* muted text on dark grounds */
+  --on-dark-3: #eaf0fb; /* primary text on dark grounds (e.g. user bubble) */
   --seal-on-dark: #f0d79c; /* eyebrow / seal text on the dark hero */
   --hero-bg:
     radial-gradient(1100px 500px at 78% -10%, rgba(var(--accent-rgb), 0.16), transparent 60%),
