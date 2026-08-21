@@ -162,9 +162,11 @@
   --band-bg:
     radial-gradient(700px 300px at 80% -20%, rgba(var(--accent-rgb), 0.28), transparent 60%),
     linear-gradient(160deg, var(--ink), var(--navy) 55%, var(--navy-2));
-  --grid-minor: rgba(255, 255, 255, 0.05);
-  --grid-major: rgba(255, 255, 255, 0.09);
-  --grid-mask: radial-gradient(120% 100% at 30% 0%, #000 40%, transparent 88%);
+  /* Slightly above the design's 5%/9% so the pattern — and its radial
+     fade — reads on screen; still a restrained survey grid, not graph paper. */
+  --grid-minor: rgba(255, 255, 255, 0.09);
+  --grid-major: rgba(255, 255, 255, 0.16);
+  --grid-mask: radial-gradient(120% 100% at 30% 0%, #000 35%, transparent 82%);
 }
 
 .dark {
