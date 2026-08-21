@@ -275,10 +275,16 @@
 }
 
 /* Seal underline — the gold provenance rule under a hero/heading highlight.
-   Seal gold is provenance, never decoration; use it to mark the trust phrase.
+   Seal gold is provenance, never decoration. The rule itself fades left→right
+   (deep gold → light gold → transparent), matching the design's hero underline.
    Sized in em so it tracks the (clamped) heading size. */
 .seal-underline {
-  background-image: linear-gradient(var(--seal-border), var(--seal-border));
+  background-image: linear-gradient(
+    90deg,
+    var(--seal) 0%,
+    var(--seal-border) 45%,
+    transparent 96%
+  );
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 100% 0.14em;
