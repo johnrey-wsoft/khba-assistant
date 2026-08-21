@@ -51,7 +51,7 @@ export const PageClient = () => {
     [appliedQ, types, regions, period, sort, page]
   );
 
-  const { data, isLoading } = useQuery(getSearchDocumentsQueryOptions(params));
+  const { data, isLoading, isFetching } = useQuery(getSearchDocumentsQueryOptions(params));
 
   const regionLabel = (code: string) => (code === NATIONWIDE ? t("nationwide") : code);
 
@@ -307,7 +307,7 @@ export const PageClient = () => {
             </div>
           )}
 
-          {isLoading ? (
+          {isFetching ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 w-full rounded-xl" />

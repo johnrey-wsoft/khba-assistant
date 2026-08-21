@@ -317,9 +317,14 @@ export const PageClient = () => {
   const [page, setPage] = useState(1);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
-  const { data: documents = [], isLoading } = useQuery(getAdminDocumentsQueryOptions());
+  // Server-side pagination: state -> params -> query. keepPreviousData keeps the
+  // current page visible while the next one loads.
+  const params = useMemo(() => ({ status: filter, page, pageSize: PAGE_SIZE }), [filter, page]);
+  const { data, isLoading, isFetching } = useQuery(getAdminDocumentsQueryOptions(params));
+  const documents = data?.items ?? [];
   const selected = documents.find((d) => d.documentCode === selectedCode) ?? null;
 
+  // Invalidates every page/filter variation (the base key is a prefix).
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getQueryKey.admin.documents() });
 
@@ -383,21 +388,11 @@ export const PageClient = () => {
 
   const statusLabel = (s: DocumentStatus) => t(`status.${s}`);
 
-  const stats = useMemo(() => {
-    const completed = documents.filter((d) => d.status === "completed").length;
-    const waiting = documents.filter((d) => d.status === "waiting").length;
-    const failed = documents.filter((d) => d.status === "failed").length;
-    const evidence = documents.reduce((n, d) => n + d.indexedCount, 0);
-    return { total: documents.length, completed, waiting, failed, evidence };
-  }, [documents]);
-
-  const filtered = filter === "all" ? documents : documents.filter((d) => d.status === filter);
-
-  // Client-side pagination of the pipeline list. Stats above stay accurate
-  // because they're derived from the full `documents` set, not the page.
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount); // clamp without an effect
-  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  // Stats and pagination come from the server; the current page is already
+  // filtered + sliced, so the list renders `documents` directly.
+  const stats = data?.stats ?? { total: 0, completed: 0, waiting: 0, failed: 0, evidence: 0 };
+  const pageCount = data?.pageCount ?? 1;
+  const safePage = Math.min(page, pageCount);
 
   const statTiles: { key: string; value: number; accent?: string }[] = [
     { key: "total", value: stats.total },
@@ -531,8 +526,8 @@ export const PageClient = () => {
                   </div>
                 ))}
 
-              {!isLoading &&
-                paged.map((d) => (
+              {!isFetching &&
+                documents.map((d) => (
                   <button
                     key={d.documentCode}
                     type="button"
@@ -582,10 +577,10 @@ export const PageClient = () => {
                   </button>
                 ))}
 
-              {!isLoading && filtered.length === 0 && uploading.length === 0 && (
+              {!isFetching && documents.length === 0 && uploading.length === 0 && (
                 <p className="px-4 py-10 text-center text-sm text-muted-foreground">{t("empty")}</p>
               )}
-              {isLoading && (
+              {isFetching && (
                 <div className="flex flex-col gap-0.5 p-2.5">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="h-12 animate-pulse rounded-xl bg-muted" />
@@ -595,7 +590,7 @@ export const PageClient = () => {
             </div>
 
             {/* Pagination */}
-            {!isLoading && filtered.length > 0 && (
+            {pageCount > 1 && (
               <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5">
                 <span className="text-[11.5px] text-muted-foreground">
                   {t("pageOf", { page: safePage, total: pageCount })}

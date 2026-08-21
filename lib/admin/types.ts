@@ -44,3 +44,29 @@ export type AdminDocumentPatch = {
   effectiveFrom?: string | null;
   active?: boolean;
 };
+
+// Server-side pagination for the document-pipeline console.
+export type AdminDocsStatusFilter = "all" | DocumentStatus;
+
+export type AdminDocsParams = {
+  status: AdminDocsStatusFilter;
+  page: number;
+  pageSize: number;
+};
+
+// Rolled-up stat tiles — global (every document, not just the current page/filter).
+export type AdminDocsStats = {
+  total: number;
+  completed: number;
+  waiting: number;
+  failed: number;
+  evidence: number;
+};
+
+export type AdminDocsResult = {
+  items: AdminDocument[];
+  total: number; // documents matching the status filter (drives pagination)
+  page: number;
+  pageCount: number;
+  stats: AdminDocsStats;
+};

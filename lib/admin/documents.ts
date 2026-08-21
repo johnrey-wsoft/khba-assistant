@@ -5,79 +5,90 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/drizzle/db";
 import { document, documentVersion } from "@/drizzle/schemas";
 import { isR2Configured, deleteObject } from "@/lib/storage/r2";
-import type { AdminDocument, AdminDocumentPatch, DocumentStatus } from "@/lib/admin/types";
+import type {
+  AdminDocsParams,
+  AdminDocsResult,
+  AdminDocument,
+  AdminDocumentPatch,
+} from "@/lib/admin/types";
 
-type DocRow = {
-  documentCode: string;
-  title: string;
-  authorityType: string;
-  jurisdictionCode: string | null;
-  securityClass: string;
-  active: boolean;
-  versionNo: number | null;
-  effectiveFrom: string | null;
-  approvalStatus: string | null;
-  indexedCount: number;
-  failedCount: number;
-  createdAt: string | null;
-};
-
-const deriveStatus = (r: DocRow): DocumentStatus => {
-  if (r.failedCount > 0) return "failed";
-  if (r.indexedCount > 0) return "completed";
-  if (r.versionNo != null) return "waiting"; // has a version but nothing indexed yet
-  return "failed"; // no version was ever produced
-};
-
-// All documents with their latest version + indexed/failed evidence counts,
-// newest first. Derives a rolled-up processing status per document.
-export const listDocuments = async (): Promise<AdminDocument[]> => {
-  const rows = (await db.execute(sql`
+// Per-document projection: latest version + indexed/failed evidence counts, plus
+// the rolled-up processing status (failed > completed > waiting). Reused by the
+// stats, count, and page queries below so they always agree.
+const DOCS_CTE = sql`
+  select
+    d.document_code                          as "documentCode",
+    d.title                                  as "title",
+    d.authority_type                         as "authorityType",
+    d.jurisdiction_code                      as "jurisdictionCode",
+    d.security_class                         as "securityClass",
+    (d.deleted_at is null)                   as "active",
+    d.created_at                             as "createdAt",
+    v.version_no                             as "versionNo",
+    v.effective_from                         as "effectiveFrom",
+    v.approval_status                        as "approvalStatus",
+    coalesce(ev.indexed, 0)::int             as "indexedCount",
+    case
+      when coalesce(ev.failed, 0) > 0 then 'failed'
+      when coalesce(ev.indexed, 0) > 0 then 'completed'
+      when v.version_id is not null then 'waiting'
+      else 'failed'
+    end                                      as "status"
+  from document d
+  left join lateral (
+    select dv.version_id, dv.version_no, dv.effective_from, dv.approval_status
+    from document_version dv
+    where dv.document_id = d.document_id
+    order by dv.version_no desc nulls last
+    limit 1
+  ) v on true
+  left join lateral (
     select
-      d.document_code                          as "documentCode",
-      d.title                                  as "title",
-      d.authority_type                         as "authorityType",
-      d.jurisdiction_code                      as "jurisdictionCode",
-      d.security_class                         as "securityClass",
-      (d.deleted_at is null)                   as "active",
-      d.created_at                             as "createdAt",
-      v.version_no                             as "versionNo",
-      v.effective_from                         as "effectiveFrom",
-      v.approval_status                        as "approvalStatus",
-      coalesce(ev.indexed, 0)::int             as "indexedCount",
-      coalesce(ev.failed, 0)::int              as "failedCount"
-    from document d
-    left join lateral (
-      select dv.version_id, dv.version_no, dv.effective_from, dv.approval_status
-      from document_version dv
-      where dv.document_id = d.document_id
-      order by dv.version_no desc nulls last
-      limit 1
-    ) v on true
-    left join lateral (
-      select
-        count(*) filter (where se.index_status = 'INDEXED') as indexed,
-        count(*) filter (where se.index_status = 'FAILED')  as failed
-      from source_evidence se
-      where se.version_id = v.version_id
-    ) ev on true
-    order by d.created_at desc nulls last
-  `)) as unknown as DocRow[];
+      count(*) filter (where se.index_status = 'INDEXED') as indexed,
+      count(*) filter (where se.index_status = 'FAILED')  as failed
+    from source_evidence se
+    where se.version_id = v.version_id
+  ) ev on true
+`;
 
-  return rows.map((r) => ({
-    documentCode: r.documentCode,
-    title: r.title,
-    authorityType: r.authorityType,
-    jurisdictionCode: r.jurisdictionCode,
-    securityClass: r.securityClass,
-    active: r.active,
-    versionNo: r.versionNo,
-    effectiveFrom: r.effectiveFrom,
-    approvalStatus: r.approvalStatus,
-    indexedCount: r.indexedCount,
-    status: deriveStatus(r),
-    createdAt: r.createdAt,
-  }));
+// Server-side, paginated document list for the pipeline console. Returns the
+// page of documents matching the status filter, the total for pagination, and
+// global stat-tile counts (over every document, independent of the filter/page).
+export const searchAdminDocuments = async (params: AdminDocsParams): Promise<AdminDocsResult> => {
+  const { status, pageSize } = params;
+  const where = status === "all" ? sql`` : sql`where "status" = ${status}`;
+
+  const [statsRows, totalRows] = (await Promise.all([
+    db.execute(sql`
+      with docs as (${DOCS_CTE})
+      select
+        count(*)::int                                   as "total",
+        count(*) filter (where "status" = 'completed')::int as "completed",
+        count(*) filter (where "status" = 'waiting')::int   as "waiting",
+        count(*) filter (where "status" = 'failed')::int    as "failed",
+        coalesce(sum("indexedCount"), 0)::int           as "evidence"
+      from docs
+    `),
+    db.execute(sql`with docs as (${DOCS_CTE}) select count(*)::int as "n" from docs ${where}`),
+  ])) as unknown as [
+    { total: number; completed: number; waiting: number; failed: number; evidence: number }[],
+    { n: number }[],
+  ];
+
+  const stats = statsRows[0] ?? { total: 0, completed: 0, waiting: 0, failed: 0, evidence: 0 };
+  const total = totalRows[0]?.n ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(Math.max(1, params.page), pageCount);
+  const offset = (page - 1) * pageSize;
+
+  const items = (await db.execute(sql`
+    with docs as (${DOCS_CTE})
+    select * from docs ${where}
+    order by "createdAt" desc nulls last
+    limit ${pageSize} offset ${offset}
+  `)) as unknown as AdminDocument[];
+
+  return { items: items as AdminDocument[], total, page, pageCount, stats };
 };
 
 // Update a document's metadata. `active` toggles the soft-delete flag;
