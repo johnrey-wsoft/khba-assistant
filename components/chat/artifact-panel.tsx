@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, ExternalLink, Download, FileText } from "lucide-react";
+import { X, ExternalLink, Download, FileText, ZoomIn } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,67 @@ const BodySkeleton = () => (
     ))}
   </div>
 );
+
+// Image document viewer: contained on a neutral ground with a loading
+// skeleton, and click-to-zoom into a fullscreen lightbox (Esc / click to close).
+const DocumentImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+
+  useEffect(() => {
+    if (!zoomed) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setZoomed(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoomed]);
+
+  return (
+    <>
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-xl border border-border bg-muted/40",
+          // Reserve height while the image loads, so the skeleton is visible
+          // (the container would otherwise collapse to 0 before load).
+          !loaded && "min-h-[340px]"
+        )}
+      >
+        {!loaded && <Skeleton className="absolute inset-0 h-full w-full" />}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          onClick={() => setZoomed(true)}
+          className="mx-auto block max-h-[70vh] w-auto max-w-full cursor-zoom-in object-contain"
+        />
+        {loaded && (
+          <span className="pointer-events-none absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[11px] font-semibold text-white">
+            <ZoomIn className="size-3" />
+            Zoom
+          </span>
+        )}
+      </div>
+
+      {zoomed && (
+        <div
+          onClick={() => setZoomed(false)}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-6 duration-150 animate-in fade-in"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={alt} className="max-h-full max-w-full object-contain" />
+          <button
+            type="button"
+            onClick={() => setZoomed(false)}
+            aria-label="Close"
+            className="absolute top-4 right-4 grid size-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
 
 // A short article label from the node path (e.g. "…/제12조" -> "제12조").
 const articleLabel = (nodePath: string): string | null => {
@@ -103,9 +164,9 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
       <aside className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[540px] flex-none flex-col border-l border-border bg-card shadow-xl duration-200 animate-in slide-in-from-right-4 fade-in md:static md:z-auto md:shadow-none">
         {/* Pane head — title + the excerpt legend. */}
         <header className="flex items-center gap-3 border-b border-border bg-muted/40 px-5 py-3.5">
-          <span className="text-sm font-extrabold text-foreground">{t("viewerTitle")}</span>
+          <span className="mr-auto text-sm font-extrabold text-foreground">{t("viewerTitle")}</span>
           {view === "text" && (
-            <span className="ml-auto hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
+            <span className="hidden items-center gap-1.5 text-xs font-medium text-muted-foreground sm:flex">
               <span className="h-3 w-5 rounded-[3px] border border-seal-border bg-highlight" />
               {t("excerptLegend")}
             </span>
@@ -124,14 +185,14 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
 
         {/* Tabs — one per source cited in the answer. */}
         {sources.length > 1 && (
-          <div className="flex gap-1 overflow-x-auto border-b border-border bg-muted/40 px-4 [scrollbar-width:none]">
+          <div className="flex gap-1 overflow-x-auto border-b border-border bg-muted/40 px-4 [scrollbar-width:thin]">
             {sources.map((s, i) => (
               <button
                 key={s.documentCode}
                 type="button"
                 onClick={() => selectTab(i)}
                 className={cn(
-                  "flex items-center gap-2 border-b-2 px-3 py-3 text-[12.5px] font-semibold whitespace-nowrap transition-colors",
+                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-[12.5px] font-semibold whitespace-nowrap transition-colors",
                   i === active
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -146,30 +207,34 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
           </div>
         )}
 
-        {/* Doc meta — title, type, base-date seal, jurisdiction. */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3">
+        {/* Doc meta — stacked: title, then labels (type / base-date seal /
+            jurisdiction), then the view controls on their own row so they never
+            crowd the badges. */}
+        <div className="flex flex-col gap-2.5 border-b border-border px-5 py-3">
           <span className="text-sm font-bold text-foreground">{source.title}</span>
-          <Badge
-            variant="outline"
-            className="rounded-[5px] border-primary/20 bg-primary/5 text-primary"
-          >
-            {authorityLabel(source.authorityType)}
-          </Badge>
-          {baseDate && (
-            <Seal>
-              {t("baseDate")} {baseDate}
-            </Seal>
-          )}
-          {source.jurisdictionCode && (
-            <span className="font-mono text-xs text-muted-foreground">
-              {source.jurisdictionCode}
-            </span>
-          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="rounded-[5px] border-primary/20 bg-primary/5 text-primary"
+            >
+              {authorityLabel(source.authorityType)}
+            </Badge>
+            {baseDate && (
+              <Seal>
+                {t("baseDate")} {baseDate}
+              </Seal>
+            )}
+            {source.jurisdictionCode && (
+              <span className="font-mono text-xs text-muted-foreground">
+                {source.jurisdictionCode}
+              </span>
+            )}
+          </div>
 
           {hasOriginal && (
-            <>
-              <span className="flex-1" />
-              {canPreview && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
+              {canPreview ? (
                 <div className="inline-flex rounded-full border border-border bg-card p-0.5">
                   {(["text", "document"] as const).map((mode) => (
                     <button
@@ -187,6 +252,8 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                     </button>
                   ))}
                 </div>
+              ) : (
+                <span />
               )}
               <a
                 href={downloadUrl}
@@ -197,7 +264,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                 {t("openOriginal")}
                 <ExternalLink className="size-3.5" />
               </a>
-            </>
+            </div>
           )}
         </div>
 
@@ -215,12 +282,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                     className="h-[70vh] w-full rounded-xl border border-border bg-background"
                   />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`${downloadUrl}?inline=1`}
-                    alt={source.title}
-                    className="w-full rounded-xl border border-border"
-                  />
+                  <DocumentImage src={`${downloadUrl}?inline=1`} alt={source.title} />
                 )
               ) : (
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-8 text-center">

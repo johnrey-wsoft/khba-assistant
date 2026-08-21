@@ -1,10 +1,49 @@
 "use client";
 
-import { type ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ImageIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+// Figure renderer for images embedded in an ingested passage. Images are
+// contained (never overflow the column), lazy-loaded, and captioned from their
+// alt text. A missing/broken file degrades to a labelled placeholder instead of
+// a broken-image icon — parsed docs often carry a description without the asset.
+// Clicking opens the full-size image in a new tab.
+const EvidenceImage = ({ src, alt }: { src?: string; alt?: string }) => {
+  const [errored, setErrored] = useState(false);
+
+  if (!src || errored) {
+    return alt ? (
+      <figure className="my-3 flex items-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-[13px] text-muted-foreground">
+        <ImageIcon className="size-4 flex-none" />
+        <figcaption>{alt}</figcaption>
+      </figure>
+    ) : null;
+  }
+
+  return (
+    <figure className="my-4">
+      <a href={src} target="_blank" rel="noreferrer" className="block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt ?? ""}
+          loading="lazy"
+          onError={() => setErrored(true)}
+          className="mx-auto max-h-[440px] w-auto max-w-full rounded-xl border border-border bg-muted/30 transition-shadow hover:shadow-md"
+        />
+      </a>
+      {alt && (
+        <figcaption className="mt-2 text-center text-[12.5px] leading-snug text-muted-foreground">
+          {alt}
+        </figcaption>
+      )}
+    </figure>
+  );
+};
 
 const HIGHLIGHT_CLASS =
   "evidence-flash rounded-[3px] bg-highlight px-1 py-0.5 font-medium text-highlight-foreground";
@@ -116,6 +155,12 @@ const MARKDOWN_COMPONENTS: ComponentProps<typeof ReactMarkdown>["components"] = 
     <td className="border border-border px-2.5 py-1.5 align-top">{children}</td>
   ),
   mark: ({ children }) => <mark className={HIGHLIGHT_CLASS}>{children}</mark>,
+  img: ({ src, alt }) => (
+    <EvidenceImage
+      src={typeof src === "string" ? src : undefined}
+      alt={typeof alt === "string" ? alt : undefined}
+    />
+  ),
 };
 
 type DocumentMarkdownProps = {
