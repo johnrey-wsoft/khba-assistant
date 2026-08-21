@@ -333,7 +333,8 @@
         "prompt": "How does Suwon's parking ordinance compare with Yongin's?"
       }
     ],
-    "admin": "Admin"
+    "admin": "Admin",
+    "search": "Search documents"
   },
   "onboarding": {
     "step": "Step {current} of {total}",
@@ -465,6 +466,39 @@
     "switchLabel": "Language",
     "en": "English",
     "ko": "한국어"
+  },
+  "search": {
+    "brand": "KHBA RAG AI",
+    "brandSub": "Unified search",
+    "backToChat": "Back to chat",
+    "eyebrow": "Multi-faceted search, one screen",
+    "headline": "Everything in one place — no more site-hopping",
+    "placeholder": "Search guides, notices, laws, ordinances — e.g. parking, purchase-lease, filing forms",
+    "searchAria": "Search documents",
+    "toggleSidebar": "Toggle sidebar",
+    "searchButton": "Search",
+    "pageOf": "Page {page} of {total}",
+    "prev": "Prev",
+    "next": "Next",
+    "facetType": "Document type",
+    "facetRegion": "Region",
+    "facetPeriod": "Period (base date)",
+    "nationwide": "Nationwide",
+    "periodAll": "All",
+    "period2026": "2026",
+    "periodRecent": "Last 3 months",
+    "showFilters": "Show filters",
+    "hideFilters": "Hide filters",
+    "clearAll": "Reset filters",
+    "resultCount": "<b>{count}</b> results · {q}",
+    "allDocuments": "All documents",
+    "sortAria": "Sort",
+    "sortDate": "Newest",
+    "sortRelevance": "Relevance",
+    "removeFilter": "Remove filter {label}",
+    "viewSource": "Open original",
+    "emptyTitle": "No documents match",
+    "emptyBody": "Try relaxing the filters or changing your search. Documents that aren't registered yet can be submitted as a reinforcement request."
   },
   "adminDocs": {
     "stats": {

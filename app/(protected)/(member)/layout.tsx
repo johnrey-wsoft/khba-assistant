@@ -6,23 +6,25 @@ import { useParams } from "next/navigation";
 import { ThreadList } from "@/components/chat/thread-list";
 import { ChatShellProvider } from "@/components/chat/chat-shell-context";
 import { ChatStoreProvider } from "@/components/chat/chat-store";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-export default function ChatLayout({ children }: PropsWithChildren) {
+// Shared shell for the member workspace (chat + search): the consultation
+// sidebar (ThreadList) plus the chat store/shell providers, wrapping every
+// route in the (member) group. `activeId` is only set on /chat/[id].
+export default function MemberLayout({ children }: PropsWithChildren) {
   const params = useParams();
   const activeId = typeof params.id === "string" ? params.id : null;
 
-  const isMobile = useIsMobile();
   // Desktop keeps the inline column open by default; the mobile drawer starts closed.
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [filter, setFilter] = useState("");
 
-  // One toggle button in the header, routed by viewport: drawer on mobile,
-  // collapsible column on desktop.
+  // One toggle button, routed by the viewport at click time: drawer on mobile,
+  // collapsible inline column on desktop. Reading the media query live (rather
+  // than a cached hook value) avoids a stale mobile/desktop read.
   const toggleThreadList = () => {
-    if (isMobile) setMobileOpen((v) => !v);
+    if (window.matchMedia("(max-width: 767px)").matches) setMobileOpen((v) => !v);
     else setDesktopOpen((v) => !v);
   };
 
@@ -38,11 +40,13 @@ export default function ChatLayout({ children }: PropsWithChildren) {
     <ChatShellProvider toggleThreadList={toggleThreadList}>
       <ChatStoreProvider>
         <div className="flex h-svh min-w-0 overflow-hidden bg-background">
-          {/* Desktop / tablet: inline collapsible column (md = 768px, matches useIsMobile). */}
+          {/* Desktop / tablet: inline collapsible column (md = 768px, matches
+              useIsMobile). One display class at a time — combining md:block with
+              md:hidden lets md:block win, so the column never collapses. */}
           <div
             className={cn(
-              "hidden h-full w-[300px] flex-none md:block",
-              !desktopOpen && "md:hidden"
+              "h-full w-[300px] flex-none",
+              desktopOpen ? "hidden md:block" : "hidden"
             )}
           >
             <ThreadList activeId={activeId} filter={filter} onFilterChange={setFilter} />

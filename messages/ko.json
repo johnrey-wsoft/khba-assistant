@@ -333,7 +333,8 @@
         "prompt": "수원시와 용인시의 주차 조례는 어떻게 다른가요?"
       }
     ],
-    "admin": "관리자"
+    "admin": "관리자",
+    "search": "자료 검색"
   },
   "onboarding": {
     "step": "{total}단계 중 {current}단계",
@@ -465,6 +466,39 @@
     "switchLabel": "언어",
     "en": "English",
     "ko": "한국어"
+  },
+  "search": {
+    "brand": "KHBA RAG AI",
+    "brandSub": "통합 검색",
+    "backToChat": "채팅으로",
+    "eyebrow": "한 화면 다면 검색",
+    "headline": "여러 사이트를 돌아다니지 않고, 여기서 한 번에",
+    "placeholder": "협회자료·공고·법령·조례 검색 — 예: 주차, 매입임대, 신고 양식",
+    "searchAria": "자료 검색",
+    "toggleSidebar": "사이드바 토글",
+    "searchButton": "검색",
+    "pageOf": "{total} 페이지 중 {page}",
+    "prev": "이전",
+    "next": "다음",
+    "facetType": "자료 유형",
+    "facetRegion": "지역",
+    "facetPeriod": "기간 (기준일)",
+    "nationwide": "전국",
+    "periodAll": "전체",
+    "period2026": "2026년",
+    "periodRecent": "최근 3개월",
+    "showFilters": "필터 펼치기",
+    "hideFilters": "필터 접기",
+    "clearAll": "필터 초기화",
+    "resultCount": "<b>{count}</b>건의 자료 · {q}",
+    "allDocuments": "전체",
+    "sortAria": "정렬",
+    "sortDate": "최신순",
+    "sortRelevance": "관련순",
+    "removeFilter": "{label} 필터 제거",
+    "viewSource": "원문 이동",
+    "emptyTitle": "조건에 맞는 자료가 없습니다",
+    "emptyBody": "필터를 완화하거나 검색어를 바꿔 보세요. 등록되지 않은 자료는 보강 요청으로 접수할 수 있습니다."
   },
   "adminDocs": {
     "stats": {
