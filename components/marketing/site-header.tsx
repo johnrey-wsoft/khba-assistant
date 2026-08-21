@@ -50,8 +50,8 @@ export const SiteHeader = () => {
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3.5">
         <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground shadow-sm">
-            K
+          <span className="grid size-8 place-items-center rounded-[10px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-base font-extrabold text-white shadow-sm">
+            近
           </span>
           {t("appName")}
         </Link>

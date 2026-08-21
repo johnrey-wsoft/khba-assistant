@@ -83,7 +83,7 @@ const SEARCH_STEP_KEYS = ["received", "searching", "checking", "drafting"] as co
 const SearchSteps = ({ activeStep }: { activeStep: number }) => {
   const t = useTranslations("chat.steps");
   return (
-    <div className="flex flex-col gap-2.5 rounded-[16px_16px_16px_4px] border border-border bg-card p-5 shadow-sm">
+    <div className="flex flex-col gap-2.5 rounded-[16px] border border-border bg-card p-5 shadow-sm">
       {SEARCH_STEP_KEYS.map((key, i) => {
         const done = i < activeStep;
         const active = i === activeStep;
@@ -257,10 +257,10 @@ const AssistantMessage = ({
   }
 
   return (
-    // The design's .answer is not a bubble/card — it's a structured answer on
-    // the page ground: an accent-bordered summary, labelled sections, and
-    // source cards. Only the pieces inside carry their own surfaces.
-    <div className="flex flex-col gap-5">
+    // The design's answer is a white card (.answer.card.card--pad): surface
+    // ground, hairline border, 16px radius, 22px padding, subtle shadow. The
+    // accent-bordered summary and labelled sections live inside it.
+    <div className="flex flex-col gap-5 rounded-[16px] border border-border bg-card p-[22px] shadow-sm">
       {summary && (
         <div className="border-l-[3px] border-primary pl-4 text-base leading-relaxed font-semibold text-foreground">
           <Markdown citations={citations} onCite={(src) => openSource(src, sources)}>
@@ -353,8 +353,8 @@ const EmptyState = ({
   const t = useTranslations("chat");
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-      <span className="mb-6 grid size-11 place-items-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
-        KH
+      <span className="mb-6 grid size-11 place-items-center rounded-xl bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-2xl font-extrabold text-white">
+        近
       </span>
       <h1 className="text-[clamp(24px,4vw,32px)] leading-tight font-extrabold tracking-tight text-foreground">
         {t.rich("emptyTitle", {

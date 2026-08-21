@@ -195,9 +195,10 @@ export const ThreadList = ({ activeId, filter, onFilterChange, onNavigate }: Thr
         <div className="flex items-center gap-2.5">
           <Link
             href="/"
-            className="grid size-8 flex-none place-items-center rounded-lg bg-primary text-sm font-extrabold text-primary-foreground shadow-sm"
+            aria-label={t("appName")}
+            className="grid size-[34px] flex-none place-items-center rounded-[9px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-[17px] leading-none font-extrabold text-white shadow-sm"
           >
-            K
+            近
           </Link>
           <span className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-bold text-foreground">{t("appName")}</span>

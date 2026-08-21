@@ -50,8 +50,8 @@ export const PageClient = ({ status, email, company }: PageClientProps) => {
   return (
     <div className="flex min-h-svh flex-col bg-muted/40">
       <header className="flex items-center gap-2.5 px-6 py-4">
-        <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground shadow-sm">
-          K
+        <span className="grid size-8 place-items-center rounded-[10px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-base font-extrabold text-white shadow-sm">
+          近
         </span>
         <span className="font-extrabold tracking-tight text-foreground">KHBA Assistant</span>
         <span className="flex-1" />
