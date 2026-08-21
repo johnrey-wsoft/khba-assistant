@@ -104,8 +104,8 @@ export const PageClient = () => {
             {/* Demo card */}
             <div className="mx-auto w-full max-w-[500px] overflow-hidden rounded-3xl border border-border bg-card shadow-xl md:ml-auto">
               <div className="flex items-center gap-2.5 border-b border-border px-5 py-4">
-                <span className="grid size-8 place-items-center rounded-[9px] bg-primary text-xs font-extrabold text-primary-foreground">
-                  KH
+                <span className="grid size-8 place-items-center rounded-[9px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-base font-extrabold text-white">
+                  近
                 </span>
                 <b className="text-sm text-foreground">{tc("appName")}</b>
                 <span className="ml-auto flex items-center gap-1.5 text-xs font-bold text-chart-2">

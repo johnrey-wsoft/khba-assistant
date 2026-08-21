@@ -353,8 +353,8 @@ const EmptyState = ({
   const t = useTranslations("chat");
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-      <span className="mb-6 grid size-11 place-items-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
-        KH
+      <span className="mb-6 grid size-11 place-items-center rounded-xl bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-2xl font-extrabold text-white">
+        近
       </span>
       <h1 className="text-[clamp(24px,4vw,32px)] leading-tight font-extrabold tracking-tight text-foreground">
         {t.rich("emptyTitle", {
