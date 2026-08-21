@@ -123,9 +123,12 @@ const DateDivider = ({ label }: { label: string }) => (
   </div>
 );
 
+// User question bubble — the design's .bubble-q: navy ground, light text, one
+// corner squared off (no tail), subtle shadow. In dark mode navy would blend
+// into the dark card, so it falls back to the (lifted) primary there.
 const UserMessage = ({ id, text, time }: { id?: string; text: string; time?: string }) => (
   <div data-mid={id} className="flex flex-col items-end gap-1.5">
-    <div className="w-fit max-w-[80%] rounded-[18px_18px_4px_18px] bg-primary px-4.5 py-3 text-primary-foreground">
+    <div className="w-fit max-w-[84%] rounded-[14px_14px_4px_14px] bg-[var(--navy)] px-4 py-[11px] text-[14.5px] leading-snug text-[color:var(--on-dark-3)] shadow-sm dark:bg-primary dark:text-primary-foreground">
       {text}
     </div>
     {time && <span className="font-mono text-xs tabular-nums text-muted-foreground">{time}</span>}
@@ -254,7 +257,10 @@ const AssistantMessage = ({
   }
 
   return (
-    <div className="flex flex-col gap-5 rounded-[16px_16px_16px_4px] border border-border bg-card p-6 shadow-sm">
+    // The design's .answer is not a bubble/card — it's a structured answer on
+    // the page ground: an accent-bordered summary, labelled sections, and
+    // source cards. Only the pieces inside carry their own surfaces.
+    <div className="flex flex-col gap-5">
       {summary && (
         <div className="border-l-[3px] border-primary pl-4 text-base leading-relaxed font-semibold text-foreground">
           <Markdown citations={citations} onCite={(src) => openSource(src, sources)}>
