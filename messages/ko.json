@@ -304,6 +304,8 @@
     "openOriginal": "원문 열기",
     "viewText": "텍스트",
     "viewDocument": "원문",
+    "viewRead": "읽기",
+    "viewRaw": "원본",
     "cantPreview": "이 파일은 여기서 미리볼 수 없습니다. 다운로드하여 확인하세요.",
     "download": "다운로드",
     "panelNotice": "KHBA 색인의 참고 발췌이며, 표시된 기준일 기준입니다. 근거로 삼기 전 공식 공개 원문에서 문구를 확인하세요.",
@@ -530,6 +532,8 @@
     "pageOf": "{total} 페이지 중 {page}",
     "prev": "이전",
     "next": "다음",
+    "panelTitle": "문서",
+    "deselect": "문서 선택 해제",
     "metaTitle": "메타데이터",
     "metaEmpty": "문서를 선택하면 메타데이터를 편집할 수 있습니다.",
     "fieldName": "문서명",
@@ -562,6 +566,12 @@
     "uploaded": "{count}건 업로드됨",
     "uploadError": "{name} 업로드에 실패했습니다. 다시 시도해 주세요.",
     "preview": "파싱 미리보기",
+    "parsedTab": "파싱",
+    "previewTab": "문서 미리보기",
+    "openOriginal": "원문 열기",
+    "download": "다운로드",
+    "parsedSections": "섹션 {count}개",
+    "noOriginal": "이 문서의 원본 파일이 없습니다.",
     "previewEmpty": "파싱된 내용이 없습니다."
   }
 }
