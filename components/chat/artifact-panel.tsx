@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, ExternalLink, Download, FileText, ZoomIn } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,22 +11,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Notice, Seal } from "@/components/chat/primitives";
 import type { ChatSource } from "@/components/chat/primitives";
-import { DocumentMarkdown } from "@/components/chat/document-markdown";
+import { DocumentMarkdown, DocumentRaw } from "@/components/chat/document-markdown";
+import {
+  DocViewToggle,
+  OriginalDocument,
+  TextModeSelect,
+  type DocView,
+  type FullDocument,
+  type TextMode,
+} from "@/components/chat/document-view";
 import { authorityLabel } from "@/lib/chat/authority";
-
-type DocumentPassage = { nodePath: string; text: string };
-type FullDocument = {
-  documentCode: string;
-  title: string;
-  authorityType: string;
-  jurisdictionCode: string | null;
-  securityClass: string;
-  effectiveFrom: string | null;
-  hasOriginal: boolean;
-  contentType: string | null;
-  originalFilename: string | null;
-  passages: DocumentPassage[];
-};
 
 const BodySkeleton = () => (
   <div className="flex flex-col gap-3">
@@ -39,67 +33,6 @@ const BodySkeleton = () => (
     ))}
   </div>
 );
-
-// Image document viewer: contained on a neutral ground with a loading
-// skeleton, and click-to-zoom into a fullscreen lightbox (Esc / click to close).
-const DocumentImage = ({ src, alt }: { src: string; alt: string }) => {
-  const [loaded, setLoaded] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
-
-  useEffect(() => {
-    if (!zoomed) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setZoomed(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [zoomed]);
-
-  return (
-    <>
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-xl border border-border bg-muted/40",
-          // Reserve height while the image loads, so the skeleton is visible
-          // (the container would otherwise collapse to 0 before load).
-          !loaded && "min-h-[340px]"
-        )}
-      >
-        {!loaded && <Skeleton className="absolute inset-0 h-full w-full" />}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt}
-          onLoad={() => setLoaded(true)}
-          onClick={() => setZoomed(true)}
-          className="mx-auto block max-h-[70vh] w-auto max-w-full cursor-zoom-in object-contain"
-        />
-        {loaded && (
-          <span className="pointer-events-none absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[11px] font-semibold text-white">
-            <ZoomIn className="size-3" />
-            Zoom
-          </span>
-        )}
-      </div>
-
-      {zoomed && (
-        <div
-          onClick={() => setZoomed(false)}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-6 duration-150 animate-in fade-in"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={alt} className="max-h-full max-w-full object-contain" />
-          <button
-            type="button"
-            onClick={() => setZoomed(false)}
-            aria-label="Close"
-            className="absolute top-4 right-4 grid size-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-      )}
-    </>
-  );
-};
 
 // A short article label from the node path (e.g. "…/제12조" -> "제12조").
 const articleLabel = (nodePath: string): string | null => {
@@ -116,7 +49,9 @@ type ArtifactPanelProps = {
 export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelProps) => {
   const t = useTranslations("chat");
   const [active, setActive] = useState(initialIndex);
-  const [view, setView] = useState<"text" | "document">("text");
+  const [view, setView] = useState<DocView>("text");
+  // Parsed text rendering: formatted markdown ("read") by default, or verbatim ("raw").
+  const [textMode, setTextMode] = useState<TextMode>("read");
   const source = sources[active] ?? sources[0];
   const citedRef = useRef<HTMLDivElement>(null);
 
@@ -232,38 +167,25 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             )}
           </div>
 
-          {hasOriginal && (
+          {data && (data.passages.length > 0 || hasOriginal) && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
-              {canPreview ? (
-                <div className="inline-flex rounded-full border border-border bg-card p-0.5">
-                  {(["text", "document"] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setView(mode)}
-                      className={cn(
-                        "rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
-                        view === mode
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {mode === "text" ? t("viewText") : t("viewDocument")}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <span />
+              <div className="flex flex-wrap items-center gap-2">
+                {canPreview && <DocViewToggle value={view} onChange={setView} />}
+                {view === "text" && data.passages.length > 0 && (
+                  <TextModeSelect value={textMode} onChange={setTextMode} />
+                )}
+              </div>
+              {hasOriginal && (
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  {t("openOriginal")}
+                  <ExternalLink className="size-3.5" />
+                </a>
               )}
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-              >
-                {t("openOriginal")}
-                <ExternalLink className="size-3.5" />
-              </a>
             </div>
           )}
         </div>
@@ -273,29 +195,13 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             {isLoading && <BodySkeleton />}
 
             {/* Original document — embedded (PDF/image) or a download prompt. */}
-            {view === "document" &&
-              (canPreview ? (
-                isPdf ? (
-                  <iframe
-                    src={`${downloadUrl}?inline=1`}
-                    title={source.title}
-                    className="h-[70vh] w-full rounded-xl border border-border bg-background"
-                  />
-                ) : (
-                  <DocumentImage src={`${downloadUrl}?inline=1`} alt={source.title} />
-                )
-              ) : (
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/40 p-8 text-center">
-                  <FileText className="size-6 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">{t("cantPreview")}</p>
-                  <Button asChild size="sm">
-                    <a href={downloadUrl} target="_blank" rel="noreferrer">
-                      <Download className="size-4" />
-                      {t("download")}
-                    </a>
-                  </Button>
-                </div>
-              ))}
+            {view === "document" && (
+              <OriginalDocument
+                downloadUrl={downloadUrl}
+                contentType={contentType}
+                title={source.title}
+              />
+            )}
 
             {/* Paper "document page" — faint ruling behind the article text. */}
             {view === "text" && (isError || (data && data.passages.length > 0)) && (
@@ -320,6 +226,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                     !!source.snippet &&
                     (passage.text === source.snippet || passage.text.includes(source.snippet));
                   const label = articleLabel(passage.nodePath);
+                  const Renderer = textMode === "raw" ? DocumentRaw : DocumentMarkdown;
                   return (
                     <div
                       key={passage.nodePath}
@@ -329,9 +236,9 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                       {label && (
                         <div className="mb-1 text-sm font-bold text-foreground">{label}</div>
                       )}
-                      <DocumentMarkdown highlight={isCited ? source.snippet : undefined}>
+                      <Renderer highlight={isCited ? source.snippet : undefined}>
                         {passage.text}
-                      </DocumentMarkdown>
+                      </Renderer>
                     </div>
                   );
                 })}

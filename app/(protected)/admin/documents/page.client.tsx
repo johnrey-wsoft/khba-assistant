@@ -11,6 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  X,
+  FileText,
+  Download,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +39,13 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DocumentMarkdown } from "@/components/chat/document-markdown";
+import { DocumentMarkdown, DocumentRaw } from "@/components/chat/document-markdown";
+import {
+  OriginalDocument,
+  TextModeSelect,
+  type FullDocument,
+  type TextMode,
+} from "@/components/chat/document-view";
 import { cn } from "@/lib/utils";
 import { getAdminDocumentsQueryOptions } from "@/queries/admin-documents.query";
 import { adminDocumentsService } from "@/services/admin-documents.service";
@@ -113,199 +122,289 @@ const MetadataPanel = ({
 }) => {
   const t = useTranslations("adminDocs");
   const [form, setForm] = useState<FormState>(() => toForm(doc));
+  // Top-level panel tab: the structured metadata form, the parsed text, or the
+  // actual original-file preview.
+  const [tab, setTab] = useState<"metadata" | "parsed" | "document">("metadata");
+  // How the parsed text reads: formatted markdown ("read", default) or verbatim ("raw").
+  const [textMode, setTextMode] = useState<TextMode>("read");
 
-  // Parsed content of this document (what the RAG ingested), for a preview.
+  // Full document (what the RAG ingested + the original file meta), for a preview.
   const { data: content, isLoading: contentLoading } = useQuery({
     queryKey: ["admin-document-content", doc.documentCode],
-    queryFn: async (): Promise<{ passages: { nodePath: string; text: string }[] }> => {
+    queryFn: async (): Promise<FullDocument> => {
       const res = await fetch(`/api/documents/${encodeURIComponent(doc.documentCode)}`);
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error("Failed to load document");
-      return json.data;
+      return json.data as FullDocument;
     },
     staleTime: 60_000,
   });
 
+  const downloadUrl = `/api/documents/${encodeURIComponent(doc.documentCode)}/download`;
+  const passageText = content?.passages.map((p) => p.text).join("\n\n") ?? "";
+  const hasText = (content?.passages.length ?? 0) > 0;
+
   return (
     <>
-      <div className="flex flex-col gap-4 p-5">
-        {/* Parsed-content preview */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-bold text-foreground">{t("preview")}</span>
-          <div className="max-h-64 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4">
-            {contentLoading ? (
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-3.5 w-3/4" />
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-5/6" />
-                <Skeleton className="h-3.5 w-2/3" />
-              </div>
-            ) : content && content.passages.length > 0 ? (
-              <DocumentMarkdown>
-                {content.passages.map((p) => p.text).join("\n\n")}
-              </DocumentMarkdown>
-            ) : (
-              <p className="text-sm text-muted-foreground">{t("previewEmpty")}</p>
-            )}
-          </div>
-        </div>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-bold text-foreground">{t("fieldName")}</span>
-          <Input
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            aria-invalid={!form.title.trim()}
-          />
-        </label>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-foreground">{t("fieldType")}</span>
-            <Select
-              value={form.authorityType}
-              onValueChange={(v) => setForm({ ...form, authorityType: v })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {AUTHORITY_TYPES.map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {authorityLabel(a)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-bold text-foreground">{t("fieldVisibility")}</span>
-            <Select
-              value={form.securityClass}
-              onValueChange={(v) => setForm({ ...form, securityClass: v })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SECURITY_CLASSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {t(`security.${s}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-bold text-foreground">{t("fieldBaseDate")}</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2 font-normal">
-                <CalendarDays className="size-4 text-muted-foreground" />
-                {form.effectiveFrom ? (
-                  <span className="font-mono">{form.effectiveFrom}</span>
-                ) : (
-                  <span className="text-muted-foreground">{t("pickDate")}</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                captionLayout="dropdown"
-                selected={parseDate(form.effectiveFrom)}
-                onSelect={(d) => setForm({ ...form, effectiveFrom: d ? fmtDate(d) : "" })}
-                autoFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
-          <span className="text-sm font-semibold text-foreground">
-            {t("activeLabel")}
-            <span className="block text-xs font-normal text-muted-foreground">
-              {t("activeHint")}
-            </span>
-          </span>
+      {/* Panel tabs — structured metadata vs. the document preview. */}
+      <div className="flex items-center border-b border-border px-2">
+        {(["metadata", "parsed", "document"] as const).map((tk) => (
           <button
+            key={tk}
             type="button"
-            role="switch"
-            aria-checked={form.active}
-            onClick={() => setForm({ ...form, active: !form.active })}
+            onClick={() => setTab(tk)}
             className={cn(
-              "relative h-6 w-11 flex-none rounded-full transition-colors",
-              form.active ? "bg-primary" : "bg-input"
+              "border-b-2 px-3 py-2.5 text-[12.5px] font-bold whitespace-nowrap transition-colors",
+              tab === tk
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            <span
-              className={cn(
-                "absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform",
-                form.active && "translate-x-5"
-              )}
-            />
+            {tk === "metadata"
+              ? t("metaTitle")
+              : tk === "parsed"
+                ? t("parsedTab")
+                : t("previewTab")}
           </button>
+        ))}
+      </div>
+
+      {tab !== "metadata" ? (
+        <div className="p-5">
+          {contentLoading ? (
+            <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-4">
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-5/6" />
+              <Skeleton className="h-3.5 w-2/3" />
+            </div>
+          ) : tab === "parsed" ? (
+            hasText ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-end">
+                  <TextModeSelect value={textMode} onChange={setTextMode} />
+                </div>
+                <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-muted/30 p-4">
+                  {textMode === "raw" ? (
+                    <DocumentRaw>{passageText}</DocumentRaw>
+                  ) : (
+                    <DocumentMarkdown>{passageText}</DocumentMarkdown>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">{t("previewEmpty")}</p>
+              </div>
+            )
+          ) : content?.hasOriginal ? (
+            <div className="flex flex-col gap-3">
+              {/* File info + download */}
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/30 px-3.5 py-2.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <FileText className="size-4 flex-none text-muted-foreground" />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-bold text-foreground">
+                      {content.originalFilename ?? doc.title}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                      {content.contentType && (
+                        <span className="font-mono">{content.contentType}</span>
+                      )}
+                      {content.effectiveFrom && (
+                        <span>
+                          {t("baseDate")} {content.effectiveFrom}
+                        </span>
+                      )}
+                      {hasText && (
+                        <span>{t("parsedSections", { count: content.passages.length })}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex flex-none items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  <Download className="size-3.5" />
+                  {t("download")}
+                </a>
+              </div>
+              <OriginalDocument
+                downloadUrl={downloadUrl}
+                contentType={content.contentType}
+                title={doc.title}
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">{t("noOriginal")}</p>
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-4 p-5">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-bold text-foreground">{t("fieldName")}</span>
+              <Input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                aria-invalid={!form.title.trim()}
+              />
+            </label>
 
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          disabled={reindexing}
-          onClick={onReindex}
-        >
-          <RefreshCw className={cn("size-4", reindexing && "animate-spin")} />
-          {reindexing ? t("reindexing") : t("reindex")}
-        </Button>
-      </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-bold text-foreground">{t("fieldType")}</span>
+                <Select
+                  value={form.authorityType}
+                  onValueChange={(v) => setForm({ ...form, authorityType: v })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUTHORITY_TYPES.map((a) => (
+                      <SelectItem key={a} value={a}>
+                        {authorityLabel(a)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-bold text-foreground">{t("fieldVisibility")}</span>
+                <Select
+                  value={form.securityClass}
+                  onValueChange={(v) => setForm({ ...form, securityClass: v })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SECURITY_CLASSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {t(`security.${s}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-      <div className="flex items-center gap-2 border-t border-border bg-muted/40 px-4 py-3">
-        <Button
-          disabled={!form.title.trim() || saving}
-          onClick={() =>
-            onSave({
-              title: form.title.trim(),
-              authorityType: form.authorityType,
-              securityClass: form.securityClass,
-              effectiveFrom: form.effectiveFrom || null,
-              active: form.active,
-            })
-          }
-        >
-          {saving ? t("saving") : t("save")}
-        </Button>
-        <Button variant="secondary" onClick={() => setForm(toForm(doc))}>
-          {t("revert")}
-        </Button>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-bold text-foreground">{t("fieldBaseDate")}</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start gap-2 font-normal">
+                    <CalendarDays className="size-4 text-muted-foreground" />
+                    {form.effectiveFrom ? (
+                      <span className="font-mono">{form.effectiveFrom}</span>
+                    ) : (
+                      <span className="text-muted-foreground">{t("pickDate")}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    captionLayout="dropdown"
+                    selected={parseDate(form.effectiveFrom)}
+                    onSelect={(d) => setForm({ ...form, effectiveFrom: d ? fmtDate(d) : "" })}
+                    autoFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
+              <span className="text-sm font-semibold text-foreground">
+                {t("activeLabel")}
+                <span className="block text-xs font-normal text-muted-foreground">
+                  {t("activeHint")}
+                </span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.active}
+                onClick={() => setForm({ ...form, active: !form.active })}
+                className={cn(
+                  "relative h-6 w-11 flex-none rounded-full transition-colors",
+                  form.active ? "bg-primary" : "bg-input"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform",
+                    form.active && "translate-x-5"
+                  )}
+                />
+              </button>
+            </div>
+
             <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto text-destructive"
-              title={t("delete")}
+              variant="outline"
+              className="w-full gap-2"
+              disabled={reindexing}
+              onClick={onReindex}
             >
-              <Trash2 className="size-4" />
+              <RefreshCw className={cn("size-4", reindexing && "animate-spin")} />
+              {reindexing ? t("reindexing") : t("reindex")}
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("deleteConfirm", { title: doc.title })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={onDelete} disabled={deleting}>
-                {deleting ? t("deleting") : t("delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+          </div>
+
+          <div className="flex items-center gap-2 border-t border-border bg-muted/40 px-4 py-3">
+            <Button
+              disabled={!form.title.trim() || saving}
+              onClick={() =>
+                onSave({
+                  title: form.title.trim(),
+                  authorityType: form.authorityType,
+                  securityClass: form.securityClass,
+                  effectiveFrom: form.effectiveFrom || null,
+                  active: form.active,
+                })
+              }
+            >
+              {saving ? t("saving") : t("save")}
+            </Button>
+            <Button variant="secondary" onClick={() => setForm(toForm(doc))}>
+              {t("revert")}
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto text-destructive"
+                  title={t("delete")}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("deleteConfirm", { title: doc.title })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" onClick={onDelete} disabled={deleting}>
+                    {deleting ? t("deleting") : t("delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </>
+      )}
     </>
   );
 };
@@ -622,15 +721,37 @@ export const PageClient = () => {
           </div>
         </div>
 
-        {/* Right: metadata */}
+        {/* Right: metadata + document preview (tabs live inside the panel) */}
         <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card lg:sticky lg:top-4">
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <h2 className="text-sm font-extrabold tracking-tight text-foreground">
-              {t("metaTitle")}
-            </h2>
-            <span className="ml-auto font-mono text-xs text-muted-foreground">
-              {selected?.documentCode ?? "—"}
-            </span>
+          {/* Panel title header — the selected document's identity, on its own row. */}
+          <div className="flex items-start gap-2 border-b border-border px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <h2
+                className={cn(
+                  "truncate text-sm font-extrabold tracking-tight",
+                  selected ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {selected ? selected.title : t("panelTitle")}
+              </h2>
+              {selected && (
+                <span className="mt-1 inline-flex items-center rounded-[5px] border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                  {selected.documentCode}
+                </span>
+              )}
+            </div>
+            {selected && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="-mr-1 size-7 flex-none text-muted-foreground"
+                onClick={() => setSelectedCode(null)}
+                title={t("deselect")}
+                aria-label={t("deselect")}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
           </div>
 
           {selected ? (

@@ -304,6 +304,8 @@
     "openOriginal": "Open original",
     "viewText": "Text",
     "viewDocument": "Document",
+    "viewRead": "Read",
+    "viewRaw": "Raw",
     "cantPreview": "This file can't be previewed here — download it to view.",
     "download": "Download",
     "panelNotice": "a reference excerpt from the KHBA index, current as of the base date shown. Confirm the wording against the official published text before relying on it.",
@@ -530,6 +532,8 @@
     "pageOf": "Page {page} of {total}",
     "prev": "Prev",
     "next": "Next",
+    "panelTitle": "Document",
+    "deselect": "Deselect document",
     "metaTitle": "Metadata",
     "metaEmpty": "Select a document to edit its metadata.",
     "fieldName": "Title",
@@ -562,6 +566,12 @@
     "uploaded": "{count} uploaded",
     "uploadError": "Couldn't upload {name}. Please try again.",
     "preview": "Parsed preview",
+    "parsedTab": "Parsed",
+    "previewTab": "Document preview",
+    "openOriginal": "Open original",
+    "download": "Download",
+    "parsedSections": "{count} sections",
+    "noOriginal": "No original file for this document.",
     "previewEmpty": "No parsed content yet."
   }
 }

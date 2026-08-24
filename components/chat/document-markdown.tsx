@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, Fragment, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ImageIcon } from "lucide-react";
@@ -183,6 +183,30 @@ export const DocumentMarkdown = ({ children, highlight, className }: DocumentMar
     </ReactMarkdown>
   </div>
 );
+
+// Raw view of an ingested passage: the source text verbatim, with markdown left
+// unrendered (monospace, wrapped). Optional cited-excerpt highlighting, matching
+// the read view so the gold mark survives the switch.
+export const DocumentRaw = ({ children, highlight, className }: DocumentMarkdownProps) => {
+  const parts = highlight && children.includes(highlight) ? children.split(highlight) : null;
+  return (
+    <pre
+      className={cn(
+        "font-mono text-[13px] leading-7 break-words whitespace-pre-wrap text-foreground/90",
+        className
+      )}
+    >
+      {parts
+        ? parts.map((part, i) => (
+            <Fragment key={i}>
+              {part}
+              {i < parts.length - 1 && <mark className={HIGHLIGHT_CLASS}>{highlight}</mark>}
+            </Fragment>
+          ))
+        : children}
+    </pre>
+  );
+};
 
 // Inline-only markdown for short previews (e.g. source-card snippets): renders
 // bold/italic/code/strikethrough inline and flattens block structure, so it
