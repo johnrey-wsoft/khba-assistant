@@ -46,8 +46,8 @@ export const SiteFooter = () => {
       <div className="mx-auto grid max-w-6xl gap-9 px-6 py-13 sm:grid-cols-2 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr]">
         <div>
           <span className="flex items-center gap-2.5 font-extrabold tracking-tight text-foreground">
-            <span className="grid size-8 place-items-center rounded-[10px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-base font-extrabold text-white">
-              近
+            <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground">
+              K
             </span>
             {t("common.appName")}
           </span>

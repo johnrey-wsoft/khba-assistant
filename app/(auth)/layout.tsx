@@ -9,8 +9,8 @@ export default function Layout({ children }: PropsWithChildren) {
           href="/"
           className="flex items-center gap-2.5 self-center font-extrabold tracking-tight"
         >
-          <span className="grid size-8 place-items-center rounded-[10px] bg-[linear-gradient(150deg,var(--navy),var(--navy-3))] text-base font-extrabold text-white shadow-sm">
-            近
+          <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-sm font-extrabold text-primary-foreground shadow-sm">
+            K
           </span>
           KHBA Assistant
         </Link>
