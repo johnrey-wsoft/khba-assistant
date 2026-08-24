@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, ExternalLink } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -165,26 +165,27 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                 {source.jurisdictionCode}
               </span>
             )}
+            {hasOriginal && (
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+              >
+                <Download className="size-3.5" />
+                {t("download")}
+              </a>
+            )}
           </div>
 
-          {data && (data.passages.length > 0 || hasOriginal) && (
+          {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
+          {data && (canPreview || data.passages.length > 0) && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                {canPreview && <DocViewToggle value={view} onChange={setView} />}
-                {view === "text" && data.passages.length > 0 && (
-                  <TextModeSelect value={textMode} onChange={setTextMode} />
-                )}
-              </div>
-              {hasOriginal && (
-                <a
-                  href={downloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                >
-                  {t("openOriginal")}
-                  <ExternalLink className="size-3.5" />
-                </a>
+              {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
+              {view === "text" && data.passages.length > 0 ? (
+                <TextModeSelect value={textMode} onChange={setTextMode} />
+              ) : (
+                <span />
               )}
             </div>
           )}
