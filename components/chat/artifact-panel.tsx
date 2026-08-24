@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, ExternalLink } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
@@ -146,45 +146,52 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             jurisdiction), then the view controls on their own row so they never
             crowd the badges. */}
         <div className="flex flex-col gap-2.5 border-b border-border px-5 py-3">
-          <span className="text-sm font-bold text-foreground">{source.title}</span>
+          {/* Header — title + badges on the left, download vertically centered on the right. */}
+          <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+              <span className="text-sm font-bold text-foreground">{source.title}</span>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="outline"
-              className="rounded-[5px] border-primary/20 bg-primary/5 text-primary"
-            >
-              {authorityLabel(source.authorityType)}
-            </Badge>
-            {baseDate && (
-              <Seal>
-                {t("baseDate")} {baseDate}
-              </Seal>
-            )}
-            {source.jurisdictionCode && (
-              <span className="font-mono text-xs text-muted-foreground">
-                {source.jurisdictionCode}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="rounded-[5px] border-primary/20 bg-primary/5 text-primary"
+                >
+                  {authorityLabel(source.authorityType)}
+                </Badge>
+                {baseDate && (
+                  <Seal>
+                    {t("baseDate")} {baseDate}
+                  </Seal>
+                )}
+                {source.jurisdictionCode && (
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {source.jurisdictionCode}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {hasOriginal && (
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex flex-none items-center gap-1 text-xs font-bold text-primary hover:underline"
+              >
+                <Download className="size-3.5" />
+                {t("download")}
+              </a>
             )}
           </div>
 
-          {data && (data.passages.length > 0 || hasOriginal) && (
+          {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
+          {data && (canPreview || data.passages.length > 0) && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                {canPreview && <DocViewToggle value={view} onChange={setView} />}
-                {view === "text" && data.passages.length > 0 && (
-                  <TextModeSelect value={textMode} onChange={setTextMode} />
-                )}
-              </div>
-              {hasOriginal && (
-                <a
-                  href={downloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                >
-                  {t("openOriginal")}
-                  <ExternalLink className="size-3.5" />
-                </a>
+              {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
+              {view === "text" && data.passages.length > 0 ? (
+                <TextModeSelect value={textMode} onChange={setTextMode} />
+              ) : (
+                <span />
               )}
             </div>
           )}
