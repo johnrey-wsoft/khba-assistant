@@ -47,24 +47,28 @@ export const PageClient = () => {
       <SiteHeader />
 
       <main className="flex-1">
-        {/* Hero — dark navy ground with the survey-grid pattern (design system's
-            large-block treatment). */}
-        <section
-          className="kh-grid overflow-hidden"
-          style={{ background: "var(--hero-bg)" }}
-        >
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-40 -left-32 size-[520px] rounded-full bg-primary/5 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-10 -right-24 size-[360px] rounded-full bg-chart-2/5 blur-3xl"
+          />
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 py-20 md:grid-cols-[1.04fr_.96fr] md:py-24">
             <div className="text-center md:text-left">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-4 py-2 text-sm font-bold text-[color:var(--seal-on-dark)] ring-1 ring-[color:var(--seal-border)]/30 ring-inset">
-                <span className="size-1.5 rounded-full bg-[color:var(--seal-on-dark)]" />
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-bold text-primary">
+                <span className="size-1.5 rounded-full bg-chart-2" />
                 {t("pill")}
               </span>
-              <h1 className="mt-5 text-[clamp(34px,4.6vw,56px)] leading-[1.12] font-extrabold tracking-tight text-white">
+              <h1 className="mt-5 text-[clamp(34px,4.6vw,56px)] leading-[1.12] font-extrabold tracking-tight text-foreground">
                 {t("titleLine")}
                 <br />
-                <span className="seal-underline">{t("titleHighlight")}</span>
+                <span className="text-primary">{t("titleHighlight")}</span>
               </h1>
-              <p className="mx-auto mt-5 max-w-[34ch] text-lg leading-relaxed text-[color:var(--on-dark-2)] md:mx-0">
+              <p className="mx-auto mt-5 max-w-[34ch] text-lg leading-relaxed text-muted-foreground md:mx-0">
                 {t("lede")}
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
@@ -75,11 +79,7 @@ export const PageClient = () => {
                   </Button>
                 </Link>
                 <Link href="#features">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                  >
+                  <Button size="lg" variant="secondary">
                     {t("ctaHow")}
                   </Button>
                 </Link>
@@ -87,12 +87,12 @@ export const PageClient = () => {
               <div className="mt-9 flex flex-wrap justify-center gap-x-6 gap-y-4 md:justify-start">
                 {STATS.map((key, i) => (
                   <div key={key} className="flex items-center gap-6">
-                    {i > 0 && <span className="hidden h-8 w-px bg-white/15 sm:block" />}
+                    {i > 0 && <span className="hidden h-8 w-px bg-border sm:block" />}
                     <div className="flex flex-col">
-                      <span className="text-xl font-extrabold text-white">
+                      <span className="text-xl font-extrabold text-foreground">
                         {t(`stats.${key}Value`)}
                       </span>
-                      <span className="text-[13px] font-semibold text-[color:var(--on-dark-2)]">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         {t(`stats.${key}Label`)}
                       </span>
                     </div>
@@ -200,16 +200,13 @@ export const PageClient = () => {
           </div>
         </section>
 
-        {/* CTA band — dark navy ground with the survey-grid pattern. */}
+        {/* CTA band */}
         <section className="mx-auto max-w-6xl px-6 py-20">
-          <div
-            className="kh-grid overflow-hidden rounded-3xl px-8 py-16 text-center shadow-lg"
-            style={{ background: "var(--band-bg)" }}
-          >
-            <h2 className="text-[clamp(28px,3.6vw,38px)] font-extrabold tracking-tight text-white">
+          <div className="rounded-3xl bg-primary px-8 py-16 text-center text-primary-foreground shadow-lg">
+            <h2 className="text-[clamp(28px,3.6vw,38px)] font-extrabold tracking-tight text-primary-foreground">
               {t("cta.title")}
             </h2>
-            <p className="mx-auto mt-4 max-w-[40ch] text-lg text-[color:var(--on-dark-2)]">
+            <p className="mx-auto mt-4 max-w-[40ch] text-lg text-primary-foreground/85">
               {t("cta.body")}
             </p>
             <Link href={PROTECTED_ROUTES.CHAT} className="mt-8 inline-block">
