@@ -146,11 +146,11 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             jurisdiction), then the view controls on their own row so they never
             crowd the badges. */}
         <div className="flex flex-col gap-2.5 border-b border-border px-5 py-3">
-          <span className="text-sm font-bold text-foreground">{source.title}</span>
-
-          {/* Info + options on the left; download vertically centered on the right. */}
+          {/* Header — title + badges on the left, download vertically centered on the right. */}
           <div className="flex items-center gap-3">
             <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+              <span className="text-sm font-bold text-foreground">{source.title}</span>
+
               <div className="flex flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
@@ -169,18 +169,6 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
                   </span>
                 )}
               </div>
-
-              {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
-              {data && (canPreview || data.passages.length > 0) && (
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
-                  {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
-                  {view === "text" && data.passages.length > 0 ? (
-                    <TextModeSelect value={textMode} onChange={setTextMode} />
-                  ) : (
-                    <span />
-                  )}
-                </div>
-              )}
             </div>
 
             {hasOriginal && (
@@ -195,6 +183,18 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
               </a>
             )}
           </div>
+
+          {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
+          {data && (canPreview || data.passages.length > 0) && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
+              {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
+              {view === "text" && data.passages.length > 0 ? (
+                <TextModeSelect value={textMode} onChange={setTextMode} />
+              ) : (
+                <span />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
