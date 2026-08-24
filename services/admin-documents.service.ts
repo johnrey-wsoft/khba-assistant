@@ -1,20 +1,39 @@
 import { axiosInstance } from "@/config/axios.config";
-import type { AdminDocument, AdminDocumentPatch } from "@/lib/admin/types";
+import type {
+  AdminDocsParams,
+  AdminDocsResult,
+  AdminDocument,
+  AdminDocumentPatch,
+} from "@/lib/admin/types";
 
 import { API_ROUTES } from "@/constants/routes.constant";
 
-export type { AdminDocument, AdminDocumentPatch };
+export type { AdminDocument, AdminDocumentPatch, AdminDocsParams, AdminDocsResult };
+
+const EMPTY: AdminDocsResult = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageCount: 1,
+  stats: { total: 0, completed: 0, waiting: 0, failed: 0, evidence: 0 },
+};
 
 export const adminDocumentsService = {
-  list: async (): Promise<AdminDocument[]> => {
+  // Server-side paginated list (page + status filter) with global stat counts.
+  search: async (params: AdminDocsParams): Promise<AdminDocsResult> => {
+    const query = new URLSearchParams({
+      status: params.status,
+      page: String(params.page),
+      pageSize: String(params.pageSize),
+    });
     try {
-      const response = await axiosInstance.get<{ data: AdminDocument[] }>(
-        API_ROUTES.ADMIN.DOCUMENTS.ROOT
+      const response = await axiosInstance.get<{ data: AdminDocsResult }>(
+        `${API_ROUTES.ADMIN.DOCUMENTS.ROOT}?${query.toString()}`
       );
-      return response.data.data ?? [];
+      return response.data.data ?? EMPTY;
     } catch (error) {
       console.error("Failed to list documents:", error);
-      return [];
+      return EMPTY;
     }
   },
 
