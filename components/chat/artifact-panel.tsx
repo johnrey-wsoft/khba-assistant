@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, Download, Maximize2 } from "lucide-react";
+import { X, Download, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { documentViewerHref } from "@/constants/routes.constant";
@@ -173,40 +173,37 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             </div>
 
             {data && (
-              <div className="flex flex-none flex-col items-end gap-1.5">
-                <a
-                  href={documentViewerHref(source.documentCode)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                >
-                  <Maximize2 className="size-3.5" />
-                  {t("openFullPage")}
-                </a>
-                {hasOriginal && (
-                  <a
-                    href={downloadUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                  >
-                    <Download className="size-3.5" />
-                    {t("download")}
-                  </a>
-                )}
-              </div>
+              <a
+                href={documentViewerHref(source.documentCode)}
+                target="_blank"
+                rel="noreferrer"
+                title={t("openFullPage")}
+                aria-label={t("openFullPage")}
+                className="flex-none text-muted-foreground transition-colors hover:text-primary"
+              >
+                <ExternalLink className="size-4" />
+              </a>
             )}
           </div>
 
-          {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
-          {data && (canPreview || data.passages.length > 0) && (
+          {/* Options — view (Text/Document) on the left; text mode (Read/Raw)
+              and the download button clustered on the right. */}
+          {data && (canPreview || data.passages.length > 0 || hasOriginal) && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
               {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
-              {view === "text" && data.passages.length > 0 ? (
-                <TextModeSelect value={textMode} onChange={setTextMode} />
-              ) : (
-                <span />
-              )}
+              <div className="flex items-center gap-2">
+                {view === "text" && data.passages.length > 0 && (
+                  <TextModeSelect value={textMode} onChange={setTextMode} />
+                )}
+                {hasOriginal && (
+                  <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
+                    <a href={downloadUrl} target="_blank" rel="noreferrer">
+                      <Download className="size-3.5" />
+                      {t("download")}
+                    </a>
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>

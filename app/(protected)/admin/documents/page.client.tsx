@@ -14,7 +14,7 @@ import {
   X,
   FileText,
   Download,
-  Maximize2,
+  ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -757,7 +757,7 @@ export const PageClient = () => {
                     rel="noreferrer"
                     aria-label={t("openViewer")}
                   >
-                    <Maximize2 className="size-4" />
+                    <ExternalLink className="size-4" />
                   </a>
                 </Button>
                 <Button
