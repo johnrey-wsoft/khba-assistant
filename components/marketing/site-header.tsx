@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useTranslations } from "next-intl";
@@ -9,12 +8,9 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { LocaleSwitcher } from "@/components/marketing/locale-switcher";
-import { cn } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PUBLIC_ROUTES, AUTH_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
-
-const NAV = [{ href: PUBLIC_ROUTES.ROOT, key: "home" }] as const;
 
 const initials = (name: string) =>
   name
@@ -26,11 +22,9 @@ const initials = (name: string) =>
     .toUpperCase();
 
 export const SiteHeader = () => {
-  const pathname = usePathname();
   const router = useRouter();
   const { user, profile } = useAuth();
   const [signingOut, startSignOut] = useTransition();
-  const tNav = useTranslations("nav");
   const t = useTranslations("common");
 
   const signOut = () =>
@@ -51,25 +45,6 @@ export const SiteHeader = () => {
           </span>
           {t("appName")}
         </Link>
-
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => {
-            const active =
-              item.href === PUBLIC_ROUTES.ROOT ? pathname === "/" : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-bold transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tNav(item.key)}
-              </Link>
-            );
-          })}
-        </nav>
 
         <span className="flex-1" />
 
