@@ -175,7 +175,7 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             {data && (
               <div className="flex flex-none flex-col items-end gap-1.5">
                 <a
-                  href={documentViewerHref(source.documentCode, source.snippet)}
+                  href={documentViewerHref(source.documentCode)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"

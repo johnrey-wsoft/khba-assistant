@@ -18,12 +18,9 @@ export const PROTECTED_ROUTES = {
   ADMIN: "/admin",
 } as const;
 
-// Full-page document viewer, optionally deep-linked to a cited excerpt to
-// scroll/highlight it in the parsed text.
-export const documentViewerHref = (code: string, snippet?: string): string => {
-  const base = `${PROTECTED_ROUTES.DOCUMENTS}/${encodeURIComponent(code)}`;
-  return snippet ? `${base}?snippet=${encodeURIComponent(snippet)}` : base;
-};
+// Full-page viewer showing the original document file.
+export const documentViewerHref = (code: string): string =>
+  `${PROTECTED_ROUTES.DOCUMENTS}/${encodeURIComponent(code)}`;
 
 export const API_ROUTES = {
   USERS: {
