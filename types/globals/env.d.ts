@@ -13,6 +13,8 @@ namespace NodeJS {
 
     OPENAI_API_KEY: string;
     LLAMA_CLOUD_API_KEY: string;
+    // Upstage Document Parse — required only to ingest .hwpx files.
+    UPSTAGE_API_KEY?: string;
 
     UPSTASH_REDIS_REST_URL: string;
     UPSTASH_REDIS_REST_TOKEN: string;
