@@ -147,8 +147,8 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             jurisdiction), then the view controls on their own row so they never
             crowd the badges. */}
         <div className="flex flex-col gap-2.5 border-b border-border px-5 py-3">
-          {/* Header — title + badges on the left, download vertically centered on the right. */}
-          <div className="flex items-center gap-3">
+          {/* Header — title + badges on the left, redirect icon top-aligned on the right. */}
+          <div className="flex items-start gap-3">
             <div className="flex min-w-0 flex-1 flex-col gap-2.5">
               <span className="text-sm font-bold text-foreground">{source.title}</span>
 
