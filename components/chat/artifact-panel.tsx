@@ -2,9 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, Download } from "lucide-react";
+import { X, Download, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { documentViewerHref } from "@/constants/routes.constant";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -146,8 +147,8 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
             jurisdiction), then the view controls on their own row so they never
             crowd the badges. */}
         <div className="flex flex-col gap-2.5 border-b border-border px-5 py-3">
-          {/* Header — title + badges on the left, download vertically centered on the right. */}
-          <div className="flex items-center gap-3">
+          {/* Header — title + badges on the left, redirect icon top-aligned on the right. */}
+          <div className="flex items-start gap-3">
             <div className="flex min-w-0 flex-1 flex-col gap-2.5">
               <span className="text-sm font-bold text-foreground">{source.title}</span>
 
@@ -171,28 +172,38 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
               </div>
             </div>
 
-            {hasOriginal && (
+            {data && (
               <a
-                href={downloadUrl}
+                href={documentViewerHref(source.documentCode)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex flex-none items-center gap-1 text-xs font-bold text-primary hover:underline"
+                title={t("openFullPage")}
+                aria-label={t("openFullPage")}
+                className="flex-none text-muted-foreground transition-colors hover:text-primary"
               >
-                <Download className="size-3.5" />
-                {t("download")}
+                <ExternalLink className="size-4" />
               </a>
             )}
           </div>
 
-          {/* Options — view (Text/Document) and text mode (Read/Raw), spread apart. */}
-          {data && (canPreview || data.passages.length > 0) && (
+          {/* Options — view (Text/Document) on the left; text mode (Read/Raw)
+              and the download button clustered on the right. */}
+          {data && (canPreview || data.passages.length > 0 || hasOriginal) && (
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
               {canPreview ? <DocViewToggle value={view} onChange={setView} /> : <span />}
-              {view === "text" && data.passages.length > 0 ? (
-                <TextModeSelect value={textMode} onChange={setTextMode} />
-              ) : (
-                <span />
-              )}
+              <div className="flex items-center gap-2">
+                {view === "text" && data.passages.length > 0 && (
+                  <TextModeSelect value={textMode} onChange={setTextMode} />
+                )}
+                {hasOriginal && (
+                  <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
+                    <a href={downloadUrl} target="_blank" rel="noreferrer">
+                      <Download className="size-3.5" />
+                      {t("download")}
+                    </a>
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>

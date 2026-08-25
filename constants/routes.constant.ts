@@ -12,10 +12,15 @@ export const AUTH_ROUTES = {
 export const PROTECTED_ROUTES = {
   CHAT: "/chat",
   SEARCH: "/search",
+  DOCUMENTS: "/documents",
   ONBOARDING: "/onboarding",
   PENDING: "/pending",
   ADMIN: "/admin",
 } as const;
+
+// Full-page viewer showing the original document file.
+export const documentViewerHref = (code: string): string =>
+  `${PROTECTED_ROUTES.DOCUMENTS}/${encodeURIComponent(code)}`;
 
 export const API_ROUTES = {
   USERS: {

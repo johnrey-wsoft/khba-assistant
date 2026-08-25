@@ -14,6 +14,7 @@ import {
   X,
   FileText,
   Download,
+  ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import { adminDocumentsService } from "@/services/admin-documents.service";
 import type { AdminDocument, AdminDocumentPatch, DocumentStatus } from "@/lib/admin/types";
 import { getQueryKey } from "@/lib/query/get-query-keys";
 import { authorityLabel } from "@/lib/chat/authority";
+import { documentViewerHref } from "@/constants/routes.constant";
 
 const AUTHORITY_TYPES = [
   "LAW",
@@ -741,16 +743,34 @@ export const PageClient = () => {
               )}
             </div>
             {selected && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="-mr-1 size-7 flex-none text-muted-foreground"
-                onClick={() => setSelectedCode(null)}
-                title={t("deselect")}
-                aria-label={t("deselect")}
-              >
-                <X className="size-4" />
-              </Button>
+              <>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 flex-none text-muted-foreground"
+                  title={t("openViewer")}
+                >
+                  <a
+                    href={documentViewerHref(selected.documentCode)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("openViewer")}
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="-mr-1 size-7 flex-none text-muted-foreground"
+                  onClick={() => setSelectedCode(null)}
+                  title={t("deselect")}
+                  aria-label={t("deselect")}
+                >
+                  <X className="size-4" />
+                </Button>
+              </>
             )}
           </div>
 
