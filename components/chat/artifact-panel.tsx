@@ -2,9 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { X, Download } from "lucide-react";
+import { X, Download, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { documentViewerHref } from "@/constants/routes.constant";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -171,16 +172,29 @@ export const ArtifactPanel = ({ sources, initialIndex, onClose }: ArtifactPanelP
               </div>
             </div>
 
-            {hasOriginal && (
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex flex-none items-center gap-1 text-xs font-bold text-primary hover:underline"
-              >
-                <Download className="size-3.5" />
-                {t("download")}
-              </a>
+            {data && (
+              <div className="flex flex-none flex-col items-end gap-1.5">
+                <a
+                  href={documentViewerHref(source.documentCode, source.snippet)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  <Maximize2 className="size-3.5" />
+                  {t("openFullPage")}
+                </a>
+                {hasOriginal && (
+                  <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                  >
+                    <Download className="size-3.5" />
+                    {t("download")}
+                  </a>
+                )}
+              </div>
             )}
           </div>
 

@@ -12,10 +12,18 @@ export const AUTH_ROUTES = {
 export const PROTECTED_ROUTES = {
   CHAT: "/chat",
   SEARCH: "/search",
+  DOCUMENTS: "/documents",
   ONBOARDING: "/onboarding",
   PENDING: "/pending",
   ADMIN: "/admin",
 } as const;
+
+// Full-page document viewer, optionally deep-linked to a cited excerpt to
+// scroll/highlight it in the parsed text.
+export const documentViewerHref = (code: string, snippet?: string): string => {
+  const base = `${PROTECTED_ROUTES.DOCUMENTS}/${encodeURIComponent(code)}`;
+  return snippet ? `${base}?snippet=${encodeURIComponent(snippet)}` : base;
+};
 
 export const API_ROUTES = {
   USERS: {
