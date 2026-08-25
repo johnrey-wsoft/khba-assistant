@@ -124,12 +124,6 @@ export const PageClient = () => {
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        {t.rich("consent", {
-          terms: (c) => <Link href="/terms">{c}</Link>,
-          privacy: (c) => <Link href="/terms">{c}</Link>,
-        })}
-      </FieldDescription>
     </div>
   );
 };

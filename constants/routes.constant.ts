@@ -1,7 +1,5 @@
 export const PUBLIC_ROUTES = {
   ROOT: "/",
-  ABOUT: "/about",
-  TERMS: "/terms",
 } as const;
 
 export const AUTH_ROUTES = {
