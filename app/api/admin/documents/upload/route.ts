@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 // Parse + embed can take a while for a large document.
 export const maxDuration = 120;
 
-// Formats the pipeline can parse (MarkItDown for most, pyhwp for .hwp/.hwpx).
+// Formats the pipeline can parse (MarkItDown for most, pyhwp for .hwp, Upstage for .hwpx).
 const ALLOWED_EXT = new Set([
   ".pdf",
   ".docx",

@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-// Upstage Document Parse — a Korean-optimized document parser used for `.hwp`,
-// which LlamaParse's agentic OCR rejects (it sniffs the OLE2/CFB container as an
-// unsupported type). Returns the document as markdown so the rest of the
-// pipeline (chunk -> embed -> upsert) is unchanged.
+// Upstage Document Parse — a Korean-optimized document parser used for `.hwpx`,
+// the OWPML (zip) Hangul format that pyhwp doesn't read and MarkItDown handles
+// poorly. Returns the document as markdown so the rest of the pipeline
+// (chunk -> embed -> upsert) is unchanged.
 //
 // Uses the synchronous endpoint (our files are far under the 100-page / 50MB
 // limits). `mode=auto` lets Upstage pick standard/enhanced per page for
