@@ -14,11 +14,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PUBLIC_ROUTES, AUTH_ROUTES, PROTECTED_ROUTES } from "@/constants/routes.constant";
 
-const NAV = [
-  { href: PUBLIC_ROUTES.ROOT, key: "home" },
-  { href: PUBLIC_ROUTES.ABOUT, key: "about" },
-  { href: PUBLIC_ROUTES.TERMS, key: "terms" },
-] as const;
+const NAV = [{ href: PUBLIC_ROUTES.ROOT, key: "home" }] as const;
 
 const initials = (name: string) =>
   name

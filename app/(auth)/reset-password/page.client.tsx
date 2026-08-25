@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { toast } from "sonner";
 import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -9,7 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { PasswordInput } from "@/components/shared/password-input";
 
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -109,12 +108,6 @@ export const PageClient = () => {
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        {t.rich("consent", {
-          terms: (c) => <Link href="/terms">{c}</Link>,
-          privacy: (c) => <Link href="/terms">{c}</Link>,
-        })}
-      </FieldDescription>
     </div>
   );
 };
