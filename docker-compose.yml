@@ -17,9 +17,11 @@ services:
       RESEND_EMAIL_FROM: ${RESEND_EMAIL_FROM}
     restart: unless-stopped
 
+  # HWP + HWPX parsing (hwplib + hwpxlib). Java replacement for the former
+  # Python pyhwp service and the Upstage HWPX API.
   hwp-api:
     build:
-      context: ./python
+      context: ./java-hwp
       dockerfile: Dockerfile
     ports:
       - "8000:8000"

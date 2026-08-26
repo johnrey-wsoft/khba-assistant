@@ -4,8 +4,8 @@ import { extname } from "node:path";
 import LlamaCloud from "@llamaindex/llama-cloud";
 
 import { parseWithHwp } from "./hwp";
+import { parseWithHwpx } from "./hwpx";
 import { parseWithMarkItDown } from "./markitdown";
-import { parseWithUpstage } from "./upstage";
 
 // Agentic OCR: parse a local document (PDF, image, HWP, 130+ formats) to
 // markdown via LlamaCloud. `tier: "agentic"` analyzes the whole document in
@@ -48,8 +48,8 @@ export const parseDocumentToMarkdown = async (filePath: string): Promise<string>
 };
 
 // Format-aware entry point for the pipeline:
-//   .hwp   -> pyhwp FastAPI service (OLE2/CFB binary; MarkItDown can't read it)
-//   .hwpx  -> Upstage Document Parse (OWPML zip; handled natively, Korean-tuned)
+//   .hwp   -> local Java hwp-api service (hwplib; OLE2/CFB binary)
+//   .hwpx  -> local Java hwp-api service (hwpxlib; OWPML zip)
 //   else   -> self-hosted MarkItDown service (free replacement for LlamaParse)
 // `parseDocumentToMarkdown` above is kept as a fallback — swap it back in here
 // to return to LlamaParse.
@@ -59,7 +59,7 @@ export const parseDocument = async (filePath: string): Promise<string> => {
     return parseWithHwp(filePath);
   }
   if (ext === ".hwpx") {
-    return parseWithUpstage(filePath);
+    return parseWithHwpx(filePath);
   }
   return parseWithMarkItDown(filePath);
 };
