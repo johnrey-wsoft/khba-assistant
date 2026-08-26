@@ -33,6 +33,7 @@ export const API_ROUTES = {
   CHATS: {
     ROOT: "/api/chats",
     BY_ID: (id: string) => `/api/chats/${id}`,
+    FEEDBACK: (id: string) => `/api/chats/${id}/feedback`,
   },
   DOCUMENTS: {
     ROOT: "/api/documents",

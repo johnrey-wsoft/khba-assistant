@@ -4,7 +4,8 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { UIMessage } from "ai";
 
 import { db } from "@/lib/drizzle/db";
-import { chats, messages } from "@/drizzle/schemas";
+import { chats, messages, messageFeedback } from "@/drizzle/schemas";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 import type { SelectChat, SelectMessage } from "@/types/drizzle.types";
 import type { ChatMessageMetadata, ChatMessagePart } from "@/drizzle/schemas/chats/message.schema";
 import type { ChatListItem } from "@/lib/chat/types";
@@ -119,7 +120,11 @@ export const listChatsByUser = async (userId: string): Promise<ChatListItem[]> =
 export const getChatWithMessages = async (
   chatId: string,
   userId: string
-): Promise<{ chat: SelectChat; messages: SelectMessage[] } | null> => {
+): Promise<{
+  chat: SelectChat;
+  messages: SelectMessage[];
+  feedback: Record<string, MessageFeedbackRating>;
+} | null> => {
   // The id is a uuid column; a non-uuid route param (e.g. /chat/favicon.ico)
   // would make Postgres throw, so treat it as "no such chat".
   if (!isPersistableChatId(chatId)) return null;
@@ -140,7 +145,64 @@ export const getChatWithMessages = async (
     .where(eq(messages.chatId, chatId))
     .orderBy(asc(messages.createdAt));
 
-  return { chat, messages: rows };
+  // This user's ratings for the chat's messages, as { messageId: rating }.
+  const fbRows = await db
+    .select({ messageId: messageFeedback.messageId, rating: messageFeedback.rating })
+    .from(messageFeedback)
+    .where(and(eq(messageFeedback.chatId, chatId), eq(messageFeedback.userId, userId)));
+  const feedback = Object.fromEntries(
+    fbRows.map((r) => [r.messageId, r.rating] as [string, MessageFeedbackRating])
+  );
+
+  return { chat, messages: rows, feedback };
+};
+
+// Set, change, or clear (rating === null) this user's feedback on one answer.
+// Owner-scoped: the chat must belong to the user and the message to the chat.
+// Returns false when either check fails.
+export const setMessageFeedback = async (
+  chatId: string,
+  userId: string,
+  messageId: string,
+  rating: MessageFeedbackRating | null
+): Promise<boolean> => {
+  if (!isPersistableChatId(chatId)) return false;
+
+  const owned =
+    (
+      await db
+        .select({ id: chats.id })
+        .from(chats)
+        .where(and(eq(chats.id, chatId), eq(chats.userId, userId), isNull(chats.deletedAt)))
+        .limit(1)
+    ).length > 0;
+  if (!owned) return false;
+
+  const messageInChat =
+    (
+      await db
+        .select({ id: messages.id })
+        .from(messages)
+        .where(and(eq(messages.id, messageId), eq(messages.chatId, chatId)))
+        .limit(1)
+    ).length > 0;
+  if (!messageInChat) return false;
+
+  if (rating === null) {
+    await db
+      .delete(messageFeedback)
+      .where(and(eq(messageFeedback.messageId, messageId), eq(messageFeedback.userId, userId)));
+    return true;
+  }
+
+  await db
+    .insert(messageFeedback)
+    .values({ messageId, chatId, userId, rating })
+    .onConflictDoUpdate({
+      target: [messageFeedback.messageId, messageFeedback.userId],
+      set: { rating, updatedAt: new Date() },
+    });
+  return true;
 };
 
 // Soft-delete an owned chat (sets deletedAt; messages are retained). Returns

@@ -15,6 +15,7 @@ import { ArtifactProvider } from "@/components/chat/artifact-context";
 import { useChatShell } from "@/components/chat/chat-shell-context";
 import { useChatStore } from "@/components/chat/chat-store";
 import type { ChatSource } from "@/components/chat/primitives";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 import { messageText } from "@/lib/chat/message-text";
 import { suggestionsSchema } from "@/lib/chat/suggestions.schema";
 import {
@@ -31,9 +32,16 @@ type ChatPaneProps = {
   // Persisted history + title for an existing chat (server-loaded on /chat/[id]).
   initialMessages?: UIMessage[];
   initialTitle?: string;
+  // The current user's saved feedback, as { messageId: rating }.
+  initialFeedback?: Record<string, MessageFeedbackRating>;
 };
 
-export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProps) => {
+export const ChatPane = ({
+  chatId,
+  initialMessages,
+  initialTitle,
+  initialFeedback,
+}: ChatPaneProps) => {
   const router = useRouter();
   const t = useTranslations("chat");
   const examples = t.raw("examples") as ChatExample[];
@@ -175,6 +183,8 @@ export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProp
           suggestions={suggestions}
           loadingSuggestions={loadingSuggestions}
           onSuggestion={submit}
+          chatId={chatId}
+          initialFeedback={initialFeedback}
         />
         <Composer
           value={input}

@@ -50,6 +50,13 @@
       "when": 1786695724472,
       "tag": "0006_profiles_verification_status",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787738439430,
+      "tag": "0007_message_feedback",
+      "breakpoints": true
     }
   ]
 }

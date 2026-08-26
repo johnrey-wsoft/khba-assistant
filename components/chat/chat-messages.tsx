@@ -5,12 +5,16 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Chip, Notice, SourceCard, type ChatSource } from "@/components/chat/primitives";
 import { useArtifact } from "@/components/chat/artifact-context";
 import { Markdown, type Citation } from "@/components/chat/markdown";
+import { chatsService } from "@/services/chats.service";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 import type { ChatExample } from "@/constants/chat.constant";
 
 // useLayoutEffect on the client (scroll before paint = no flicker), useEffect
@@ -158,16 +162,44 @@ const AnswerLabel = ({ children }: { children: React.ReactNode }) => (
 
 type Feedback = "up" | "down" | "report" | null;
 
-const FeedbackBar = ({ meta }: { meta?: string }) => {
-  const [value, setValue] = useState<Feedback>(null);
+const FeedbackBar = ({
+  meta,
+  chatId,
+  messageId,
+  initial = null,
+}: {
+  meta?: string;
+  chatId?: string;
+  messageId?: string;
+  initial?: Feedback;
+}) => {
+  const [value, setValue] = useState<Feedback>(initial);
   const t = useTranslations("chat");
   const pill =
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors";
+
+  // Toggle a rating (clicking the active one clears it), persist optimistically,
+  // and roll back on failure. Only persists for saved chats with a message id.
+  const choose = (next: Exclude<Feedback, null>) => {
+    const nextValue: Feedback = value === next ? null : next;
+    const prev = value;
+    setValue(nextValue);
+    if (!chatId || !messageId) return;
+    void chatsService
+      .saveFeedback(chatId, messageId, nextValue as MessageFeedbackRating | null)
+      .then((ok) => {
+        if (!ok) {
+          setValue(prev);
+          toast.error(t("actionError"));
+        }
+      });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
       <button
         type="button"
-        onClick={() => setValue("up")}
+        onClick={() => choose("up")}
         className={cn(
           pill,
           value === "up"
@@ -180,7 +212,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
       </button>
       <button
         type="button"
-        onClick={() => setValue("down")}
+        onClick={() => choose("down")}
         className={cn(
           pill,
           value === "down"
@@ -193,7 +225,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
       </button>
       <button
         type="button"
-        onClick={() => setValue("report")}
+        onClick={() => choose("report")}
         className={cn(
           pill,
           value === "report"
@@ -221,6 +253,8 @@ type AssistantMessageProps = {
   followups?: string[];
   loadingFollowups?: boolean;
   onFollowup?: (value: string) => void;
+  chatId?: string;
+  feedback?: Feedback;
 };
 
 const AssistantMessage = ({
@@ -228,6 +262,8 @@ const AssistantMessage = ({
   followups = [],
   loadingFollowups = false,
   onFollowup,
+  chatId,
+  feedback = null,
 }: AssistantMessageProps) => {
   const { openSource } = useArtifact();
   const t = useTranslations("chat");
@@ -332,7 +368,9 @@ const AssistantMessage = ({
         </div>
       )}
 
-      {hasContent && <FeedbackBar meta={footerMeta} />}
+      {hasContent && (
+        <FeedbackBar meta={footerMeta} chatId={chatId} messageId={message.id} initial={feedback} />
+      )}
     </div>
   );
 };
@@ -378,6 +416,8 @@ type ChatMessagesProps = {
   suggestions?: string[];
   loadingSuggestions?: boolean;
   onSuggestion?: (value: string) => void;
+  chatId?: string;
+  initialFeedback?: Record<string, MessageFeedbackRating>;
 };
 
 export const ChatMessages = ({
@@ -389,6 +429,8 @@ export const ChatMessages = ({
   suggestions = [],
   loadingSuggestions = false,
   onSuggestion,
+  chatId,
+  initialFeedback,
 }: ChatMessagesProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -481,6 +523,8 @@ export const ChatMessages = ({
                     followups={isLatestAnswer ? suggestions : []}
                     loadingFollowups={isLatestAnswer && loadingSuggestions}
                     onFollowup={onSuggestion}
+                    chatId={chatId}
+                    feedback={initialFeedback?.[message.id] ?? null}
                   />
                 );
               })}
