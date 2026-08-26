@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/config/axios.config";
 import type { ChatListItem, ChatWithMessages } from "@/lib/chat/types";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 
 import { API_ROUTES } from "@/constants/routes.constant";
 
@@ -47,6 +48,22 @@ export const chatsService = {
       return true;
     } catch (error) {
       console.error("Failed to delete chat:", error);
+      return false;
+    }
+  },
+
+  // Set/change/clear the current user's rating on one answer (rating === null
+  // clears it). Returns false on failure so the caller can roll back optimistic UI.
+  saveFeedback: async (
+    chatId: string,
+    messageId: string,
+    rating: MessageFeedbackRating | null
+  ): Promise<boolean> => {
+    try {
+      await axiosInstance.post(API_ROUTES.CHATS.FEEDBACK(chatId), { messageId, rating });
+      return true;
+    } catch (error) {
+      console.error("Failed to save feedback:", error);
       return false;
     }
   },

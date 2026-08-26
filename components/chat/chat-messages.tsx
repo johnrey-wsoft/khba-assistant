@@ -2,8 +2,19 @@
 
 import type { UIMessage } from "ai";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check } from "lucide-react";
+import {
+  ThumbsUp,
+  HelpCircle,
+  Flag,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Copy,
+  Pencil,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { Chip, Notice, SourceCard, type ChatSource } from "@/components/chat/primitives";
 import { useArtifact } from "@/components/chat/artifact-context";
 import { Markdown, type Citation } from "@/components/chat/markdown";
+import { chatsService } from "@/services/chats.service";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 import type { ChatExample } from "@/constants/chat.constant";
 
 // useLayoutEffect on the client (scroll before paint = no flicker), useEffect
@@ -123,14 +136,120 @@ const DateDivider = ({ label }: { label: string }) => (
   </div>
 );
 
-const UserMessage = ({ id, text, time }: { id?: string; text: string; time?: string }) => (
-  <div data-mid={id} className="flex flex-col items-end gap-1.5">
-    <div className="w-fit max-w-[80%] rounded-[18px_18px_4px_18px] bg-primary px-4.5 py-3 text-primary-foreground">
-      {text}
+// Minimal icon-only "copy to clipboard" button, shared by the user prompt and
+// the assistant answer. Flips to a check for ~1.5s; toasts on failure.
+const CopyButton = ({ text, className }: { text: string; className?: string }) => {
+  const [copied, setCopied] = useState(false);
+  const t = useTranslations("chat");
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(t("actionError"));
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={copied ? t("copied") : t("copy")}
+      aria-label={copied ? t("copied") : t("copy")}
+      className={cn(
+        "grid size-7 flex-none place-items-center rounded-md transition-colors",
+        copied ? "text-chart-2" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        className
+      )}
+    >
+      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+    </button>
+  );
+};
+
+const UserMessage = ({
+  id,
+  text,
+  time,
+  onEdit,
+}: {
+  id?: string;
+  text: string;
+  time?: string;
+  onEdit?: (id: string, text: string) => void;
+}) => {
+  const t = useTranslations("chat");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(text);
+
+  const startEdit = () => {
+    setDraft(text);
+    setEditing(true);
+  };
+  const save = () => {
+    const trimmed = draft.trim();
+    if (trimmed && id && onEdit) onEdit(id, trimmed);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div data-mid={id} className="flex flex-col items-end gap-2">
+        <div className="w-full max-w-[80%]">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={Math.min(8, Math.max(2, draft.split("\n").length))}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                save();
+              }
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="w-full resize-none rounded-[18px] border border-border bg-card p-3 text-sm text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+          />
+          <div className="mt-1.5 flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              {t("cancel")}
+            </Button>
+            <Button size="sm" onClick={save} disabled={!draft.trim()}>
+              {t("save")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div data-mid={id} className="flex flex-col items-end gap-1.5">
+      <div className="w-fit max-w-[80%] rounded-[18px_18px_4px_18px] bg-primary px-4.5 py-3 text-primary-foreground">
+        {text}
+      </div>
+      <div className="flex items-center gap-1">
+        {time && (
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">{time}</span>
+        )}
+        {onEdit && id && (
+          <button
+            type="button"
+            onClick={startEdit}
+            title={t("edit")}
+            aria-label={t("edit")}
+            className="grid size-7 flex-none place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Pencil className="size-4" />
+          </button>
+        )}
+        <CopyButton text={text} />
+      </div>
     </div>
-    {time && <span className="font-mono text-xs tabular-nums text-muted-foreground">{time}</span>}
-  </div>
-);
+  );
+};
 
 // Show this many source cards before collapsing the rest behind "See all".
 const SOURCE_PREVIEW_COUNT = 3;
@@ -158,16 +277,46 @@ const AnswerLabel = ({ children }: { children: React.ReactNode }) => (
 
 type Feedback = "up" | "down" | "report" | null;
 
-const FeedbackBar = ({ meta }: { meta?: string }) => {
-  const [value, setValue] = useState<Feedback>(null);
+const FeedbackBar = ({
+  meta,
+  chatId,
+  messageId,
+  initial = null,
+  copyText,
+}: {
+  meta?: string;
+  chatId?: string;
+  messageId?: string;
+  initial?: Feedback;
+  copyText?: string;
+}) => {
+  const [value, setValue] = useState<Feedback>(initial);
   const t = useTranslations("chat");
   const pill =
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors";
+
+  // Toggle a rating (clicking the active one clears it), persist optimistically,
+  // and roll back on failure. Only persists for saved chats with a message id.
+  const choose = (next: Exclude<Feedback, null>) => {
+    const nextValue: Feedback = value === next ? null : next;
+    const prev = value;
+    setValue(nextValue);
+    if (!chatId || !messageId) return;
+    void chatsService
+      .saveFeedback(chatId, messageId, nextValue as MessageFeedbackRating | null)
+      .then((ok) => {
+        if (!ok) {
+          setValue(prev);
+          toast.error(t("actionError"));
+        }
+      });
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
       <button
         type="button"
-        onClick={() => setValue("up")}
+        onClick={() => choose("up")}
         className={cn(
           pill,
           value === "up"
@@ -180,7 +329,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
       </button>
       <button
         type="button"
-        onClick={() => setValue("down")}
+        onClick={() => choose("down")}
         className={cn(
           pill,
           value === "down"
@@ -193,7 +342,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
       </button>
       <button
         type="button"
-        onClick={() => setValue("report")}
+        onClick={() => choose("report")}
         className={cn(
           pill,
           value === "report"
@@ -210,6 +359,7 @@ const FeedbackBar = ({ meta }: { meta?: string }) => {
       ) : (
         meta && <span className="font-mono text-xs tabular-nums text-muted-foreground">{meta}</span>
       )}
+      {copyText && <CopyButton text={copyText} />}
     </div>
   );
 };
@@ -221,6 +371,8 @@ type AssistantMessageProps = {
   followups?: string[];
   loadingFollowups?: boolean;
   onFollowup?: (value: string) => void;
+  chatId?: string;
+  feedback?: Feedback;
 };
 
 const AssistantMessage = ({
@@ -228,6 +380,8 @@ const AssistantMessage = ({
   followups = [],
   loadingFollowups = false,
   onFollowup,
+  chatId,
+  feedback = null,
 }: AssistantMessageProps) => {
   const { openSource } = useArtifact();
   const t = useTranslations("chat");
@@ -332,7 +486,15 @@ const AssistantMessage = ({
         </div>
       )}
 
-      {hasContent && <FeedbackBar meta={footerMeta} />}
+      {hasContent && (
+        <FeedbackBar
+          meta={footerMeta}
+          chatId={chatId}
+          messageId={message.id}
+          initial={feedback}
+          copyText={text}
+        />
+      )}
     </div>
   );
 };
@@ -378,6 +540,9 @@ type ChatMessagesProps = {
   suggestions?: string[];
   loadingSuggestions?: boolean;
   onSuggestion?: (value: string) => void;
+  chatId?: string;
+  initialFeedback?: Record<string, MessageFeedbackRating>;
+  onEditMessage?: (id: string, text: string) => void;
 };
 
 export const ChatMessages = ({
@@ -389,6 +554,9 @@ export const ChatMessages = ({
   suggestions = [],
   loadingSuggestions = false,
   onSuggestion,
+  chatId,
+  initialFeedback,
+  onEditMessage,
 }: ChatMessagesProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -468,6 +636,7 @@ export const ChatMessages = ({
                       id={message.id}
                       text={getText(message)}
                       time={getTime(message)}
+                      onEdit={onEditMessage}
                     />
                   );
                 }
@@ -481,6 +650,8 @@ export const ChatMessages = ({
                     followups={isLatestAnswer ? suggestions : []}
                     loadingFollowups={isLatestAnswer && loadingSuggestions}
                     onFollowup={onSuggestion}
+                    chatId={chatId}
+                    feedback={initialFeedback?.[message.id] ?? null}
                   />
                 );
               })}

@@ -5,6 +5,7 @@ import { ChatPane } from "@/components/chat/chat-pane";
 import { guardChatPage } from "@/lib/guards/member.guard";
 import { getChatWithMessages } from "@/lib/chat/store";
 import { toUIMessage } from "@/lib/chat/serialize";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -26,15 +27,23 @@ export default async function Page({ params }: PageProps) {
   // no row yet -> undefined -> fresh pane that sends the handed-off first message.
   let initialMessages: UIMessage[] | undefined;
   let initialTitle: string | undefined;
+  let initialFeedback: Record<string, MessageFeedbackRating> | undefined;
 
   const loaded = await getChatWithMessages(id, profile.id);
   if (loaded) {
     initialMessages = loaded.messages.map(toUIMessage);
     initialTitle = loaded.chat.title ?? undefined;
+    initialFeedback = loaded.feedback;
   }
 
   // key forces a clean useChat instance per conversation.
   return (
-    <ChatPane key={id} chatId={id} initialMessages={initialMessages} initialTitle={initialTitle} />
+    <ChatPane
+      key={id}
+      chatId={id}
+      initialMessages={initialMessages}
+      initialTitle={initialTitle}
+      initialFeedback={initialFeedback}
+    />
   );
 }

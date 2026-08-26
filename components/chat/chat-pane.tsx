@@ -15,6 +15,7 @@ import { ArtifactProvider } from "@/components/chat/artifact-context";
 import { useChatShell } from "@/components/chat/chat-shell-context";
 import { useChatStore } from "@/components/chat/chat-store";
 import type { ChatSource } from "@/components/chat/primitives";
+import type { MessageFeedbackRating } from "@/drizzle/schemas/chats/message-feedback.schema";
 import { messageText } from "@/lib/chat/message-text";
 import { suggestionsSchema } from "@/lib/chat/suggestions.schema";
 import {
@@ -31,9 +32,16 @@ type ChatPaneProps = {
   // Persisted history + title for an existing chat (server-loaded on /chat/[id]).
   initialMessages?: UIMessage[];
   initialTitle?: string;
+  // The current user's saved feedback, as { messageId: rating }.
+  initialFeedback?: Record<string, MessageFeedbackRating>;
 };
 
-export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProps) => {
+export const ChatPane = ({
+  chatId,
+  initialMessages,
+  initialTitle,
+  initialFeedback,
+}: ChatPaneProps) => {
   const router = useRouter();
   const t = useTranslations("chat");
   const examples = t.raw("examples") as ChatExample[];
@@ -60,7 +68,7 @@ export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProp
     );
     setArtifact({ sources: list, index });
   };
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
     id: chatId,
     messages: seed,
     // Assistant reply finished streaming and was persisted server-side; reflect
@@ -154,6 +162,18 @@ export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProp
     setInput("");
   };
 
+  // Edit a past user prompt: drop it and everything after (the conversation
+  // re-forks), then re-send the edited text so the assistant answers afresh.
+  // The truncated tail is pruned from the DB by the chat route's onFinish sync.
+  const editMessage = (messageId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || isBusy) return;
+    const index = messages.findIndex((m) => m.id === messageId);
+    if (index === -1) return;
+    setMessages(messages.slice(0, index));
+    sendMessage({ text: trimmed });
+  };
+
   const conversation = conversations.find((c) => c.id === chatId);
   // Live session title (updates as it streams) wins; else the server-loaded
   // title for a reopened chat.
@@ -175,6 +195,9 @@ export const ChatPane = ({ chatId, initialMessages, initialTitle }: ChatPaneProp
           suggestions={suggestions}
           loadingSuggestions={loadingSuggestions}
           onSuggestion={submit}
+          chatId={chatId}
+          initialFeedback={initialFeedback}
+          onEditMessage={editMessage}
         />
         <Composer
           value={input}

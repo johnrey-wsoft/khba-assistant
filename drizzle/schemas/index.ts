@@ -5,6 +5,7 @@ export { profiles } from "./profiles/profiles.schema";
 export * from "./chats/enums";
 export { chats } from "./chats/chat.schema";
 export { messages } from "./chats/message.schema";
+export { messageFeedback } from "./chats/message-feedback.schema";
 export * from "./chats/relations";
 
 // WS-1267 — Document & Evidence Data Standard Schema
