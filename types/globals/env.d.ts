@@ -13,6 +13,9 @@ namespace NodeJS {
 
     OPENAI_API_KEY: string;
     LLAMA_CLOUD_API_KEY: string;
+    // Optional Upstage Document Parse — a cloud .hwpx parser kept as an
+    // alternative; the active path is the local Java hwp-api (lib/ingest/upstage.ts).
+    UPSTAGE_API_KEY?: string;
 
     UPSTASH_REDIS_REST_URL: string;
     UPSTASH_REDIS_REST_TOKEN: string;
