@@ -162,13 +162,20 @@ export const getChatWithMessages = async (
     .orderBy(asc(messages.createdAt));
 
   // This user's ratings for the chat's messages, as { messageId: rating }.
-  const fbRows = await db
-    .select({ messageId: messageFeedback.messageId, rating: messageFeedback.rating })
-    .from(messageFeedback)
-    .where(and(eq(messageFeedback.chatId, chatId), eq(messageFeedback.userId, userId)));
-  const feedback = Object.fromEntries(
-    fbRows.map((r) => [r.messageId, r.rating] as [string, MessageFeedbackRating])
-  );
+  // Never let a feedback failure (e.g. the table not migrated yet) break the
+  // core conversation load — degrade to "no saved feedback".
+  let feedback: Record<string, MessageFeedbackRating> = {};
+  try {
+    const fbRows = await db
+      .select({ messageId: messageFeedback.messageId, rating: messageFeedback.rating })
+      .from(messageFeedback)
+      .where(and(eq(messageFeedback.chatId, chatId), eq(messageFeedback.userId, userId)));
+    feedback = Object.fromEntries(
+      fbRows.map((r) => [r.messageId, r.rating] as [string, MessageFeedbackRating])
+    );
+  } catch (error) {
+    console.error("Failed to load message feedback (is the migration applied?):", error);
+  }
 
   return { chat, messages: rows, feedback };
 };
