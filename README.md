@@ -1,22 +1,22 @@
-# NextBase
+# KHBA Assistant
 
-![NextBase Browser Image](/public/nextbase-template.png)
-
-A production-ready full-stack starter built with **Next.js 16**, **Supabase**, **Drizzle ORM**, and **TypeScript**.
+A retrieval-augmented chat assistant for **KHBA** (Korea Housing Builders Association) members. Ask about a statute, ordinance, or notice in plain words and get a grounded answer — with the source document, the issuing authority, and its base date attached. Built by **W Labs**.
 
 ## Tech Stack
 
-| Category        | Technology                                    |
-| --------------- | --------------------------------------------- |
-| Framework       | Next.js 16 (App Router), React 19, TypeScript |
-| Auth & Database | Supabase (email/password, OAuth), PostgreSQL  |
-| ORM             | Drizzle ORM (type-safe queries, migrations)   |
-| UI              | Shadcn/ui, Radix, Tailwind CSS v4             |
-| State           | TanStack React Query, Zustand                 |
-| Forms           | react-hook-form, Zod                          |
-| Testing         | Vitest (unit), Playwright (E2E)               |
-| Docs            | VitePress                                     |
-| Deploy          | Docker, GitHub Actions CI                     |
+| Category        | Technology                                        |
+| --------------- | ------------------------------------------------- |
+| Framework       | Next.js 16 (App Router), React 19, TypeScript     |
+| Auth & Database | Supabase (`@supabase/ssr`), PostgreSQL + pgvector |
+| ORM             | Drizzle ORM (type-safe queries, migrations)       |
+| AI / RAG        | Vercel AI SDK, OpenAI (embeddings + chat)         |
+| UI              | Shadcn/ui, Radix, Tailwind CSS v4                 |
+| i18n            | next-intl (Korean-first, English)                 |
+| State           | TanStack React Query, Zustand                     |
+| Forms           | react-hook-form, Zod                              |
+| Testing         | Vitest (unit), Playwright (E2E)                   |
+| Docs            | VitePress                                         |
+| Deploy          | Docker Compose, GitHub Actions CI                 |
 
 ## Quick Start
 
@@ -46,6 +46,13 @@ Copy `.env.example` to `.env` and configure:
 | `RESEND_EMAIL_FROM`                    | —        | Sender address                                   |
 | `UPSTASH_REDIS_REST_URL`               | —        | [Upstash](https://upstash.com) for rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN`             | —        | Upstash token                                    |
+| `OPENAI_API_KEY`                       | Ingest   | Embeddings for the RAG pipeline                  |
+| `LLAMA_CLOUD_API_KEY`                  | —        | Optional cloud OCR parser (fallback)             |
+| `NEXT_PUBLIC_API_URL`                  | —        | `hwp-api` service URL (default `:8000`)          |
+| `MARKITDOWN_API_URL`                   | —        | `markitdown-api` service URL (default `:8001`)   |
+| `UPSTAGE_API_KEY`                      | —        | Optional cloud `.hwpx` parser (not wired in)     |
+
+> R2 object-storage variables (`R2_*`) for raw source files and the full ingestion set are in `.env.example`.
 
 > **Offline development:** Run `supabase start` for a local Supabase instance. See the [full guide](./docs/overview.md#local-development-offline).
 
@@ -86,13 +93,19 @@ pnpm docs:preview           # Preview production docs
 ```text
 app/
 ├── (auth)/                 # Login, register, password reset
-├── (protected)/            # Dashboard (auth-gated)
-├── (public)/               # Landing page
-└── api/                    # API endpoints
+├── (protected)/
+│   ├── (member)/           # Chat + document search (member shell)
+│   ├── admin/              # Admin: document management
+│   ├── documents/[code]/   # Full-page document viewer
+│   ├── onboarding/         # Member onboarding
+│   └── pending/            # Awaiting desk approval
+├── (public)/               # Marketing landing
+└── api/                    # API routes (chat, documents, ingest, admin)
 components/
 ├── ui/                     # Shadcn/ui primitives (do not modify)
-├── shared/                 # Reusable components
-├── app-sidebar/            # Sidebar shell
+├── chat/                   # Chat, citations, artifact + document viewers
+├── admin/                  # Admin shell
+├── shared/                 # Reusable wrappers
 └── providers/              # Context providers
 lib/
 ├── supabase/               # Auth + database clients
@@ -114,16 +127,35 @@ docs/                       # VitePress documentation
 
 ## Features
 
-- **Authentication** — Email/password + OAuth (GitHub, Google), pre-built forms
-- **Route Protection** — Middleware-based auth with automatic redirects
-- **API Layer** — Consistent responses, auth guards, rate limiting
-- **Database** — Drizzle ORM with migrations, studio, soft deletes
-- **Sidebar Shell** — Collapsible navigation with user menu
-- **Email** — Resend integration (optional)
-- **SEO** — Metadata helper with Open Graph and Twitter cards
-- **Rate Limiting** — Tiered Upstash Redis limits (optional, skipped in dev)
-- **CI/CD** — GitHub Actions for lint, tests, and build
-- **Docker** — Multi-stage production build (Node 22 Alpine)
+- **Grounded chat** — Answers cite the source document, authority, and base date; an artifact panel shows the original text alongside the answer
+- **Document search** — Faceted search over the approved corpus (type, authority, region, period)
+- **Document viewer** — Full-page viewer for the original file, linked from chat, search, and admin
+- **Admin document management** — Upload, parse, re-index, and edit metadata for source documents
+- **RAG ingestion** — Parse → semantic chunk → embed → pgvector, across self-hosted parser services (see below)
+- **Onboarding + verification gate** — Members are approved by the association desk before access
+- **Internationalization** — Korean-first with English, cookie-based via next-intl
+- **Auth & RBAC** — Supabase auth with admin-gated routes and API guards
+- **Rate limiting** — Tiered Upstash Redis limits (optional, skipped in dev)
+- **CI/CD + Docker** — GitHub Actions and a multi-service `docker compose`
+
+## Document ingestion (RAG)
+
+Uploaded source documents (laws, ordinances, notices) are parsed to markdown, semantically chunked, embedded, and stored for retrieval. Parsing is routed by file type across self-hosted microservices defined in `docker-compose.yml`:
+
+| Format                           | Parser                 | Service                                                 |
+| -------------------------------- | ---------------------- | ------------------------------------------------------- |
+| `.hwp`, `.hwpx`                  | hwplib / hwpxlib       | **`hwp-api`** — Java (`./java-hwp`) on `:8000`          |
+| PDF, DOCX, PPTX, XLSX, images, … | Microsoft MarkItDown   | **`markitdown-api`** (`./python-markitdown`) on `:8001` |
+| _(fallback)_                     | LlamaCloud agentic OCR | cloud (`LLAMA_CLOUD_API_KEY`)                           |
+
+Run the parser services with Docker alongside the local app:
+
+```bash
+docker compose up -d hwp-api markitdown-api
+pnpm dev
+```
+
+Embeddings use OpenAI (`OPENAI_API_KEY`); raw files are optionally stored in Cloudflare R2 (`R2_*`). `UPSTAGE_API_KEY` enables an optional cloud `.hwpx` parser, kept as a fallback but not wired into the pipeline. See [the ingestion requirements doc](./docs/requirements/khba-rag-document-requirements_en.md) for the full design.
 
 ## Documentation
 
@@ -132,8 +164,10 @@ pnpm docs:dev     # Start VitePress at http://localhost:4000
 ```
 
 - **[Getting Started](./docs/overview.md)** — Setup, structure, core features
-- **[Architecture Patterns](./docs/patterns/index.md)** — API response, auth guard, validation, routes, caching, status codes
-- **[AGENTS.md](./AGENTS.md)** — Full developer reference
+- **[RAG Implementation](./docs/implementation/khba-rag.en.md)** — Ingestion pipeline, retrieval, chat
+- **[Document Requirements & API Plan](./docs/requirements/khba-rag-document-requirements_en.md)** — HWP/HWPX parsing decisions, API surface
+- **[Architecture Patterns](./docs/patterns/index.md)** — API response, auth guard, validation, routes, caching
+- **[CLAUDE.md](./CLAUDE.md)** · **[AGENTS.md](./AGENTS.md)** — Developer reference
 
 ## Configuration
 

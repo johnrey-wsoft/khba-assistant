@@ -258,7 +258,7 @@
     <div class="doc-meta">
       <span><strong data-en="Project:" data-kr="프로젝트:">Project:</strong> KHBA Assistant · W Labs</span>
       <span><strong data-en="Scope:" data-kr="범위:">Scope:</strong> <span data-en="Ingestion doc requirements (incl. HWP/HWPX) + API list" data-kr="인제스션 문서 요구사항(HWP/HWPX 포함) + API 목록">Ingestion doc requirements (incl. HWP/HWPX) + API list</span></span>
-      <span><strong data-en="Status:" data-kr="상태:">Status:</strong> <span class="status-chip status-active" data-en="Decision made — pyhwp + FastAPI" data-kr="결정 완료 — pyhwp + FastAPI">Decision made — pyhwp + FastAPI</span></span>
+      <span><strong data-en="Status:" data-kr="상태:">Status:</strong> <span class="status-chip status-active" data-en="Implemented — Java hwplib / hwpxlib (superseded pyhwp)" data-kr="구현 완료 — Java hwplib / hwpxlib (pyhwp 대체)">Implemented — Java hwplib / hwpxlib (superseded pyhwp)</span></span>
     </div>
   </div>
 
@@ -454,16 +454,16 @@
   <section id="s-decision">
     <h2 data-en="6 · Recommendation — Decision" data-kr="6 · 권장 사항 — 결정">6 · Recommendation — Decision</h2>
     <div class="callout-done">
-      <strong data-en="Chosen: pyhwp + a self-hosted FastAPI wrapper" data-kr="채택: pyhwp + 자체 호스팅 FastAPI 래퍼">Chosen: pyhwp + a self-hosted FastAPI wrapper</strong>
-      <span data-en="On cost grounds — it's free/open-source with no per-page billing, versus Upstage's pay-per-page pricing or a Hancom commercial SDK license. It also keeps documents in-house (relevant for CONFIDENTIAL-class sources)." data-kr="비용 기준으로 결정. Upstage의 페이지당 과금이나 한컴 상업용 SDK 라이선스 대비 무료/오픈소스이며 페이지당 과금이 없습니다. 또한 문서를 사내에 유지할 수 있습니다(CONFIDENTIAL 등급 출처와 관련).">On cost grounds — free/open-source with no per-page billing, versus Upstage's pay-per-page pricing or a Hancom commercial SDK license. Also keeps documents in-house.</span>
+      <strong data-en="Chosen: a self-hosted Java service — hwplib (.hwp) + hwpxlib (.hwpx)" data-kr="채택: 자체 호스팅 Java 서비스 — hwplib(.hwp) + hwpxlib(.hwpx)">Chosen: a self-hosted Java service — hwplib (.hwp) + hwpxlib (.hwpx)</strong>
+      <span data-en="Superseded the initial pyhwp + FastAPI implementation (which only handled legacy binary .hwp, not .hwpx) with one self-hosted Java service (./java-hwp) that parses both Hangul formats. Stays free/open-source and in-house (no per-page billing like Upstage, no commercial license like the Hancom SDK)." data-kr="최초 pyhwp + FastAPI 구현(구형 바이너리 .hwp만 처리, .hwpx 미지원)을, 두 한글 포맷을 모두 파싱하는 단일 자체 호스팅 Java 서비스(./java-hwp)로 대체했습니다. 무료/오픈소스·사내 유지를 그대로 유지합니다(Upstage의 페이지당 과금·한컴 상업용 라이선스 불필요).">Superseded the initial pyhwp + FastAPI implementation (which only handled legacy binary .hwp, not .hwpx) with one self-hosted Java service (./java-hwp) that parses both Hangul formats. Stays free/open-source and in-house.</span>
     </div>
 
     <div class="pipeline">
-      <div class="pipe-node plain"><span class="pn-title">.hwp</span><span class="pn-sub" data-en="Source file" data-kr="원본 파일">Source file</span></div>
+      <div class="pipe-node plain"><span class="pn-title">.hwp / .hwpx</span><span class="pn-sub" data-en="Source file" data-kr="원본 파일">Source file</span></div>
       <div class="pipe-arrow">→</div>
-      <div class="pipe-node"><span class="pn-title" data-en="FastAPI service" data-kr="FastAPI 서비스">FastAPI service</span><span class="pn-sub" data-en="wraps pyhwp (hwp5txt / hwp5html)" data-kr="pyhwp 래핑 (hwp5txt / hwp5html)">wraps pyhwp</span></div>
+      <div class="pipe-node"><span class="pn-title" data-en="Java hwp-api" data-kr="Java hwp-api">Java hwp-api</span><span class="pn-sub" data-en="hwplib / hwpxlib" data-kr="hwplib / hwpxlib">hwplib / hwpxlib</span></div>
       <div class="pipe-arrow">→</div>
-      <div class="pipe-node"><span class="pn-title" data-en="Post-process" data-kr="후처리">Post-process</span><span class="pn-sub" data-en="to Markdown + manual table cleanup" data-kr="Markdown으로 + 표 수동 정리">to Markdown + table cleanup</span></div>
+      <div class="pipe-node"><span class="pn-title" data-en="Extract text" data-kr="텍스트 추출">Extract text</span><span class="pn-sub" data-en="markdown for the pipeline" data-kr="파이프라인용 markdown">markdown for the pipeline</span></div>
       <div class="pipe-arrow">→</div>
       <div class="pipe-node db"><span class="pn-title" data-en="semanticChunk" data-kr="semanticChunk">semanticChunk</span><span class="pn-sub" data-en="existing pipeline, unchanged" data-kr="기존 파이프라인, 변경 없음">existing pipeline, unchanged</span></div>
     </div>
@@ -525,10 +525,10 @@
         </tr></thead>
         <tbody>
           <tr>
-            <td data-en="Internal HWP parsing service (pyhwp-based, FastAPI)" data-kr="내부 HWP 파싱 서비스 (pyhwp 기반, FastAPI)">Internal HWP parsing service (pyhwp-based, FastAPI)</td>
-            <td data-en="Primary path: parse legacy .hwp into Markdown/plain text for ingestion" data-kr="주 경로: 구형 .hwp를 인제스션용 Markdown/텍스트로 파싱">Primary path: parse legacy .hwp into Markdown/plain text</td>
+            <td data-en="Internal HWP/HWPX parsing service (Java, hwplib + hwpxlib)" data-kr="내부 HWP/HWPX 파싱 서비스 (Java, hwplib + hwpxlib)">Internal HWP/HWPX parsing service (Java, hwplib + hwpxlib)</td>
+            <td data-en="Primary path: parse .hwp/.hwpx into Markdown/plain text for ingestion" data-kr="주 경로: .hwp/.hwpx를 인제스션용 Markdown/텍스트로 파싱">Primary path: parse .hwp/.hwpx into Markdown/plain text</td>
             <td data-en="Self-hosted, no external auth" data-kr="자체 호스팅, 외부 인증 없음">Self-hosted, no external auth</td>
-            <td><span class="ticket-chip chosen" data-en="To build — chosen solution" data-kr="구축 예정 — 채택된 솔루션">To build — chosen</span></td>
+            <td><span class="ticket-chip chosen" data-en="Implemented — ./java-hwp" data-kr="구현 완료 — ./java-hwp">Implemented — ./java-hwp</span></td>
           </tr>
           <tr>
             <td>Upstage Document Parse</td>
