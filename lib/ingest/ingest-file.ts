@@ -38,7 +38,7 @@ const generateCode = () => `UP-${randomUUID().slice(0, 8).toUpperCase()}`;
 // Run the full ingest pipeline (parse -> chunk -> embed -> R2 -> upsert) for an
 // uploaded file's bytes, mirroring scripts/ingest.ts but from an upload instead
 // of the manifest. parseDocument needs a path, so the bytes are staged in a
-// temp file (its extension routes the parser: .hwp -> pyhwp, .hwpx -> Upstage,
+// temp file (its extension routes the parser: .hwp / .hwpx -> Java hwp-api,
 // else MarkItDown).
 export const ingestUploadedFile = async (
   fileName: string,

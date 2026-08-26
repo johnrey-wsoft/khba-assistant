@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-// HWP parser using the Python FastAPI service with pyhwp.
-// This replaces the Upstage Document Parse API for .hwp files.
+// HWP parser using the local Java hwp-api service (hwplib).
 // Returns the document as markdown so the rest of the pipeline
 // (chunk -> embed -> upsert) is unchanged.
 const getApiUrl = () => {
