@@ -127,12 +127,48 @@ const DateDivider = ({ label }: { label: string }) => (
   </div>
 );
 
+// Minimal icon-only "copy to clipboard" button, shared by the user prompt and
+// the assistant answer. Flips to a check for ~1.5s; toasts on failure.
+const CopyButton = ({ text, className }: { text: string; className?: string }) => {
+  const [copied, setCopied] = useState(false);
+  const t = useTranslations("chat");
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(t("actionError"));
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={copied ? t("copied") : t("copy")}
+      aria-label={copied ? t("copied") : t("copy")}
+      className={cn(
+        "grid size-7 flex-none place-items-center rounded-md transition-colors",
+        copied ? "text-chart-2" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        className
+      )}
+    >
+      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+    </button>
+  );
+};
+
 const UserMessage = ({ id, text, time }: { id?: string; text: string; time?: string }) => (
   <div data-mid={id} className="flex flex-col items-end gap-1.5">
     <div className="w-fit max-w-[80%] rounded-[18px_18px_4px_18px] bg-primary px-4.5 py-3 text-primary-foreground">
       {text}
     </div>
-    {time && <span className="font-mono text-xs tabular-nums text-muted-foreground">{time}</span>}
+    <div className="flex items-center gap-1">
+      {time && <span className="font-mono text-xs tabular-nums text-muted-foreground">{time}</span>}
+      <CopyButton text={text} />
+    </div>
   </div>
 );
 
@@ -176,21 +212,9 @@ const FeedbackBar = ({
   copyText?: string;
 }) => {
   const [value, setValue] = useState<Feedback>(initial);
-  const [copied, setCopied] = useState(false);
   const t = useTranslations("chat");
   const pill =
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors";
-
-  const copy = async () => {
-    if (!copyText) return;
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error(t("actionError"));
-    }
-  };
 
   // Toggle a rating (clicking the active one clears it), persist optimistically,
   // and roll back on failure. Only persists for saved chats with a message id.
@@ -256,20 +280,7 @@ const FeedbackBar = ({
       ) : (
         meta && <span className="font-mono text-xs tabular-nums text-muted-foreground">{meta}</span>
       )}
-      {copyText && (
-        <button
-          type="button"
-          onClick={copy}
-          title={copied ? t("copied") : t("copy")}
-          aria-label={copied ? t("copied") : t("copy")}
-          className={cn(
-            "grid size-7 flex-none place-items-center rounded-md transition-colors",
-            copied ? "text-chart-2" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        </button>
-      )}
+      {copyText && <CopyButton text={copyText} />}
     </div>
   );
 };
