@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import type { UIMessage } from "ai";
 
 import { db } from "@/lib/drizzle/db";
@@ -68,6 +68,22 @@ export const saveMessages = async (chatId: string, list: UIMessage[]): Promise<v
     });
 
   await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, chatId));
+};
+
+// Persist the full conversation, then prune any of the chat's messages no longer
+// present in `list` — e.g. after a prompt edit truncates the tail and re-forks.
+// `list` must be the complete, authoritative message list for the chat.
+export const syncMessages = async (chatId: string, list: UIMessage[]): Promise<void> => {
+  await saveMessages(chatId, list);
+
+  const ids = list.map((m) => m.id);
+  await db
+    .delete(messages)
+    .where(
+      ids.length > 0
+        ? and(eq(messages.chatId, chatId), notInArray(messages.id, ids))
+        : eq(messages.chatId, chatId)
+    );
 };
 
 // Set (or regenerate) a chat's title. Scoped to the owner so it can't retitle

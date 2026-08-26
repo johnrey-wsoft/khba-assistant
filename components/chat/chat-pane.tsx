@@ -68,7 +68,7 @@ export const ChatPane = ({
     );
     setArtifact({ sources: list, index });
   };
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
     id: chatId,
     messages: seed,
     // Assistant reply finished streaming and was persisted server-side; reflect
@@ -162,6 +162,18 @@ export const ChatPane = ({
     setInput("");
   };
 
+  // Edit a past user prompt: drop it and everything after (the conversation
+  // re-forks), then re-send the edited text so the assistant answers afresh.
+  // The truncated tail is pruned from the DB by the chat route's onFinish sync.
+  const editMessage = (messageId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || isBusy) return;
+    const index = messages.findIndex((m) => m.id === messageId);
+    if (index === -1) return;
+    setMessages(messages.slice(0, index));
+    sendMessage({ text: trimmed });
+  };
+
   const conversation = conversations.find((c) => c.id === chatId);
   // Live session title (updates as it streams) wins; else the server-loaded
   // title for a reopened chat.
@@ -185,6 +197,7 @@ export const ChatPane = ({
           onSuggestion={submit}
           chatId={chatId}
           initialFeedback={initialFeedback}
+          onEditMessage={editMessage}
         />
         <Composer
           value={input}

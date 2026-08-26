@@ -2,7 +2,12 @@ import { convertToModelMessages, createIdGenerator, type UIMessage } from "ai";
 
 import { khbaAgent } from "@/lib/ai/khba-agent";
 import { requireApproved } from "@/lib/guards/member.guard";
-import { ensureChatForUser, isPersistableChatId, saveMessages } from "@/lib/chat/store";
+import {
+  ensureChatForUser,
+  isPersistableChatId,
+  saveMessages,
+  syncMessages,
+} from "@/lib/chat/store";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -30,6 +35,8 @@ export async function POST(req: Request) {
     // updated conversation to onFinish for saving.
     originalMessages: messages,
     generateMessageId: createIdGenerator({ prefix: "msg", size: 24 }),
-    onFinish: persist ? ({ messages: all }) => saveMessages(id!, all) : undefined,
+    // Sync (not just upsert) so an edited prompt prunes the old, now-orphaned
+    // tail of the conversation from the DB.
+    onFinish: persist ? ({ messages: all }) => syncMessages(id!, all) : undefined,
   });
 }

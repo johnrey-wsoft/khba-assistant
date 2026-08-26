@@ -179,6 +179,7 @@
     "feedbackSaved": "Feedback saved",
     "copy": "Copy",
     "copied": "Copied",
+    "edit": "Edit",
     "seeAll": "See all {count} sources",
     "showFewer": "Show fewer",
     "sourceCount": "{count, plural, one {# source} other {# sources}}",
