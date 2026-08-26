@@ -177,6 +177,8 @@
     "notQuite": "부족해요",
     "report": "오류 신고",
     "feedbackSaved": "피드백이 저장되었습니다",
+    "copy": "복사",
+    "copied": "복사됨",
     "seeAll": "출처 {count}개 모두 보기",
     "showFewer": "접기",
     "sourceCount": "출처 {count}개",

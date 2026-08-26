@@ -2,7 +2,7 @@
 
 import type { UIMessage } from "ai";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { ThumbsUp, HelpCircle, Flag, ChevronDown, ChevronUp, Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { toast } from "sonner";
@@ -167,16 +167,30 @@ const FeedbackBar = ({
   chatId,
   messageId,
   initial = null,
+  copyText,
 }: {
   meta?: string;
   chatId?: string;
   messageId?: string;
   initial?: Feedback;
+  copyText?: string;
 }) => {
   const [value, setValue] = useState<Feedback>(initial);
+  const [copied, setCopied] = useState(false);
   const t = useTranslations("chat");
   const pill =
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors";
+
+  const copy = async () => {
+    if (!copyText) return;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error(t("actionError"));
+    }
+  };
 
   // Toggle a rating (clicking the active one clears it), persist optimistically,
   // and roll back on failure. Only persists for saved chats with a message id.
@@ -236,6 +250,22 @@ const FeedbackBar = ({
         <Flag className="size-3.5" />
         {t("report")}
       </button>
+      {copyText && (
+        <button
+          type="button"
+          onClick={copy}
+          aria-label={t("copy")}
+          className={cn(
+            pill,
+            copied
+              ? "border-chart-2 bg-chart-2/10 text-chart-2"
+              : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary"
+          )}
+        >
+          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          {copied ? t("copied") : t("copy")}
+        </button>
+      )}
       <span className="flex-1" />
       {value ? (
         <span className="text-xs font-semibold text-chart-2">{t("feedbackSaved")}</span>
@@ -369,7 +399,13 @@ const AssistantMessage = ({
       )}
 
       {hasContent && (
-        <FeedbackBar meta={footerMeta} chatId={chatId} messageId={message.id} initial={feedback} />
+        <FeedbackBar
+          meta={footerMeta}
+          chatId={chatId}
+          messageId={message.id}
+          initial={feedback}
+          copyText={text}
+        />
       )}
     </div>
   );
