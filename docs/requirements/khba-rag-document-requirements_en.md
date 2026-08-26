@@ -3,7 +3,7 @@
 > **Project:** KHBA Assistant (W Labs) · Retrieval-Augmented legal/administrative chat
 > **Scope of this doc:** Source-document requirements for ingestion (incl. HWP/HWPX), proposed
 > parsing solutions, and the full API list needed for the project
-> **Status:** Decision made — pyhwp + FastAPI chosen (see [§6](#6-recommendation--decision))
+> **Status:** Implemented — self-hosted Java service (`hwplib` for `.hwp`, `hwpxlib` for `.hwpx`), which superseded the earlier pyhwp + FastAPI choice (see [§6](#6-recommendation--decision))
 > **Related:** [Implementation documentation](./khba-rag_en.md) · **Language:** English · [한국어 버전](./khba-rag-document-requirements_ko.md)
 
 ---
@@ -136,6 +136,11 @@ flowchart LR
 
 ### 4.3 pyhwp + a small FastAPI wrapper (self-hosted, open source)
 
+> **Superseded** — this was the initial implementation, since replaced by a
+> self-hosted Java service (`hwplib` + `hwpxlib`) that parses both `.hwp` and
+> `.hwpx`. See [§6](#6-recommendation--decision). Kept below for historical
+> context.
+
 [`pyhwp`](https://github.com/mete0r/pyhwp) is an open-source (AGPLv3) Python library and CLI
 (`hwp5proc`, `hwp5txt`, `hwp5html`, `hwp5odt`) that parses the legacy binary `.hwp` (HWPv5) format
 directly, with no dependency on Hancom software. It is wrapped in a small internal FastAPI
@@ -184,48 +189,43 @@ flowchart LR
 
 ## 6. Recommendation — Decision
 
-**Chosen: pyhwp + a self-hosted FastAPI wrapper** — **IMPLEMENTED**
+**Chosen: a self-hosted Java service — `hwplib` for `.hwp`, `hwpxlib` for `.hwpx`** — **IMPLEMENTED**
 
-The solution has been implemented on cost grounds — it's free/open-source with no per-page billing,
-versus Upstage's pay-per-page pricing or a Hancom commercial SDK license. It also keeps documents
-in-house (relevant for `CONFIDENTIAL`-class sources).
+> **Update (superseded pyhwp):** the first implementation used `pyhwp` + a Python FastAPI wrapper
+> (see [§4.3](#43-pyhwp--a-small-fastapi-wrapper-self-hosted-open-source)), but pyhwp only handles
+> legacy binary `.hwp`, not `.hwpx`. It was replaced by a single self-hosted **Java** service
+> (`./java-hwp`) that parses **both** Hangul formats with the maintained
+> [`hwplib`](https://github.com/neolord0/hwplib) and [`hwpxlib`](https://github.com/neolord0/hwpxlib)
+> libraries, keeping the same HTTP contract so the ingestion pipeline was unchanged.
+
+The solution stays self-hosted and free/open-source (no per-page billing, unlike Upstage; no
+commercial license, unlike the Hancom SDK), and keeps documents in-house (relevant for
+`CONFIDENTIAL`-class sources).
 
 ```mermaid
 flowchart LR
-    HWP[.hwp file] --> API["Internal FastAPI service<br/>POST /convert/hwp-to-markdown"]
-    API --> OUT["Plain text from BodyText.xml"]
-    OUT --> POST["Post-process to Markdown<br/>+ manual table cleanup"]
-    POST --> CHUNK["semanticChunk<br/>(existing pipeline, unchanged)"]
+    HWP[".hwp / .hwpx file"] --> API["Java hwp-api service<br/>POST /convert/hwp(x)-to-markdown"]
+    API --> OUT["Extracted text (hwplib / hwpxlib)"]
+    OUT --> CHUNK["semanticChunk<br/>(existing pipeline, unchanged)"]
 ```
-
-**Known limitation to plan around:** pyhwp only parses legacy binary `.hwp` (HWPv5) — it does
-**not** support `.hwpx`. Since newer Korean government documents are increasingly issued as
-`.hwpx`, this plan needs one of the following before `.hwpx` sources show up in the manifest:
-
-- Confirm the current/expected corpus is `.hwp`-only for now (see [§9](#9-open-questions)), and
-  revisit `.hwpx` support as a follow-up once real files arrive, **or**
-- Pair pyhwp with a lightweight `.hwpx` path up front — `.hwpx` is XML-based, so it can likely be
-  unzipped and parsed directly (e.g. with `lxml`) without a heavyweight second dependency.
 
 **Implementation status:**
 
-- ✅ **FastAPI service built:** Located in `python/main.py` with endpoint `POST /convert/hwp-to-markdown`
-- ✅ **Text extraction method:** Uses `hwp5proc unpack --vstreams` to extract virtual streams, then parses `BodyText.xml` with `lxml.etree.itertext()`
-- ✅ **Fallback mechanism:** Falls back to `PrvText.utf8` if `BodyText.xml` extraction fails
-- ✅ **Integration wired:** `lib/ingest/hwp.ts` calls the local service via `NEXT_PUBLIC_API_URL`
-- ✅ **Temporary file cleanup:** Automatic cleanup after processing
-- ⚠️ **Table fidelity:** Main known weak point — plan for manual review/cleanup on early ingested HWP documents with tables
-- ⚠️ **Maintenance:** No vendor SLA — budget time for maintaining the wrapper and tracking upstream `pyhwp` project
+- ✅ **Service built:** `./java-hwp` (Spring Boot) — endpoints `POST /convert/hwp-to-markdown` and `POST /convert/hwpx-to-markdown`
+- ✅ **Both formats natively:** `hwplib` parses legacy binary `.hwp`; `hwpxlib` parses OWPML `.hwpx` — no separate second path needed
+- ✅ **Integration wired:** `lib/ingest/hwp.ts` / `lib/ingest/hwpx.ts` call the service via `NEXT_PUBLIC_API_URL`; `parse.ts` routes `.hwp`/`.hwpx` there
+- ✅ **Containerised:** runs as the `hwp-api` service in `docker-compose.yml` (port 8000)
+- ⚠️ **Table fidelity:** output is extracted text (paragraphs + inline table text), not markdown pipe-tables — richer table extraction (walking the hwplib/hwpxlib model instead of `TextExtractor`) is a follow-up
 
 **Environment variables:**
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000  # Local FastAPI service URL
+NEXT_PUBLIC_API_URL=http://localhost:8000  # Java hwp-api service URL
 ```
 
-**Fallback options:** Keep **Upstage Document Parse** and the **Hancom SDK** documented above as fallback options if
-pyhwp's output quality proves insufficient for a given document class, rather than removing them
-from consideration.
+**Fallback options:** **Upstage Document Parse** is kept in the codebase (`lib/ingest/upstage.ts`,
+`UPSTAGE_API_KEY`) as a documented cloud fallback for `.hwpx`, though it is not wired into the
+pipeline. The **Hancom SDK** (§4.1) remains a documented high-fidelity option.
 
 ---
 
@@ -247,14 +247,14 @@ Carried over from [§12 of the implementation doc](./khba-rag_en.md#12-api-surfa
 
 | API / Service                                                 | Purpose                                                                                                                             | Auth / Access                                  | Status                                                                     |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
-| **Internal HWP parsing service** (pyhwp-based, FastAPI)       | Primary path: parse legacy `.hwp` into Markdown/plain text for ingestion                                                            | Self-hosted, no external auth                  | **✅ Implemented** — `python/main.py` + `lib/ingest/hwp.ts`                |
+| **Internal HWP/HWPX parsing service** (Java, hwplib + hwpxlib) | Primary path: parse `.hwp`/`.hwpx` into Markdown/plain text for ingestion                                                          | Self-hosted, no external auth                  | **✅ Implemented** — `./java-hwp` + `lib/ingest/hwp.ts`·`hwpx.ts`          |
 | **Upstage Document Parse** (`POST /v1/document-digitization`) | Fallback for documents pyhwp parses poorly (esp. complex tables), and candidate for `.hwpx` if a dedicated `.hwpx` path isn't built | `UPSTAGE_API_KEY`, console account             | **Documented fallback** — not provisioned unless needed                    |
 | **Hancom Hwp SDK / Developer API**                            | High-fidelity fallback for documents neither pyhwp nor Upstage parse acceptably                                                     | Commercial license via Hancom Developer portal | **Documented fallback** — pending budget/licensing decision if ever needed |
 
 **Current environment variables:**
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000  # Internal FastAPI HWP service (implemented)
+NEXT_PUBLIC_API_URL=http://localhost:8000  # Internal Java hwp-api service (implemented)
 ```
 
 No new paid API keys are required for the chosen path. If a fallback is later exercised, add

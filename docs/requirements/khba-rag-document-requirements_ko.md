@@ -3,7 +3,7 @@
 > **프로젝트:** KHBA Assistant (W Labs) · 검색 증강(RAG) 법령/행정 챗봇
 > **이 문서의 범위:** 인제스션 대상 원본 문서 요구사항(HWP/HWPX 포함), 제안된 파싱 솔루션,
 > 프로젝트에 필요한 전체 API 목록
-> **상태:** 결정 완료 — pyhwp + FastAPI 채택 ([§6](#6-권장-사항--결정) 참조)
+> **상태:** 구현 완료 — 자체 호스팅 Java 서비스(`.hwp`는 `hwplib`, `.hwpx`는 `hwpxlib`)로, 기존 pyhwp + FastAPI 선택을 대체했습니다 ([§6](#6-권장-사항--결정) 참조)
 > **관련 문서:** [구현 문서](./khba-rag_ko.md) · **Language:** [English](./khba-rag-document-requirements_en.md) · 한국어
 
 ---
@@ -129,6 +129,10 @@ flowchart LR
 
 ### 4.3 pyhwp + 경량 FastAPI 래퍼 (자체 호스팅, 오픈소스)
 
+> **대체됨(Superseded)** — 초기 구현이었으나, `.hwp`와 `.hwpx`를 모두 파싱하는 자체 호스팅
+> Java 서비스(`hwplib` + `hwpxlib`)로 대체되었습니다. [§6](#6-권장-사항--결정) 참조. 아래는
+> 이력 참고용으로 남겨둡니다.
+
 [`pyhwp`](https://github.com/mete0r/pyhwp)는 한컴 소프트웨어에 의존하지 않고 구형 바이너리 `.hwp`
 (HWPv5) 포맷을 직접 파싱하는 오픈소스(AGPLv3) Python 라이브러리·CLI(`hwp5proc`, `hwp5txt`,
 `hwp5html`, `hwp5odt`)입니다. 소규모 내부 FastAPI 서비스로 감싸서, 현재 파이프라인이 LlamaCloud를
@@ -176,48 +180,42 @@ flowchart LR
 
 ## 6. 권장 사항 — 결정
 
-**채택: pyhwp + 자체 호스팅 FastAPI 래퍼** — **구현 완료**
+**채택: 자체 호스팅 Java 서비스 — `.hwp`는 `hwplib`, `.hwpx`는 `hwpxlib`** — **구현 완료**
 
-비용 기준으로 결정되어 구현되었습니다. Upstage의 페이지당 과금이나 한컴 상업용 SDK 라이선스 대비
-무료/오픈소스이며 페이지당 과금이 없습니다. 또한 문서를 사내에 유지할 수 있습니다
-(`CONFIDENTIAL` 등급 출처와 관련).
+> **업데이트(pyhwp 대체):** 최초 구현은 `pyhwp` + Python FastAPI 래퍼였으나
+> ([§4.3](#43-pyhwp--경량-fastapi-래퍼-자체-호스팅-오픈소스) 참조), pyhwp는 구형 바이너리 `.hwp`만
+> 처리하고 `.hwpx`는 지원하지 않습니다. 이를 유지 관리되는
+> [`hwplib`](https://github.com/neolord0/hwplib) · [`hwpxlib`](https://github.com/neolord0/hwpxlib)
+> 라이브러리로 두 한글 포맷을 **모두** 파싱하는 단일 자체 호스팅 **Java** 서비스(`./java-hwp`)로
+> 대체했으며, HTTP 계약을 동일하게 유지하여 인제스션 파이프라인은 변경 없이 그대로입니다.
+
+자체 호스팅·무료/오픈소스를 유지합니다(Upstage의 페이지당 과금이나 한컴 상업용 SDK 라이선스와
+달리 비용이 없음). 또한 문서를 사내에 유지할 수 있습니다(`CONFIDENTIAL` 등급 출처와 관련).
 
 ```mermaid
 flowchart LR
-    HWP[.hwp 파일] --> API["내부 FastAPI 서비스<br/>POST /convert/hwp-to-markdown"]
-    API --> OUT["BodyText.xml에서 텍스트 추출"]
-    OUT --> POST["Markdown으로 후처리<br/>+ 표 수동 정리"]
-    POST --> CHUNK["semanticChunk<br/>(기존 파이프라인, 변경 없음)"]
+    HWP[".hwp / .hwpx 파일"] --> API["Java hwp-api 서비스<br/>POST /convert/hwp(x)-to-markdown"]
+    API --> OUT["텍스트 추출 (hwplib / hwpxlib)"]
+    OUT --> CHUNK["semanticChunk<br/>(기존 파이프라인, 변경 없음)"]
 ```
-
-**대비해야 할 알려진 제약:** pyhwp는 구형 바이너리 `.hwp`(HWPv5)만 파싱하며 **`.hwpx`는
-지원하지 않습니다.** 최신 한국 정부 문서가 점점 더 `.hwpx`로 발행되는 추세이므로, `.hwpx` 원본이
-매니페스트에 등장하기 전에 다음 중 하나를 결정해야 합니다:
-
-- 현재/예상 말뭉치가 당분간 `.hwp`뿐임을 확인하고([§9](#9-열린-질문) 참조), 실제 파일이 들어올 때
-  후속 작업으로 `.hwpx` 지원을 다루거나, **또는**
-- pyhwp와 함께 처음부터 경량 `.hwpx` 경로를 병행 — `.hwpx`는 XML 기반이므로 무거운 두 번째
-  의존성 없이 압축 해제 후 직접 파싱(예: `lxml`)이 가능할 가능성이 높음.
 
 **구현 상태:**
 
-- ✅ **FastAPI 서비스 구축 완료:** `python/main.py`에 `POST /convert/hwp-to-markdown` 엔드포인트 구현
-- ✅ **텍스트 추출 방법:** `hwp5proc unpack --vstreams`로 가상 스트림 추출 후, `lxml.etree.itertext()`로 `BodyText.xml` 파싱
-- ✅ **폴백 메커니즘:** `BodyText.xml` 추출 실패 시 `PrvText.utf8`로 폴백
-- ✅ **연동 완료:** `lib/ingest/hwp.ts`가 `NEXT_PUBLIC_API_URL`을 통해 로컬 서비스 호출
-- ✅ **임시 파일 정리:** 처리 후 자동 정리
-- ⚠️ **표 충실도:** 가장 알려진 약점 — 표가 포함된 초기 HWP 문서에 대해 수동 검토/정리 단계 계획 필요
-- ⚠️ **유지보수:** 벤더 SLA 없음 — 래퍼 유지보수와 상위 `pyhwp` 프로젝트 추적 시간 예산 반영 필요
+- ✅ **서비스 구축 완료:** `./java-hwp` (Spring Boot) — 엔드포인트 `POST /convert/hwp-to-markdown`, `POST /convert/hwpx-to-markdown`
+- ✅ **두 포맷 네이티브 지원:** `hwplib`가 구형 바이너리 `.hwp`, `hwpxlib`가 OWPML `.hwpx` 처리 — 별도의 두 번째 경로 불필요
+- ✅ **연동 완료:** `lib/ingest/hwp.ts` · `lib/ingest/hwpx.ts`가 `NEXT_PUBLIC_API_URL`로 서비스 호출, `parse.ts`가 `.hwp`/`.hwpx`를 라우팅
+- ✅ **컨테이너화:** `docker-compose.yml`의 `hwp-api` 서비스로 실행(포트 8000)
+- ⚠️ **표 충실도:** 출력은 추출 텍스트(문단 + 표 인라인 텍스트)이며 Markdown 파이프 표는 아님 — 더 풍부한 표 추출(`TextExtractor` 대신 hwplib/hwpxlib 모델 순회)은 후속 작업
 
 **환경 변수:**
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000  # 로컬 FastAPI 서비스 URL
+NEXT_PUBLIC_API_URL=http://localhost:8000  # Java hwp-api 서비스 URL
 ```
 
-**대안 옵션:** 위에 문서화한 **Upstage Document Parse**와 **한컴 SDK**는, 특정 문서 유형에 대해 pyhwp 결과물
-품질이 부족한 것으로 판명될 경우를 위한 대안으로 계속 문서에 남겨두고 검토 대상에서 제외하지
-않습니다.
+**대안 옵션:** **Upstage Document Parse**는 코드베이스(`lib/ingest/upstage.ts`, `UPSTAGE_API_KEY`)에
+`.hwpx`용 클라우드 대안으로 남겨두었으나 파이프라인에는 연결되어 있지 않습니다. **한컴 SDK**(§4.1)도
+고충실도 대안으로 계속 문서에 남아 있습니다.
 
 ---
 
@@ -239,14 +237,14 @@ NEXT_PUBLIC_API_URL=http://localhost:8000  # 로컬 FastAPI 서비스 URL
 
 | API / 서비스                                                  | 목적                                                                                                    | 인증/접근                                 | 상태                                                      |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| **내부 HWP 파싱 서비스** (pyhwp 기반, FastAPI)                | 주 경로: 구형 `.hwp`를 인제스션용 Markdown/텍스트로 파싱                                                | 자체 호스팅, 외부 인증 없음               | **✅ 구현 완료** — `python/main.py` + `lib/ingest/hwp.ts` |
+| **내부 HWP/HWPX 파싱 서비스** (Java, hwplib + hwpxlib)        | 주 경로: `.hwp`/`.hwpx`를 인제스션용 Markdown/텍스트로 파싱                                             | 자체 호스팅, 외부 인증 없음               | **✅ 구현 완료** — `./java-hwp` + `lib/ingest/hwp.ts`·`hwpx.ts` |
 | **Upstage Document Parse** (`POST /v1/document-digitization`) | pyhwp가 잘 처리하지 못하는 문서(특히 복잡한 표)를 위한 대안, 전용 `.hwpx` 경로가 없을 경우 `.hwpx` 후보 | `UPSTAGE_API_KEY`, 콘솔 계정              | **문서화된 대안** — 필요 시까지 프로비저닝하지 않음       |
 | **한컴 Hwp SDK / 디벨로퍼 API**                               | pyhwp와 Upstage 모두 만족스럽게 파싱하지 못하는 문서를 위한 고충실도 대안                               | 한컴 디벨로퍼 포털을 통한 상업용 라이선스 | **문서화된 대안** — 필요 시 예산/라이선스 결정 보류       |
 
 **현재 환경 변수:**
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000  # 내부 FastAPI HWP 서비스 (구현 완료)
+NEXT_PUBLIC_API_URL=http://localhost:8000  # 내부 Java hwp-api 서비스 (구현 완료)
 ```
 
 채택된 경로에는 신규 유료 API 키가 필요하지 않습니다. 이후 대안이 실제로 사용될 경우, 기존 목록

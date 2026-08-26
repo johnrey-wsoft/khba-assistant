@@ -46,6 +46,13 @@ Copy `.env.example` to `.env` and configure:
 | `RESEND_EMAIL_FROM`                    | —        | Sender address                                   |
 | `UPSTASH_REDIS_REST_URL`               | —        | [Upstash](https://upstash.com) for rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN`             | —        | Upstash token                                    |
+| `OPENAI_API_KEY`                       | Ingest   | Embeddings for the RAG pipeline                  |
+| `LLAMA_CLOUD_API_KEY`                  | —        | Optional cloud OCR parser (fallback)             |
+| `NEXT_PUBLIC_API_URL`                  | —        | `hwp-api` service URL (default `:8000`)          |
+| `MARKITDOWN_API_URL`                   | —        | `markitdown-api` service URL (default `:8001`)   |
+| `UPSTAGE_API_KEY`                      | —        | Optional cloud `.hwpx` parser (not wired in)     |
+
+> R2 object-storage variables (`R2_*`) for raw source files and the full ingestion set are in `.env.example`.
 
 > **Offline development:** Run `supabase start` for a local Supabase instance. See the [full guide](./docs/overview.md#local-development-offline).
 
@@ -124,6 +131,25 @@ docs/                       # VitePress documentation
 - **Rate Limiting** — Tiered Upstash Redis limits (optional, skipped in dev)
 - **CI/CD** — GitHub Actions for lint, tests, and build
 - **Docker** — Multi-stage production build (Node 22 Alpine)
+
+## Document ingestion (RAG)
+
+Uploaded source documents (laws, ordinances, notices) are parsed to markdown, semantically chunked, embedded, and stored for retrieval. Parsing is routed by file type across self-hosted microservices defined in `docker-compose.yml`:
+
+| Format                           | Parser                 | Service                                                 |
+| -------------------------------- | ---------------------- | ------------------------------------------------------- |
+| `.hwp`, `.hwpx`                  | hwplib / hwpxlib       | **`hwp-api`** — Java (`./java-hwp`) on `:8000`          |
+| PDF, DOCX, PPTX, XLSX, images, … | Microsoft MarkItDown   | **`markitdown-api`** (`./python-markitdown`) on `:8001` |
+| _(fallback)_                     | LlamaCloud agentic OCR | cloud (`LLAMA_CLOUD_API_KEY`)                           |
+
+Run the parser services with Docker alongside the local app:
+
+```bash
+docker compose up -d hwp-api markitdown-api
+pnpm dev
+```
+
+Embeddings use OpenAI (`OPENAI_API_KEY`); raw files are optionally stored in Cloudflare R2 (`R2_*`). `UPSTAGE_API_KEY` enables an optional cloud `.hwpx` parser, kept as a fallback but not wired into the pipeline. See [the ingestion requirements doc](./docs/requirements/khba-rag-document-requirements_en.md) for the full design.
 
 ## Documentation
 
