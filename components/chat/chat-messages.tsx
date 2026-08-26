@@ -250,27 +250,25 @@ const FeedbackBar = ({
         <Flag className="size-3.5" />
         {t("report")}
       </button>
-      {copyText && (
-        <button
-          type="button"
-          onClick={copy}
-          aria-label={t("copy")}
-          className={cn(
-            pill,
-            copied
-              ? "border-chart-2 bg-chart-2/10 text-chart-2"
-              : "border-border bg-card text-muted-foreground hover:border-primary hover:text-primary"
-          )}
-        >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          {copied ? t("copied") : t("copy")}
-        </button>
-      )}
       <span className="flex-1" />
       {value ? (
         <span className="text-xs font-semibold text-chart-2">{t("feedbackSaved")}</span>
       ) : (
         meta && <span className="font-mono text-xs tabular-nums text-muted-foreground">{meta}</span>
+      )}
+      {copyText && (
+        <button
+          type="button"
+          onClick={copy}
+          title={copied ? t("copied") : t("copy")}
+          aria-label={copied ? t("copied") : t("copy")}
+          className={cn(
+            "grid size-7 flex-none place-items-center rounded-md transition-colors",
+            copied ? "text-chart-2" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        </button>
       )}
     </div>
   );
